@@ -1,0 +1,72 @@
+generate_home_project_task:
+  description: >
+    Create a simple home project for {hobby_name} that the user can try today
+    with minimal supplies. The project should:
+    - Take no more than 1-2 hours
+    - Use common household items or cost under $10
+    - Give a genuine taste of the hobby's core experience
+    - Be achievable for a complete beginner
+  expected_output: >
+    A detailed home project including:
+    - Project name and description
+    - Materials needed (with household alternatives)
+    - Step-by-step instructions
+    - What they'll learn/experience from this
+    - Tips for success
+  agent: sampling_agent
+
+find_local_experiences_task:
+  description: >
+    Identify local experiences where the user can sample {hobby_name} in or around
+    {location}. Look for:
+    - Free community events or meetups
+    - Beginner workshops or classes (one-time, not ongoing commitment)
+    - Studios or spaces that offer trial sessions
+    - Parks, venues, or public spaces suited for this hobby
+  expected_output: >
+    A list of 3-5 local sampling opportunities including:
+    - Type of experience (workshop, meetup, open studio, etc.)
+    - Where to find it (general guidance for their location type)
+    - Typical cost (free to low-cost preferred)
+    - What to expect as a first-timer
+    - How to find these in their specific area
+  agent: sampling_agent
+
+curate_learning_path_task:
+  description: >
+    Curate a beginner learning path for {hobby_name} using free or low-cost
+    online resources. The path should take someone from zero knowledge to
+    completing their first real project within 2-4 weeks of casual practice.
+  expected_output: >
+    A structured learning path including:
+    - Week-by-week breakdown of skills to learn
+    - Specific free resources (YouTube channels, websites, apps)
+    - Practice exercises for each stage
+    - First "real" project to complete
+    - Signs of progress to look for
+  agent: sampling_agent
+
+compile_sampling_options_task:
+  description: >
+    Compile all the sampling options into a cohesive menu of ways to try
+    {hobby_name}. Present options for different preferences:
+    - "Try it now" (immediate home project)
+    - "Learn online" (structured learning path)
+    - "Experience it locally" (in-person sampling)
+
+    Make it easy for the user to pick what suits them best.
+  expected_output: >
+    A formatted "Sampling Menu" for {hobby_name} with:
+
+    Quick Start Option:
+    - The home project summary with a "start now" feel
+
+    Learn at Home Option:
+    - Learning path overview with time commitment
+
+    Local Experience Option:
+    - Best local sampling opportunities
+
+    Recommendation on which option suits different personality types
+    (hands-on learners, social learners, self-paced learners)
+  agent: sampling_agent

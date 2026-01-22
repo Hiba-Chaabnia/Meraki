@@ -1,0 +1,75 @@
+analyze_work_task:
+  description: >
+    Analyze the user's submitted work for {hobby_name}.
+
+    Work description: {work_description}
+    Session count: {session_count}
+
+    Consider:
+    - What techniques or skills are demonstrated
+    - Areas of strength to highlight
+    - Areas for potential improvement
+    - Progress since they started (if applicable)
+  expected_output: >
+    A structured analysis including:
+    - Skills demonstrated in this work
+    - Strengths to celebrate
+    - Growth opportunities (framed positively)
+    - Comparison to typical progress for session #{session_count}
+  agent: practice_agent
+
+generate_feedback_task:
+  description: >
+    Generate encouraging, constructive feedback based on the work analysis.
+    The feedback should:
+    - Lead with genuine praise for specific elements
+    - Offer 1-2 actionable improvement suggestions
+    - Connect their progress to their hobby journey
+    - End with encouragement for continued practice
+  expected_output: >
+    Personalized feedback message that:
+    - Celebrates specific achievements in their work
+    - Provides gentle, actionable guidance
+    - Maintains enthusiasm for the hobby
+    - Feels like it's from a supportive mentor, not a critic
+  agent: practice_agent
+
+emotional_checkin_task:
+  description: >
+    Conduct an emotional check-in based on the user's current emotional state.
+
+    Current emotional state: {emotional_state}
+    Recent emotional history: {emotional_history}
+    Session count: {session_count}
+
+    Respond appropriately to their emotional state while encouraging continued
+    engagement with the hobby.
+  expected_output: >
+    An empathetic response that:
+    - Acknowledges their current feelings
+    - Normalizes their experience (especially if frustrated/discouraged)
+    - Offers perspective on the learning journey
+    - Suggests next steps appropriate to their emotional state
+    - For positive emotions: builds momentum
+    - For negative emotions: provides support and reframes challenges
+  agent: practice_agent
+
+calibrate_challenge_task:
+  description: >
+    Design the next practice challenge for {hobby_name} based on:
+    - Current session count: {session_count}
+    - Recent emotional history: {emotional_history}
+    - Current skill level (inferred from session count)
+
+    The challenge should push them slightly beyond current ability while
+    remaining achievable and fun.
+  expected_output: >
+    A calibrated challenge including:
+    - Challenge name and description
+    - Specific goal to achieve
+    - Estimated time to complete
+    - Why this challenge is right for their current level
+    - Tips for success
+    - What skill this will help develop
+    - How to know when they've succeeded
+  agent: challenge_agent

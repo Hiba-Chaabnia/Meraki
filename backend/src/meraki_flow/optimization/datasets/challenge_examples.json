@@ -1,0 +1,82 @@
+[
+  {
+    "input": {
+      "hobby_name": "drawing",
+      "session_count": 1,
+      "emotional_state": "nervous",
+      "skill_level": "beginner"
+    },
+    "expected_difficulty": "very easy",
+    "reference": "First session challenge should be simple and confidence-building, like drawing basic shapes or a simple object"
+  },
+  {
+    "input": {
+      "hobby_name": "piano",
+      "session_count": 6,
+      "emotional_state": "okay",
+      "skill_level": "beginner"
+    },
+    "expected_difficulty": "beginner",
+    "reference": "Appropriate challenge for early progression, perhaps learning a simple melody with both hands"
+  },
+  {
+    "input": {
+      "hobby_name": "woodworking",
+      "session_count": 20,
+      "emotional_state": "confident",
+      "skill_level": "intermediate"
+    },
+    "expected_difficulty": "intermediate-advanced",
+    "reference": "Challenge should stretch skills for experienced practitioner, like a piece with joinery"
+  },
+  {
+    "input": {
+      "hobby_name": "photography",
+      "session_count": 5,
+      "emotional_state": "discouraged",
+      "skill_level": "beginner"
+    },
+    "expected_difficulty": "easy",
+    "reference": "Easier challenge to rebuild confidence, focusing on one technique they can master"
+  },
+  {
+    "input": {
+      "hobby_name": "crochet",
+      "session_count": 3,
+      "emotional_state": "excited",
+      "skill_level": "beginner"
+    },
+    "expected_difficulty": "beginner",
+    "reference": "Simple project like a scarf or dishcloth to practice basic stitches"
+  },
+  {
+    "input": {
+      "hobby_name": "digital illustration",
+      "session_count": 15,
+      "emotional_state": "bored",
+      "skill_level": "intermediate"
+    },
+    "expected_difficulty": "intermediate",
+    "reference": "New technique or style to reignite interest, like trying a new brush style or subject matter"
+  },
+  {
+    "input": {
+      "hobby_name": "baking",
+      "session_count": 10,
+      "emotional_state": "confident",
+      "skill_level": "intermediate"
+    },
+    "expected_difficulty": "intermediate",
+    "reference": "More complex recipe like croissants or a layered cake"
+  },
+  {
+    "input": {
+      "hobby_name": "origami",
+      "session_count": 2,
+      "emotional_state": "frustrated",
+      "skill_level": "beginner"
+    },
+    "expected_difficulty": "very easy",
+    "reference": "Simple model with few folds to rebuild confidence and enjoyment"
+  }
+]
