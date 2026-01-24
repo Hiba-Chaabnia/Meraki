@@ -1,0 +1,42 @@
+generate_challenge_task:
+  description: >
+    Design a creative challenge for someone practicing {hobby_name} based on their history:
+
+    Practice stats:
+    - Total sessions: {session_count}
+    - Average session duration: {avg_duration} minutes
+    - Mood distribution: {mood_distribution}
+    - Days active: {days_active}
+
+    Previously completed challenges:
+    {completed_challenges}
+
+    Previously skipped challenges (DO NOT repeat similar patterns):
+    {skipped_challenges}
+
+    Recent AI feedback highlights:
+    {recent_feedback}
+
+    Recent mood trend: {last_mood_trend}
+
+    Calibration rules:
+    - If session_count < 5: difficulty should be "easy", focus on confidence-building
+    - If session_count 5-15: difficulty "medium", introduce creative constraints
+    - If session_count > 15: difficulty "hard" or "stretch", push boundaries
+    - If recent moods are frustrated/discouraged: lower difficulty, focus on fun
+    - If recent moods are loved/good: can push harder
+    - NEVER create a challenge similar to a skipped one
+    - estimated_time should be realistic (15-60 min range)
+  expected_output: >
+    Return a JSON object with the following structure:
+    {
+      "title": "Catchy, exciting challenge title (3-6 words)",
+      "description": "2-3 sentences describing what to do",
+      "why_this_challenge": "1-2 sentences explaining why this is perfect for them right now",
+      "skills": ["skill1", "skill2"],
+      "difficulty": "easy" | "medium" | "hard" | "stretch",
+      "estimated_time": "30 minutes",
+      "tips": ["Practical tip 1", "Practical tip 2"],
+      "what_youll_learn": ["Learning outcome 1", "Learning outcome 2"]
+    }
+  agent: challenge_designer

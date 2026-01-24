@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-02-09T07:43:35.440957+00:00",
+  "applied": false,
+  "trials_per_optimizer": 10,
+  "results": [
+    {
+      "name": "discovery",
+      "status": "failed",
+      "error": "MetaPromptOptimizer.__init__() got an unexpected keyword argument 'project_name'"
+    },
+    {
+      "name": "challenges",
+      "status": "failed",
+      "error": "FewShotBayesianOptimizer.__init__() got an unexpected keyword argument 'project_name'"
+    },
+    {
+      "name": "motivation",
+      "status": "failed",
+      "error": "EvolutionaryOptimizer.__init__() got an unexpected keyword argument 'project_name'"
+    }
+  ]
+}

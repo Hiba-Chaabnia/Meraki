@@ -1,32 +1,32 @@
 """Tests for the Sampling Crew."""
 import pytest
-from meraki_flow.crews.sampling_crew.sampling_crew import SamplingCrew
+from meraki_flow.crews.sampling_preview_crew.sampling_preview_crew import SamplingPreviewCrew
 
 
-class TestSamplingCrew:
+class TestSamplingPreviewCrew:
     """Test cases for Sampling Crew initialization and configuration."""
 
     def test_crew_initialization(self):
         """Test that Sampling Crew can be initialized."""
-        crew_instance = SamplingCrew()
+        crew_instance = SamplingPreviewCrew()
         assert crew_instance is not None
 
     def test_crew_creation(self):
         """Test that Sampling Crew can create a crew object."""
-        crew_instance = SamplingCrew()
+        crew_instance = SamplingPreviewCrew()
         crew = crew_instance.crew()
         assert crew is not None
 
     def test_agent_exists(self):
         """Test that sampling_agent is defined."""
-        crew_instance = SamplingCrew()
+        crew_instance = SamplingPreviewCrew()
         agent = crew_instance.sampling_agent()
         assert agent is not None
         assert agent.role is not None
 
     def test_tasks_exist(self):
         """Test that all required tasks are defined."""
-        crew_instance = SamplingCrew()
+        crew_instance = SamplingPreviewCrew()
 
         home_project_task = crew_instance.generate_home_project_task()
         assert home_project_task is not None
@@ -44,6 +44,6 @@ class TestSamplingCrew:
         """Test that the crew uses sequential process."""
         from crewai import Process
 
-        crew_instance = SamplingCrew()
+        crew_instance = SamplingPreviewCrew()
         crew = crew_instance.crew()
         assert crew.process == Process.sequential

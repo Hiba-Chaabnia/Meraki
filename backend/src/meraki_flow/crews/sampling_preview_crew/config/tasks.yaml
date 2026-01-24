@@ -1,0 +1,87 @@
+recommend_sampling_path_task:
+  description: >
+    Based on the user's quiz answers, recommend which of the 3 sampling paths
+    would be the best fit for them to try {hobby_name}:
+
+    1. Watch First - Passive discovery through curated videos
+    2. Micro-Try - Instant 5-minute activity with no materials
+    3. Find Locally - In-person class or workshop
+
+    Consider these quiz signals:
+    - Social vs solo preference (q3, q8): Solo learners → Watch First or Micro-Try; Social → Find Locally
+    - Energy level (q5): Low energy → Watch First; High energy → Micro-Try or Find Locally
+    - Learning style (q11): Visual learners → Watch First; Hands-on → Micro-Try
+    - Schedule/time (q9, q15): Busy/unpredictable → Watch First or Micro-Try; Flexible → Find Locally
+    - Comfort with new situations (q7, q14): Anxious → Watch First; Adventurous → Find Locally
+    - Need for instant gratification (q10): High → Micro-Try; Patient → Watch First
+
+    Quiz answers provided:
+    {quiz_answers}
+  expected_output: >
+    Return a JSON object with the following structure:
+    {
+      "primary_path": "watch" | "micro" | "local",
+      "reason": "2-3 sentences explaining why this path fits them based on their quiz answers",
+      "what_to_expect": "1 sentence about what they'll experience",
+      "secondary_path": "watch" | "micro" | "local",
+      "encouragement": "A brief, warm message to motivate them"
+    }
+  agent: sampling_preview_agent
+
+generate_micro_activity_task:
+  description: >
+    Create a micro activity for {hobby_name} that the user can do RIGHT NOW in
+    under 5 minutes with absolutely zero materials or preparation. The activity should:
+    - Use only their body, senses, or objects already in any room
+    - Give a genuine taste of the hobby's core mindset or skill
+    - Be achievable for someone who has never tried this hobby
+    - Feel like a "taste" not a "lesson"
+
+    Examples of good micro activities:
+    - Pottery: "Close your eyes and slowly trace the contours of a mug, noticing curves and weight"
+    - Drawing: "Without looking at the paper, draw the outline of your hand for 60 seconds"
+    - Photography: "Frame 3 interesting compositions using your fingers as a viewfinder"
+  expected_output: >
+    Return a JSON object with the following structure:
+    {
+      "title": "Catchy 2-4 word activity title",
+      "instruction": "Clear 2-3 sentence instruction in conversational tone",
+      "duration": "2-5 minutes",
+      "why_it_works": "1 sentence connecting this to the real hobby"
+    }
+  agent: sampling_preview_agent
+
+curate_watch_videos_task:
+  description: >
+    Use the youtube_search tool to find 3 YouTube videos that give a beginner the
+    best introduction to {hobby_name}. Search for terms like:
+    - "{hobby_name} beginner tutorial"
+    - "{hobby_name} for beginners"
+    - "how to start {hobby_name}"
+    - "{hobby_name} first time"
+
+    The videos should:
+    - Be beginner-friendly (no jargon, no assumed knowledge)
+    - Show the hobby in action (not just talking heads)
+    - Be 10-20 minutes each (not too short, not overwhelming)
+    - Come from credible creators who are good at teaching
+    - Together give a complete picture: what it looks like, what you need, and why people love it
+
+    After finding videos with the tool, curate the best 3 and explain why each is
+    good for beginners.
+  expected_output: >
+    Return a JSON object with the following structure:
+    {
+      "videos": [
+        {
+          "title": "Video title",
+          "channel": "Channel name",
+          "url": "https://youtube.com/watch?v=...",
+          "thumbnail": "Thumbnail URL",
+          "duration": "15:32",
+          "why_good": "1-2 sentences on what makes it good for beginners",
+          "what_to_watch_for": "Specific things to pay attention to"
+        }
+      ]
+    }
+  agent: sampling_preview_agent

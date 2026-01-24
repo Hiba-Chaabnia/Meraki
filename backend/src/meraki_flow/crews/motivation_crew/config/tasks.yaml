@@ -1,0 +1,37 @@
+assess_and_intervene_task:
+  description: >
+    Assess the user's engagement with {hobby_name} and create a single motivation nudge:
+
+    Engagement signals:
+    - Days since last session: {days_since_last_session}
+    - Recent moods: {recent_moods}
+    - Challenge skip rate: {challenge_skip_rate}
+    - Current streak: {current_streak} days
+    - Longest streak: {longest_streak} days
+    - Session frequency trend: {session_frequency_trend}
+
+    Urgency rules:
+    - days_since_last_session 1-3: urgency "gentle"
+    - days_since_last_session 4-7: urgency "check_in"
+    - days_since_last_session 7+: urgency "re_engage"
+
+    Nudge types to choose from:
+    - "streak_reminder": remind them of their streak before it breaks
+    - "mood_check": check in if recent moods were low
+    - "challenge_prompt": suggest trying a new challenge
+    - "micro_session": suggest a tiny 5-min session to get back in
+    - "celebration": celebrate a milestone or positive pattern
+    - "fresh_start": offer a clean-slate re-engagement
+
+    The suggested_action should be one of: "log_session", "view_challenge", "browse_hobbies"
+    The action_data can be a relevant slug or empty string.
+  expected_output: >
+    Return a JSON object:
+    {
+      "nudge_type": "streak_reminder" | "mood_check" | "challenge_prompt" | "micro_session" | "celebration" | "fresh_start",
+      "message": "A warm, personal 1-2 sentence message",
+      "suggested_action": "log_session" | "view_challenge" | "browse_hobbies",
+      "action_data": "",
+      "urgency": "gentle" | "check_in" | "re_engage"
+    }
+  agent: motivation_specialist

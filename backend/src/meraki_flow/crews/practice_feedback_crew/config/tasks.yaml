@@ -1,0 +1,41 @@
+analyze_session_task:
+  description: >
+    Analyze this practice session and provide warm, specific feedback:
+
+    Hobby: {hobby_name}
+    Session type: {session_type}
+    Duration: {duration} minutes
+    Mood: {mood}
+    Notes: {notes}
+
+    Recent session history (last 5):
+    {recent_sessions}
+
+    Completed challenges:
+    {completed_challenges}
+
+    Image URL (if provided): {image_url}
+
+    If an image URL is provided, acknowledge it in your feedback.
+    Comment on what you can infer from the image about their practice
+    (setup, materials, progress, effort visible). Be encouraging about
+    them sharing visual evidence of their work.
+
+    Based on this information:
+    1. Make 2-3 specific observations about their practice (what they did, patterns you notice)
+    2. Identify 1-2 signs of growth (even small ones - consistency, trying new things, longer sessions)
+    3. Suggest 1-2 specific next things to try that build on what they just did
+    4. Write a brief celebration message acknowledging their effort
+
+    Be specific to {hobby_name} - reference techniques, materials, and concepts relevant
+    to this hobby. If their mood was frustrated or discouraged, be extra supportive and
+    normalize the struggle.
+  expected_output: >
+    Return a JSON object with the following structure:
+    {
+      "observations": ["Specific observation 1", "Specific observation 2"],
+      "growth": ["Growth sign 1", "Growth sign 2"],
+      "suggestions": ["Try this next 1", "Try this next 2"],
+      "celebration": "A warm 1-2 sentence celebration of their effort"
+    }
+  agent: practice_analyst
