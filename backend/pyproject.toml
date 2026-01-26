@@ -1,0 +1,37 @@
+[project]
+name = "meraki_flow"
+version = "0.1.0"
+description = "Meraki is a multi-agent system that helps you discover, start and sustain creative hobbies - Developed using crewAI"
+authors = [{ name = "Hiba Chaabnia", email = "hiba.chaabnia.pro@gmail.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]==1.8.1",
+    "opik>=1.0.0",
+    "opik-optimizer>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.scripts]
+kickoff = "meraki_flow.main:kickoff"
+run_crew = "meraki_flow.main:kickoff"
+plot = "meraki_flow.main:plot"
+run_with_trigger = "meraki_flow.main:run_with_trigger"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "flow"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v"

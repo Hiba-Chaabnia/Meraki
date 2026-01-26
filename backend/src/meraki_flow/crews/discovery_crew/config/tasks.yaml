@@ -1,0 +1,56 @@
+analyze_profile_task:
+  description: >
+    Analyze the user's profile to understand their interests, constraints, and preferences.
+
+    User Profile:
+    - Hobby Interests: {hobby_interests}
+    - Available Time: {available_time} hours per week
+    - Budget: ${budget}
+    - Location: {location}
+
+    Consider what types of activities might appeal to someone with these interests,
+    and what practical limitations their time and budget might impose.
+  expected_output: >
+    A structured analysis of the user's profile including:
+    - Primary interest themes identified
+    - Time availability assessment (can they do daily practice? weekly sessions?)
+    - Budget tier (minimal investment, moderate, or premium hobbies possible)
+    - Location considerations (indoor/outdoor, urban/rural options)
+  agent: discovery_agent
+
+rank_hobbies_task:
+  description: >
+    Based on the profile analysis, generate and rank potential hobbies for the user.
+    Consider hobbies that:
+    - Align with their stated interests: {hobby_interests}
+    - Fit within {available_time} hours/week
+    - Can be started with ${budget} or less
+    - Are accessible in/around {location}
+
+    Rank hobbies by overall fit score considering all factors.
+  expected_output: >
+    A ranked list of 5-8 hobby recommendations, each including:
+    - Hobby name
+    - Why it matches their interests
+    - Time requirement (hours/week)
+    - Startup cost estimate
+    - Fit score (1-10)
+  agent: discovery_agent
+
+generate_recommendations_task:
+  description: >
+    Create final personalized hobby recommendations with actionable next steps.
+    For each top hobby, provide concrete ways to get started immediately.
+    Focus on low-barrier entry points that don't require major commitments.
+  expected_output: >
+    Top 3 hobby recommendations formatted as:
+
+    For each hobby:
+    - Name and brief description
+    - Why it's perfect for this user
+    - First step to try today (free or very low cost)
+    - What they'll need to get started
+    - Expected progression path
+
+    Formatted as a clear, encouraging guide that makes starting feel achievable.
+  agent: discovery_agent

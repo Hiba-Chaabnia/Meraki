@@ -1,0 +1,57 @@
+[
+  {
+    "input": {
+      "hobby_name": "watercolor painting",
+      "session_count": 1,
+      "emotional_state": "excited",
+      "skill_level": "beginner"
+    },
+    "expected_difficulty": "beginner",
+    "expected_elements": ["basic techniques", "simple subject", "foundational skills"],
+    "reference": "Challenge should be a simple first project like painting basic shapes or a simple flower to build confidence."
+  },
+  {
+    "input": {
+      "hobby_name": "guitar",
+      "session_count": 5,
+      "emotional_state": "okay",
+      "skill_level": "beginner"
+    },
+    "expected_difficulty": "beginner-intermediate",
+    "expected_elements": ["chord progressions", "simple song", "technique practice"],
+    "reference": "Challenge should build on basics, perhaps learning a simple song with 3-4 chords."
+  },
+  {
+    "input": {
+      "hobby_name": "pottery",
+      "session_count": 10,
+      "emotional_state": "confident",
+      "skill_level": "intermediate"
+    },
+    "expected_difficulty": "intermediate",
+    "expected_elements": ["new technique", "larger project", "refinement"],
+    "reference": "Challenge should introduce new techniques like glazing or creating a matched set."
+  },
+  {
+    "input": {
+      "hobby_name": "photography",
+      "session_count": 3,
+      "emotional_state": "frustrated",
+      "skill_level": "beginner"
+    },
+    "expected_difficulty": "easy-beginner",
+    "expected_elements": ["review basics", "confidence building", "small wins"],
+    "reference": "Challenge should be easier to rebuild confidence, focusing on a single technique they can master."
+  },
+  {
+    "input": {
+      "hobby_name": "knitting",
+      "session_count": 20,
+      "emotional_state": "confident",
+      "skill_level": "advanced"
+    },
+    "expected_difficulty": "advanced",
+    "expected_elements": ["complex pattern", "new stitch", "ambitious project"],
+    "reference": "Challenge should be ambitious, like a complex garment or introducing colorwork."
+  }
+]
