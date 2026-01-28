@@ -1,8 +1,8 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-
-const API_URL = process.env.CREWAI_API_URL || "http://localhost:8000";
+import { requireAuth } from "@/lib/supabase/requireAuth";
+import { formatSlug } from "@/lib/hobbyData";
+import { API_URL } from "@/lib/config";
 
 export interface NudgeData {
   id: string;
@@ -17,11 +17,9 @@ export async function getActiveNudge(): Promise<{
   data?: NudgeData;
   error?: string;
 }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   // nudges table is new — not in generated types yet, cast to any
   const { data, error } = await (supabase as any)
@@ -39,11 +37,9 @@ export async function getActiveNudge(): Promise<{
 }
 
 export async function dismissNudge(nudgeId: string): Promise<{ error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { error } = await (supabase as any)
     .from("nudges")
@@ -58,18 +54,12 @@ export async function dismissNudge(nudgeId: string): Promise<{ error?: string }>
 export async function triggerMotivationCheck(
   hobbySlug: string
 ): Promise<{ job_id?: string; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
-  const hobbyName = hobbySlug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  const hobbyName = formatSlug(hobbySlug);
 
-  // Gather engagement signals
   const { data: sessions } = await supabase
     .from("practice_sessions")
     .select("created_at, mood")
@@ -91,7 +81,6 @@ export async function triggerMotivationCheck(
     .map((s) => s.mood ?? "okay")
     .join(", ");
 
-  // Challenge skip rate
   const { data: challenges } = await supabase
     .from("user_challenges")
     .select("status")

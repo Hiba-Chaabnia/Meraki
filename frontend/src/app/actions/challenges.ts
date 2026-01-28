@@ -1,15 +1,13 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-
-const API_URL = process.env.CREWAI_API_URL || "http://localhost:8000";
+import { requireAuth } from "@/lib/supabase/requireAuth";
+import { formatSlug } from "@/lib/hobbyData";
+import { API_URL } from "@/lib/config";
 
 export async function getUserChallenges() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from("user_challenges")
@@ -22,11 +20,9 @@ export async function getUserChallenges() {
 }
 
 export async function getChallengeById(id: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from("user_challenges")
@@ -40,11 +36,9 @@ export async function getChallengeById(id: string) {
 }
 
 export async function completeChallenge(userChallengeId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from("user_challenges")
@@ -61,17 +55,11 @@ export async function completeChallenge(userChallengeId: string) {
 export async function triggerChallengeGeneration(
   hobbySlug: string
 ): Promise<{ job_id?: string; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
-  // Convert slug to name
-  const hobbyName = hobbySlug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  const hobbyName = formatSlug(hobbySlug);
 
   // Gather practice stats
   const { data: userHobby } = await supabase
@@ -81,6 +69,8 @@ export async function triggerChallengeGeneration(
     .eq("status", "active")
     .limit(1)
     .maybeSingle();
+
+  void userHobby;
 
   const { data: sessions } = await supabase
     .from("practice_sessions")
@@ -96,7 +86,6 @@ export async function triggerChallengeGeneration(
       ? Math.round(sessionList.reduce((s, r) => s + (r.duration ?? 0), 0) / sessionCount)
       : 0;
 
-  // Mood distribution
   const moods: Record<string, number> = {};
   for (const s of sessionList) {
     if (s.mood) moods[s.mood] = (moods[s.mood] ?? 0) + 1;
@@ -105,11 +94,9 @@ export async function triggerChallengeGeneration(
     .map(([k, v]) => `${k}: ${v}`)
     .join(", ");
 
-  // Days active
   const uniqueDays = new Set(sessionList.map((s) => s.created_at?.split("T")[0]));
   const daysActive = uniqueDays.size;
 
-  // Completed & skipped challenges
   const { data: userChallenges } = await supabase
     .from("user_challenges")
     .select("status, challenges(title)")
@@ -127,7 +114,6 @@ export async function triggerChallengeGeneration(
     .filter(Boolean)
     .join(", ");
 
-  // Recent mood trend
   const recentMoods = sessionList
     .slice(0, 5)
     .map((s) => s.mood ?? "okay")

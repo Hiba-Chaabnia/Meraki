@@ -1,24 +1,18 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-
-const API_URL = process.env.CREWAI_API_URL || "http://localhost:8000";
+import { requireAuth } from "@/lib/supabase/requireAuth";
+import { formatSlug } from "@/lib/hobbyData";
+import { API_URL } from "@/lib/config";
 
 export async function triggerRoadmapGeneration(
   hobbySlug: string
 ): Promise<{ job_id?: string; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
-  const hobbyName = hobbySlug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  const hobbyName = formatSlug(hobbySlug);
 
-  // Gather practice stats
   const { data: sessions } = await supabase
     .from("practice_sessions")
     .select("duration, created_at")
@@ -36,7 +30,6 @@ export async function triggerRoadmapGeneration(
   const uniqueDays = new Set(sessionList.map((s) => s.created_at?.split("T")[0]));
   const daysActive = uniqueDays.size;
 
-  // Completed challenges
   const { data: userChallenges } = await supabase
     .from("user_challenges")
     .select("status, challenges(title)")
@@ -89,11 +82,9 @@ export async function pollRoadmapStatus(
 // Supabase generated types don't include them yet. Using `any` casts until types are regenerated.
 
 export async function getUserRoadmap(hobbySlug: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await (supabase as any)
     .from("user_roadmaps")
@@ -109,11 +100,9 @@ export async function getUserRoadmap(hobbySlug: string) {
 }
 
 export async function getUserRoadmaps() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await (supabase as any)
     .from("user_roadmaps")
@@ -126,13 +115,10 @@ export async function getUserRoadmaps() {
 }
 
 export async function advanceRoadmapPhase(userRoadmapId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
-  // Get current phase
   const { data: current, error: getErr } = await (supabase as any)
     .from("user_roadmaps")
     .select("current_phase, roadmaps(total_phases)")

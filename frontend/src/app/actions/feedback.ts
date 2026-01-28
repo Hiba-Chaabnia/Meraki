@@ -1,8 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-
-const API_URL = process.env.CREWAI_API_URL || "http://localhost:8000";
+import { requireAuth } from "@/lib/supabase/requireAuth";
+import { API_URL } from "@/lib/config";
 
 export interface PracticeFeedback {
   observations: string[];
@@ -21,11 +20,11 @@ export interface FeedbackStatusResponse {
 export async function getSessionFeedback(
   sessionId: string
 ): Promise<{ data?: PracticeFeedback; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
+
+  void user; // user verified via requireAuth; RLS enforces ownership
 
   const { data, error } = await supabase
     .from("ai_feedback")
@@ -44,13 +43,10 @@ export async function getSessionFeedback(
 export async function triggerPracticeFeedback(
   sessionId: string
 ): Promise<{ job_id?: string; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
-  // Fetch session with joins
   const { data: session, error: sessError } = await supabase
     .from("practice_sessions")
     .select("*, user_hobbies!inner(*, hobbies(*))")
@@ -63,7 +59,6 @@ export async function triggerPracticeFeedback(
   const hobby = session.user_hobbies?.hobbies;
   const hobbyName = hobby?.name ?? "Unknown Hobby";
 
-  // Fetch recent sessions for context
   const { data: recentSessions } = await supabase
     .from("practice_sessions")
     .select("duration, mood, notes, session_type, created_at")
@@ -79,7 +74,6 @@ export async function triggerPracticeFeedback(
     )
     .join(" | ");
 
-  // Fetch completed challenges
   const { data: completedCh } = await supabase
     .from("user_challenges")
     .select("challenges(title)")
@@ -110,10 +104,7 @@ export async function triggerPracticeFeedback(
       }),
     });
 
-    if (!response.ok) {
-      return { error: `API error: ${response.status}` };
-    }
-
+    if (!response.ok) return { error: `API error: ${response.status}` };
     const data = await response.json();
     return { job_id: data.job_id };
   } catch (e) {
@@ -127,9 +118,7 @@ export async function pollPracticeFeedbackStatus(
 ): Promise<FeedbackStatusResponse | { error: string }> {
   try {
     const response = await fetch(`${API_URL}/practice/feedback/${jobId}`);
-    if (!response.ok) {
-      return { error: `API error: ${response.status}` };
-    }
+    if (!response.ok) return { error: `API error: ${response.status}` };
     return await response.json();
   } catch (e) {
     return { error: `Failed to poll feedback status: ${e}` };

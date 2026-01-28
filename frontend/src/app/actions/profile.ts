@@ -1,13 +1,15 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/supabase/requireAuth";
+
+function sanitize(value: string): string {
+  return value.replace(/<[^>]*>/g, "").trim();
+}
 
 export async function getProfile() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from("profiles")
@@ -35,15 +37,21 @@ export async function updateProfile(updates: {
   if (updates.pronouns !== undefined && updates.pronouns.length > 50)
     return { error: "Pronouns must be 50 characters or fewer." };
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const sanitized = {
+    ...updates,
+    ...(updates.full_name !== undefined && { full_name: sanitize(updates.full_name) }),
+    ...(updates.bio !== undefined && { bio: sanitize(updates.bio) }),
+    ...(updates.location !== undefined && { location: sanitize(updates.location) }),
+    ...(updates.pronouns !== undefined && { pronouns: sanitize(updates.pronouns) }),
+  };
+
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from("profiles")
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update({ ...sanitized, updated_at: new Date().toISOString() })
     .eq("id", user.id)
     .select()
     .single();

@@ -62,13 +62,13 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
           .map(toPracticeSession);
         setSessions(hobbySessions);
 
-        // Fetch feedback for last 3 sessions
+        // Fetch feedback for last 3 sessions in parallel
         const last3 = hobbySessions.slice(0, 3);
         const fbResults: Record<string, PracticeFeedback> = {};
-        for (const s of last3) {
-          const res = await getSessionFeedback(s.id);
-          if (res.data) fbResults[s.id] = res.data;
-        }
+        const feedbackResponses = await Promise.all(last3.map((s) => getSessionFeedback(s.id)));
+        feedbackResponses.forEach((res, i) => {
+          if (res.data) fbResults[last3[i].id] = res.data;
+        });
         setFeedbackMap(fbResults);
       }
 

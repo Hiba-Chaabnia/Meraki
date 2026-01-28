@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { getHobby } from "@/lib/hobbyData";
-import { ScallopedButton } from "@/components/ui/ScallopedButton";
 import {
   triggerSamplingPreview,
   type SamplingPreviewResult,
@@ -287,13 +286,12 @@ export default function MicroPage({
               <p className="text-gray-600 text-lg leading-relaxed mb-8 max-w-xl mx-auto">
                 {activity.instruction}
               </p>
-              <ScallopedButton
-                bgColor="var(--lavender)"
-                scallopSize="sm"
+              <button
+                className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={() => setStarted(true)}
               >
                 I&apos;m Ready — Let&apos;s Go!
-              </ScallopedButton>
+              </button>
             </div>
           ) : !completed ? (
             <div className="p-8 md:p-10">
@@ -315,13 +313,12 @@ export default function MicroPage({
               </div>
 
               <div className="text-center">
-                <ScallopedButton
-                  bgColor="var(--lavender)"
-                  scallopSize="sm"
+                <button
+                  className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
                   onClick={() => setCompleted(true)}
                 >
                   Done! How Did It Feel?
-                </ScallopedButton>
+                </button>
               </div>
             </div>
           ) : (
@@ -342,20 +339,14 @@ export default function MicroPage({
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href={`/discover/sampling/${hobbySlug}/local`}>
-                  <ScallopedButton
-                    bgColor="var(--green)"
-                    scallopSize="sm"
-                  >
+                  <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
                     Find a Local Class
-                  </ScallopedButton>
+                  </button>
                 </Link>
                 <Link href={`/discover/sampling/${hobbySlug}/watch`}>
-                  <ScallopedButton
-                    bgColor={hobby.color}
-                    scallopSize="sm"
-                  >
+                  <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
                     Watch a Video
-                  </ScallopedButton>
+                  </button>
                 </Link>
               </div>
             </div>

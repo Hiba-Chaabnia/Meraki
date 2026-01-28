@@ -1,4 +1,4 @@
-export default function DiscoverLayout({
+export default function PageLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ScallopedButton } from "@/components/ui/ScallopedButton";
 import { Sparkles, Target, Compass, Zap } from "lucide-react";
 import type { ActiveHobby, Challenge, Roadmap } from "@/lib/dashboardData";
 import type { NudgeData } from "@/app/actions/nudges";
@@ -35,9 +34,9 @@ export function TodaysFocus({
       >
         <div className="flex flex-wrap gap-3 mt-4">
           <Link href="/discover/quiz">
-            <ScallopedButton bgColor="var(--primary)" textColor="#fff" scallopSize="sm">
-              Take the Quiz
-            </ScallopedButton>
+            <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
+              Take Quiz
+            </button>
           </Link>
         </div>
       </FocusCard>
@@ -55,9 +54,9 @@ export function TodaysFocus({
         <div className="flex flex-wrap gap-3 mt-4">
           {nudge.action_data && (
             <Link href={nudge.action_data}>
-              <ScallopedButton bgColor="var(--secondary)" textColor="#fff" scallopSize="sm">
+              <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
                 Let&apos;s Go
-              </ScallopedButton>
+              </button>
             </Link>
           )}
           <button
@@ -82,9 +81,9 @@ export function TodaysFocus({
       >
         <div className="flex flex-wrap gap-3 mt-4">
           <Link href={`/dashboard/challenges/${activeChallenge.id}`}>
-            <ScallopedButton bgColor={activeChallenge.hobbyColor} textColor="#fff" scallopSize="sm">
+            <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
               Continue Challenge
-            </ScallopedButton>
+            </button>
           </Link>
         </div>
       </FocusCard>

@@ -1,9 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/supabase/requireAuth";
+import { formatSlug } from "@/lib/hobbyData";
+import { API_URL } from "@/lib/config";
 import type { Json } from "@/types/database.types";
 
-const API_URL = process.env.CREWAI_API_URL || "http://localhost:8000";
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 // ─── Types ───
@@ -129,13 +131,7 @@ export async function triggerSamplingPreview(hobbySlug: string): Promise<{
     }
   }
 
-  // Convert slug to hobby name (capitalize and replace hyphens)
-  const hobbyName = hobbySlug
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-
-  console.log("[Sampling Preview] Starting for hobby:", hobbyName);
+  const hobbyName = formatSlug(hobbySlug);
 
   try {
     const response = await fetch(`${API_URL}/sampling/preview`, {
@@ -157,10 +153,8 @@ export async function triggerSamplingPreview(hobbySlug: string): Promise<{
     }
 
     const data: SamplingPreviewJobResponse = await response.json();
-    console.log("[Sampling Preview] Job started:", data.job_id);
     return { job_id: data.job_id };
   } catch (e) {
-    console.error("[Sampling Preview] API connection failed:", e);
     return { error: `Failed to connect to sampling API: ${e}` };
   }
 }
@@ -184,11 +178,8 @@ export async function pollSamplingPreviewStatus(
       return { error: `API error: ${response.status} - ${errorText}` };
     }
 
-    const data: SamplingPreviewStatusResponse = await response.json();
-    console.log("[Sampling Preview] Poll status:", data.status);
-    return data;
+    return await response.json() as SamplingPreviewStatusResponse;
   } catch (e) {
-    console.error("[Sampling Preview] Poll failed:", e);
     return { error: `Failed to poll sampling preview status: ${e}` };
   }
 }
@@ -219,13 +210,7 @@ export async function triggerLocalExperiences(
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Convert slug to hobby name
-  const hobbyName = hobbySlug
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-
-  console.log("[Local Experiences] Starting for hobby:", hobbyName, "in", location);
+  const hobbyName = formatSlug(hobbySlug);
 
   try {
     const response = await fetch(`${API_URL}/sampling/local`, {
@@ -247,10 +232,8 @@ export async function triggerLocalExperiences(
     }
 
     const data: LocalExperiencesJobResponse = await response.json();
-    console.log("[Local Experiences] Job started:", data.job_id);
     return { job_id: data.job_id };
   } catch (e) {
-    console.error("[Local Experiences] API connection failed:", e);
     return { error: `Failed to connect to local experiences API: ${e}` };
   }
 }
@@ -274,11 +257,8 @@ export async function pollLocalExperiencesStatus(
       return { error: `API error: ${response.status} - ${errorText}` };
     }
 
-    const data: LocalExperiencesStatusResponse = await response.json();
-    console.log("[Local Experiences] Poll status:", data.status);
-    return data;
+    return await response.json() as LocalExperiencesStatusResponse;
   } catch (e) {
-    console.error("[Local Experiences] Poll failed:", e);
     return { error: `Failed to poll local experiences status: ${e}` };
   }
 }
@@ -292,11 +272,9 @@ export async function saveSamplingResult(
   hobbySlug: string,
   result: SamplingPreviewResult
 ): Promise<{ error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { error } = await supabase
     .from("sampling_results")
@@ -320,11 +298,9 @@ export async function saveSamplingResult(
 export async function getSamplingResult(
   hobbySlug: string
 ): Promise<{ data?: SamplingPreviewResult; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from("sampling_results")
@@ -349,11 +325,9 @@ export async function saveLocalExperienceResult(
   location: string,
   result: LocalExperiencesResult
 ): Promise<{ error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { error } = await supabase
     .from("local_experience_results")
@@ -379,11 +353,9 @@ export async function getLocalExperienceResult(
   hobbySlug: string,
   location: string
 ): Promise<{ data?: LocalExperiencesResult; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from("local_experience_results")
@@ -406,11 +378,9 @@ export async function getLocalExperienceResult(
 export async function completeSampling(hobbySlug: string) {
   if (!hobbySlug || hobbySlug.length > 50 || !SLUG_RE.test(hobbySlug))
     return { error: "Invalid hobby slug." };
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   // Find the hobby by slug
   const { data: hobby, error: hobbyError } = await supabase
