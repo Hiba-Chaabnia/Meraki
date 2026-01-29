@@ -4,7 +4,7 @@ import { use } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { PlayIcon, ArrowLeftIcon, HomeIcon } from "@/components/ui/Icons";
+import { ArrowLeftIcon, HomeIcon } from "@/components/ui/Icons";
 import { PathwayCard } from "@/components/discover/sampling/PathwayCard";
 import { useSamplingPreview } from "@/hooks/useSamplingPreview";
 import { getHobby } from "@/lib/hobbyData";
@@ -145,7 +145,6 @@ export default function SamplingPage({
                   }}
                 >
                   Watch Now
-                  <PlayIcon className="w-4 h-4 ml-2" />
                 </Link>
               }
             />

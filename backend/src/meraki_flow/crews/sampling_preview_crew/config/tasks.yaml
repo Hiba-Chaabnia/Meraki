@@ -53,7 +53,7 @@ generate_micro_activity_task:
 
 curate_watch_videos_task:
   description: >
-    Use the youtube_search tool to find 3 YouTube videos that give a beginner the
+    Use the youtube_search tool to find 5 YouTube videos that give a beginner the
     best introduction to {hobby_name}. Search for terms like:
     - "{hobby_name} beginner tutorial"
     - "{hobby_name} for beginners"
@@ -67,7 +67,7 @@ curate_watch_videos_task:
     - Come from credible creators who are good at teaching
     - Together give a complete picture: what it looks like, what you need, and why people love it
 
-    After finding videos with the tool, curate the best 3 and explain why each is
+    After finding videos with the tool, curate the best 5 and explain why each is
     good for beginners.
   expected_output: >
     Return a JSON object with the following structure:

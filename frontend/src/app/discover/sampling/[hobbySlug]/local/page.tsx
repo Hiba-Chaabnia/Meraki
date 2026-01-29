@@ -4,6 +4,7 @@ import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { getHobby } from "@/lib/hobbyData";
+import { PageLayout } from "@/components/layouts/PageLayout";
 import { useGoogleMaps, reverseGeocode } from "@/lib/useGoogleMaps";
 import {
   triggerLocalExperiences,
@@ -260,148 +261,123 @@ export default function LocalPage({
     : spotsToShow.filter((s) => s.type.toLowerCase().includes(filter.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* ── Location modal ── */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          >
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-              onClick={() => setShowModal(false)}
-            />
-
-            {/* Modal */}
+    <PageLayout
+      title={locationSet ? `Spots Near ${location}` : "Find Something Nearby"}
+      subtitle={`${hobby.name} · Local experiences`}
+      backHref={`/discover/sampling/${hobbySlug}`}
+      backLabel="Back to sampling"
+    >
+      <div className="max-w-4xl mx-auto">
+        {/* Location modal */}
+        <AnimatePresence>
+          {showModal && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative bg-white rounded-3xl shadow-2xl p-8 md:p-10 max-w-md w-full z-10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
             >
-              {/* Close button */}
-              <button
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                 onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 p-1.5 rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors"
-                aria-label="Close"
+              />
+
+              {/* Modal */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="relative bg-white rounded-3xl shadow-2xl p-8 md:p-10 max-w-md w-full z-10"
               >
-                <XIcon className="w-5 h-5" />
-              </button>
-
-              <div className="text-center mb-8">
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                  style={{ backgroundColor: "#D4EFCF" }}
-                >
-                  <MapPinIcon className="w-7 h-7 text-[var(--green)]" />
-                </div>
-                <h2 className="!text-xl md:!text-2xl mb-2">
-                  Where are you located?
-                </h2>
-                <p className="text-gray-500 text-sm">
-                  We just need your area &mdash; nothing more specific than your city.
-                </p>
-              </div>
-
-              {/* City input with Google Places Autocomplete */}
-              <div className="space-y-3 mb-6">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleSetLocation();
-                    }
-                  }}
-                  placeholder="Start typing your city\u2026"
-                  autoComplete="off"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--green)] focus:border-transparent transition-shadow"
-                />
+                {/* Close button */}
                 <button
-                  onClick={handleSetLocation}
-                  disabled={!location.trim()}
-                  className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg active:scale-[0.98]"
-                  style={{ backgroundColor: "var(--green)" }}
+                  onClick={() => setShowModal(false)}
+                  className="absolute top-4 right-4 p-1.5 rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                  aria-label="Close"
                 >
-                  Find Spots Near Me
+                  <XIcon className="w-5 h-5" />
                 </button>
-              </div>
 
-              <div className="relative flex items-center justify-center mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-100" />
+                <div className="text-center mb-8">
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                    style={{ backgroundColor: "#D4EFCF" }}
+                  >
+                    <MapPinIcon className="w-7 h-7 text-[var(--green)]" />
+                  </div>
+                  <h2 className="!text-xl md:!text-2xl mb-2">
+                    Where are you located?
+                  </h2>
+                  <p className="text-gray-500 text-sm">
+                    We just need your area &mdash; nothing more specific than your city.
+                  </p>
                 </div>
-                <span className="relative bg-white px-3 text-xs text-gray-300 uppercase tracking-widest">
-                  or
-                </span>
-              </div>
 
-              <button
-                onClick={handleDetect}
-                disabled={detecting}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
-              >
-                <CrosshairIcon className={`w-4 h-4 ${detecting ? "animate-spin" : ""}`} />
-                {detecting ? "Detecting\u2026" : "Use my current location"}
-              </button>
+                {/* City input with Google Places Autocomplete */}
+                <div className="space-y-3 mb-6">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSetLocation();
+                      }
+                    }}
+                    placeholder="Start typing your city..."
+                    autoComplete="off"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--green)] focus:border-transparent transition-shadow"
+                  />
+                  <button
+                    onClick={handleSetLocation}
+                    disabled={!location.trim()}
+                    className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg active:scale-[0.98]"
+                    style={{ backgroundColor: "var(--green)" }}
+                  >
+                    Find Spots Near Me
+                  </button>
+                </div>
 
-              {/* Error message */}
-              {geoError && (
-                <p className="text-xs text-red-400 text-center mt-3">
-                  {geoError}
+                <div className="relative flex items-center justify-center mb-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-100" />
+                  </div>
+                  <span className="relative bg-white px-3 text-xs text-gray-300 uppercase tracking-widest">
+                    or
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleDetect}
+                  disabled={detecting}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
+                >
+                  <CrosshairIcon className={`w-4 h-4 ${detecting ? "animate-spin" : ""}`} />
+                  {detecting ? "Detecting..." : "Use my current location"}
+                </button>
+
+                {/* Error message */}
+                {geoError && (
+                  <p className="text-xs text-red-400 text-center mt-3">
+                    {geoError}
+                  </p>
+                )}
+
+                <p className="text-xs text-gray-300 text-center mt-4">
+                  We won't store your location data.
                 </p>
-              )}
-
-              <p className="text-xs text-gray-300 text-center mt-4">
-                We won&apos;t store your location data.
-              </p>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
 
-      {/* ── Top bar ── */}
-      <div className="w-full max-w-4xl mx-auto px-4 pt-6 pb-2 flex items-center justify-between">
-        <Link
-          href={`/discover/sampling/${hobbySlug}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to sampling
-        </Link>
-        <Link
-          href="/dashboard"
-          className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
-        >
-          Dashboard
-        </Link>
-      </div>
-
-      {/* ── Header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto px-4 pt-4 pb-6"
-      >
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <p className="text-xs font-bold tracking-widest uppercase text-[var(--green)] mb-1">
-              {hobby.name} &middot; Local experiences
-            </p>
-            <h1 className="!text-2xl md:!text-3xl">
-              {locationSet ? `Spots Near ${location}` : "Find Something Nearby"}
-            </h1>
-          </div>
-          {locationSet && (
+        {/* Change location button */}
+        {locationSet && (
+          <div className="flex justify-end mb-4">
             <button
               onClick={() => setShowModal(true)}
               className="text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1.5"
@@ -409,12 +385,8 @@ export default function LocalPage({
               <MapPinIcon className="w-4 h-4" />
               Change location
             </button>
-          )}
-        </div>
-      </motion.div>
-
-      {/* ── Content ── */}
-      <div className="max-w-4xl mx-auto px-4 pb-16">
+          </div>
+        )}
         {!locationSet ? (
           /* Empty state */
           <motion.div
@@ -550,7 +522,7 @@ export default function LocalPage({
           </>
         )}
       </div>
-    </div>
+    </PageLayout>
   );
 }
 

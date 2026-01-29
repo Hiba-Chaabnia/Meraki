@@ -26,9 +26,9 @@ export function PageLayout({
   className = "",
 }: PageLayoutProps) {
   return (
-    <div className={`h-screen w-screen bg-[var(--background)] overflow-y-auto ${className}`}>
+    <div className={`min-h-screen w-full bg-[var(--background)] flex flex-col overflow-x-hidden ${className}`}>
       {/* ── Header Row ── */}
-      <div className="w-full mx-auto px-4 pt-8 mb-8">
+      <div className="w-full mx-auto px-4 pt-8 mb-8 flex-shrink-0">
         <div className="grid grid-cols-[auto_1fr_auto] items-top gap-4">
           {/* Back Button */}
           {showBackButton && backHref && (
@@ -65,7 +65,7 @@ export function PageLayout({
       </div>
 
       {/* ── Content Area ── */}
-      <div className="w-full mx-auto px-4">
+      <div className="flex-1 flex flex-col w-full mx-auto px-4">
         {children}
       </div>
     </div>

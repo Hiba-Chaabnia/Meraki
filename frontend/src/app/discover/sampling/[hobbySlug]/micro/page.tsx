@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { getHobby } from "@/lib/hobbyData";
+import { PageLayout } from "@/components/layouts/PageLayout";
 import {
   triggerSamplingPreview,
   type SamplingPreviewResult,
@@ -230,26 +231,13 @@ export default function MicroPage({
   }, [hobbySlug, searchParams]);
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* Top bar */}
-      <div className="w-full max-w-3xl mx-auto px-4 pt-6 flex items-center justify-between">
-        <Link
-          href={`/discover/sampling/${hobbySlug}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to sampling options
-        </Link>
-        <Link
-          href="/dashboard"
-          className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
-        >
-          Dashboard
-        </Link>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-3xl mx-auto px-4 py-12">
+    <PageLayout
+      title={activity.title}
+      subtitle={`A tiny taste of ${hobby.name.toLowerCase()} — no materials needed, just you.`}
+      backHref={`/discover/sampling/${hobbySlug}`}
+      backLabel="Back to sampling options"
+    >
+      <div className="max-w-3xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -262,12 +250,6 @@ export default function MicroPage({
           >
             <SparkleIcon className="w-8 h-8" style={{ color: "var(--lavender)" }} />
           </div>
-          <h1 className="!text-3xl md:!text-4xl mb-4">
-            {activity.title}
-          </h1>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            A tiny taste of {hobby.name.toLowerCase()} — no materials needed, just you.
-          </p>
         </motion.div>
 
         {/* Activity card */}
@@ -368,6 +350,6 @@ export default function MicroPage({
           </Link>
         </motion.div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

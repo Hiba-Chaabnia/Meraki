@@ -1,54 +1,23 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { getHobby } from "@/lib/hobbyData";
+import { PageLayout } from "@/components/layouts/PageLayout";
+import { PUBLIC_API_URL } from "@/lib/config";
 import {
   triggerSamplingPreview,
   type SamplingPreviewResult,
 } from "@/app/actions/sampling";
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_CREWAI_API_URL || "http://localhost:8000";
-
-const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
-
-const PlayIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M8 5.14v14l11-7-11-7z" />
-  </svg>
-);
-
-const ExternalLinkIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
-  </svg>
-);
-
-interface Video {
-  title: string;
-  channel: string;
-  url: string;
-  thumbnail?: string;
-  duration: string;
-  why_good: string;
-  what_to_watch_for?: string;
-}
+import type { Video } from "@/components/discover/sampling/watch/types";
+import { VideoDisplaySection } from "@/components/discover/sampling/watch/VideoDisplaySection";
+import { EmptyVideoSection } from "@/components/discover/sampling/watch/EmptyVideoSection";
+import { useCommit } from "@/hooks/useCommit";
 
 // Module-level cache — survives unmount/remount during client-side navigation
 const videosCache = new Map<string, Video[]>();
-
-// Extract YouTube video ID from URL
-function getYouTubeId(url: string): string | null {
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
-  return match ? match[1] : null;
-}
 
 export default function WatchPage({
   params,
@@ -62,12 +31,11 @@ export default function WatchPage({
   const [videos, setVideos] = useState<Video[] | null>(cached);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(cached?.[0] ?? null);
   const [loading, setLoading] = useState(!cached);
+  const { handleCommit, committing, committed, commitError } = useCommit(hobbySlug);
 
   const searchParams = useSearchParams();
 
-  // Poll the backend directly from the browser (no server action needed for GET)
   useEffect(() => {
-    // If we already have cached data, skip fetching
     if (videosCache.has(hobbySlug)) return;
 
     let cancelled = false;
@@ -76,7 +44,6 @@ export default function WatchPage({
     function applyVideos(data: SamplingPreviewResult) {
       if (data.videos && data.videos.length > 0) {
         videosCache.set(hobbySlug, data.videos);
-        // Store the FULL result so the parent sampling page can use it on back-nav
         try {
           sessionStorage.setItem(`sampling-preview-${hobbySlug}`, JSON.stringify(data));
         } catch { /* sessionStorage unavailable */ }
@@ -89,7 +56,7 @@ export default function WatchPage({
     async function pollBackend(jobId: string) {
       pollTimer = setInterval(async () => {
         try {
-          const res = await fetch(`${BACKEND_URL}/sampling/preview/${jobId}`);
+          const res = await fetch(`${PUBLIC_API_URL}/sampling/preview/${jobId}`);
           if (cancelled) return;
           if (!res.ok) {
             if (pollTimer) clearInterval(pollTimer);
@@ -112,7 +79,7 @@ export default function WatchPage({
     }
 
     async function loadVideos() {
-      // 0. Check sessionStorage for data from parent page
+      // 0. Check sessionStorage for data passed from parent page
       try {
         const stored = sessionStorage.getItem(`sampling-preview-${hobbySlug}`);
         if (stored) {
@@ -127,11 +94,11 @@ export default function WatchPage({
         }
       } catch { /* sessionStorage unavailable */ }
 
-      // 1. If jobId is in the URL (passed from parent page), poll it directly
+      // 1. If jobId is in the URL (passed from parent), poll it directly
       const jobIdParam = searchParams.get("jobId");
       if (jobIdParam) {
         try {
-          const res = await fetch(`${BACKEND_URL}/sampling/preview/${jobIdParam}`);
+          const res = await fetch(`${PUBLIC_API_URL}/sampling/preview/${jobIdParam}`);
           if (cancelled) return;
           if (res.ok) {
             const data = await res.json();
@@ -144,16 +111,14 @@ export default function WatchPage({
               return;
             }
           }
-        } catch {
-          // Job not found or backend down — fall through to trigger new
-        }
+        } catch { /* fall through to trigger new */ }
       }
 
       // 2. Check sessionStorage for a previously-started job ID
       try {
         const storedJobId = sessionStorage.getItem(`sampling-job-${hobbySlug}`);
         if (storedJobId) {
-          const res = await fetch(`${BACKEND_URL}/sampling/preview/${storedJobId}`);
+          const res = await fetch(`${PUBLIC_API_URL}/sampling/preview/${storedJobId}`);
           if (!cancelled && res.ok) {
             const data = await res.json();
             if (data.status === "completed" && data.result) {
@@ -168,7 +133,7 @@ export default function WatchPage({
         }
       } catch { /* ignore */ }
 
-      // 3. No jobId or job not found — trigger a new one via server action
+      // 3. Trigger a new preview job
       const { job_id, error } = await triggerSamplingPreview(hobbySlug);
       if (cancelled) return;
       if (error || !job_id) {
@@ -186,249 +151,87 @@ export default function WatchPage({
     };
   }, [hobbySlug, searchParams]);
 
+
+  const hasVideos = videos && videos.length > 0 && selectedVideo;
+
+  const [devState, setDevState] = useState<'auto' | 'loading' | 'error' | 'success'>('auto');
+
+  const showSuccess = devState === 'success' || (devState === 'auto' && hasVideos);
+  const showLoading = devState === 'loading' || (devState === 'auto' && loading);
+
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* Top bar */}
-      <div className="w-full max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between">
-        <Link
-          href={`/discover/sampling/${hobbySlug}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to sampling options
-        </Link>
-        <Link
-          href="/dashboard"
-          className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
-        >
-          Dashboard
-        </Link>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-10"
-        >
-          <div
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6"
-            style={{ backgroundColor: hobby.lightColor }}
-          >
-            <PlayIcon className="w-8 h-8" style={{ color: hobby.color }} />
-          </div>
-          <h1 className="!text-3xl md:!text-4xl mb-4">
-            Watch {hobby.name} in Action
-          </h1>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Get a feel for what {hobby.name.toLowerCase()} looks like before you try it yourself.
-            No commitment, just inspiration.
-          </p>
-        </motion.div>
-
-        {videos && videos.length > 0 ? (
-          <>
-            {/* Main video player */}
-            {selectedVideo && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="mb-8"
-              >
-                <div className="aspect-video rounded-2xl overflow-hidden bg-black mb-4">
-                  {getYouTubeId(selectedVideo.url) ? (
-                    <iframe
-                      src={`https://www.youtube.com/embed/${getYouTubeId(selectedVideo.url)}`}
-                      title={selectedVideo.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="w-full h-full"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <a
-                        href={selectedVideo.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-white hover:underline"
-                      >
-                        Open video <ExternalLinkIcon className="w-4 h-4" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-white rounded-xl border border-gray-100 p-6">
-                  <h2 className="!text-lg font-semibold mb-2">{selectedVideo.title}</h2>
-                  <p className="text-sm text-gray-500 mb-4">
-                    {selectedVideo.channel} · {selectedVideo.duration}
-                  </p>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-1">Why this video:</p>
-                      <p className="text-sm text-gray-500">{selectedVideo.why_good}</p>
-                    </div>
-                    {selectedVideo.what_to_watch_for && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-1">What to watch for:</p>
-                        <p className="text-sm text-gray-500">{selectedVideo.what_to_watch_for}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Video list */}
-            {videos.length > 1 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <h3 className="text-sm font-bold tracking-widest uppercase text-gray-400 mb-4">
-                  More videos
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {videos.map((video, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedVideo(video)}
-                      className={`flex gap-4 p-4 rounded-xl border transition-all text-left ${
-                        selectedVideo === video
-                          ? "border-gray-300 bg-gray-50"
-                          : "border-gray-100 bg-white hover:border-gray-200"
-                      }`}
-                    >
-                      <div
-                        className="w-24 h-16 rounded-lg flex-shrink-0 bg-cover bg-center"
-                        style={{
-                          backgroundColor: hobby.lightColor,
-                          backgroundImage: video.thumbnail ? `url(${video.thumbnail})` : undefined,
-                        }}
-                      >
-                        {!video.thumbnail && (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <PlayIcon className="w-6 h-6" style={{ color: hobby.color }} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 line-clamp-2">{video.title}</p>
-                        <p className="text-xs text-gray-400 mt-1">{video.channel} · {video.duration}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </>
-        ) : (
-          /* Fallback when no videos loaded */
+    <PageLayout
+      title={`Watch ${hobby.name} in Action`}
+      subtitle="Get a feel for what this hobby looks like before you try it yourself. No commitment, just inspiration."
+      backHref={`/discover/sampling/${hobbySlug}`}
+      backLabel="Back to sampling options"
+    >
+      <div className="w-full flex-1 flex flex-col">
+        {/* Error toast */}
+        {commitError && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="aspect-video rounded-2xl overflow-hidden mb-8"
-            style={{ backgroundColor: hobby.lightColor }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl shadow-lg"
           >
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center">
-                {loading ? (
-                  <>
-                    <div className="animate-spin w-10 h-10 border-3 border-gray-200 border-t-gray-500 rounded-full mx-auto mb-4" />
-                    <p className="text-gray-500">Finding the best videos for you...</p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      This may take a moment while our AI curates beginner-friendly content
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
-                      style={{ backgroundColor: hobby.color }}
-                    >
-                      <PlayIcon className="w-10 h-10 text-white ml-1" />
-                    </div>
-                    <p className="text-gray-500 mb-3">
-                      We couldn&apos;t load curated videos right now, but you can search YouTube directly:
-                    </p>
-                    <a
-                      href={`https://www.youtube.com/results?search_query=${encodeURIComponent(hobby.name + " beginner tutorial")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg active:scale-95 mb-3"
-                      style={{ backgroundColor: hobby.color }}
-                    >
-                      Search YouTube for &ldquo;{hobby.name} beginner tutorial&rdquo;
-                      <ExternalLinkIcon className="w-4 h-4" />
-                    </a>
-                    <br />
-                    <Link
-                      href={`/discover/sampling/${hobbySlug}`}
-                      className="text-sm text-gray-400 mt-2 hover:text-gray-600 underline"
-                    >
-                      Back to sampling options
-                    </Link>
-                  </>
-                )}
+            <span>⚠</span>
+            {commitError}
+          </motion.div>
+        )}
+
+        {committed ? (
+          <div className="flex-1 flex items-center justify-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="text-center max-w-sm w-full space-y-6"
+            >
+              <div
+                className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl"
+                style={{ backgroundColor: hobby.lightColor }}
+              >
+                🎉
               </div>
-            </div>
-          </motion.div>
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+                  {hobby.name} is now on your list!
+                </h2>
+                <p className="text-gray-500 text-sm">
+                  Head to your dashboard to log your first session and start your journey.
+                </p>
+              </div>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95"
+                style={{ backgroundColor: hobby.color }}
+              >
+                Go to Dashboard
+              </Link>
+            </motion.div>
+          </div>
+        ) : showSuccess && hasVideos ? (
+          <VideoDisplaySection
+            videos={videos}
+            selectedVideo={selectedVideo}
+            onSelectVideo={setSelectedVideo}
+            hobbySlug={hobbySlug}
+            hobbyName={hobby.name}
+            onCommit={handleCommit}
+            committing={committing}
+          />
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <EmptyVideoSection
+              loading={showLoading}
+              hobbyName={hobby.name}
+              hobbySlug={hobbySlug}
+              onCommit={handleCommit}
+              committing={committing}
+            />
+          </div>
         )}
-
-        {/* What you'll see - only show if no videos */}
-        {(!videos || videos.length === 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="bg-white rounded-2xl border border-gray-100 p-8"
-          >
-            <h2 className="!text-xl mb-4">What you&apos;ll see</h2>
-            <ul className="space-y-3 text-gray-600">
-              <li className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: hobby.color }} />
-                A beginner-friendly introduction to {hobby.name.toLowerCase()}
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: hobby.color }} />
-                The basic tools and materials you&apos;d need to get started
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: hobby.color }} />
-                What a typical session looks like from start to finish
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: hobby.color }} />
-                Tips from experienced hobbyists
-              </li>
-            </ul>
-          </motion.div>
-        )}
-
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="text-center mt-10"
-        >
-          <p className="text-gray-400 text-sm mb-4">
-            Ready to try it yourself?
-          </p>
-          <Link
-            href={`/discover/sampling/${hobbySlug}/micro`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95"
-            style={{ backgroundColor: "var(--lavender)" }}
-          >
-            Try a Micro Activity
-          </Link>
-        </motion.div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

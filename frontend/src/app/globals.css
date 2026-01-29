@@ -21,8 +21,13 @@
   --accent: #FFD64D;
   --coral: #FF9149;
 
-  /* Utility Colors */
-  --white: #FFF9F5;
+  /* White Scale */
+  --white: #FFF9F5;          /* base white — background color */
+  --white-muted: #F5EFE9;    /* cards, inputs, subtle surfaces */
+  --white-soft: #EDE5DE;     /* dividers, sidebars */
+  --white-dim: #E3D9D1;      /* borders, hover states */
+
+  /* Black Scale */
   --black: #292929;
   --gray: #494949;
 }

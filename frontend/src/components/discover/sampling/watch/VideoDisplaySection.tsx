@@ -26,7 +26,7 @@ export function VideoDisplaySection({
   committing,
 }: SamplingSectionProps) {
   return (
-    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_24rem] lg:gap-8">
+    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[2fr_1fr] lg:gap-8 pb-6">
       {/* Left column — player only */}
       <div>
         {selectedVideo && (
@@ -51,12 +51,13 @@ export function VideoDisplaySection({
         >
           <div>
             <div className="space-y-3">
-              {videos.filter((v) => v !== selectedVideo).slice(0, 5).map((video, index) => (
+              {videos.filter((v) => v !== selectedVideo).slice(0, 5).map((video, index, arr) => (
                 <VideoListItem
                   key={index}
                   video={video}
                   isSelected={selectedVideo === video}
                   onSelect={() => onSelectVideo(video)}
+                  isLast={index === arr.length - 1}
                 />
               ))}
             </div>
@@ -64,7 +65,7 @@ export function VideoDisplaySection({
         </motion.div>
 
         <div className="flex-1 flex items-center">
-          <hr className="w-full border-gray-200" />
+          <hr className="w-full border-[var(--white-muted)]" />
         </div>
 
         {/* CTA */}
