@@ -1,4 +1,4 @@
-import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
+import type { SectionTheme } from "@/lib/sectionTheme";
 
 interface QuizOptionProps {
   option: string;

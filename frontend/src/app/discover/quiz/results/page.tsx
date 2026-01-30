@@ -9,7 +9,7 @@ import { NoMatchesState } from "@/components/discover/quiz-results/NoMatchesStat
 import { ResultsLoading } from "@/components/discover/sampling/ResultsLoading";
 
 import { QuizStepper } from "@/components/discover/quiz/QuizStepper";
-import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
+import type { SectionTheme } from "@/lib/sectionTheme";
 
 // Theme constants for alternating card styles
 const CARD_THEMES: [SectionTheme, SectionTheme] = [

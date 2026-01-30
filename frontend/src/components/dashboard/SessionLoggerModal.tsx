@@ -101,7 +101,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="relative bg-white rounded-2xl border-2 shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            style={{ borderColor: selectedHobby?.color ?? "var(--secondary)" }}
+            style={{ borderColor: "var(--secondary)" }}
           >
             <AnimatePresence mode="wait">
               {phase === "saved" ? (
@@ -219,7 +219,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                                 }`}
                               style={
                                 hobbySlug === h.slug
-                                  ? { backgroundColor: h.color }
+                                  ? { backgroundColor: "#374151" }
                                   : undefined
                               }
                             >
@@ -241,7 +241,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                             Duration:{" "}
                             <span
                               className="font-bold"
-                              style={{ color: selectedHobby?.color ?? "var(--secondary)" }}
+                              style={{ color: "var(--secondary)" }}
                             >
                               {duration} min
                             </span>
@@ -329,7 +329,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                       onClick={handleSave}
                       disabled={hobbies.length === 0 || saving}
                       className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ backgroundColor: selectedHobby?.color ?? "var(--secondary)" }}
+                      style={{ backgroundColor: "var(--secondary)" }}
                     >
                       {saving ? "Saving..." : sessionType === "thought" ? "Log Thought" : "Save Session"}
                     </button>

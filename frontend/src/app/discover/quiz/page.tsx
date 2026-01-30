@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuiz } from "@/lib/hooks/useQuiz";
-import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
+import type { SectionTheme } from "@/lib/sectionTheme";
 import { FlowerShape } from "@/components/ui/FlowerShape";
 import { saveQuizResponses } from "@/app/actions/quiz";
 import { QuizStepper } from "@/components/discover/quiz/QuizStepper";

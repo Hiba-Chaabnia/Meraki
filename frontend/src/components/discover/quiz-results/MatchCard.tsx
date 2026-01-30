@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { MatchCard as MatchCardType } from "@/lib/types/quiz";
-import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
+import type { SectionTheme } from "@/lib/sectionTheme";
 
 interface MatchCardProps {
   match: MatchCardType;
@@ -20,10 +20,10 @@ function normalizeTags(tags: string[]) {
 }
 
 export function MatchCard({ match, index, theme }: MatchCardProps) {
-  const cardBg = theme ? theme.bg : match.lightColor + "40";
-  const accentColor = theme ? theme.accent : match.color;
-  const tagBg = theme ? theme.light : match.color + "20";
-  const tagText = theme ? theme.accent : match.color;
+  const cardBg = theme ? theme.bg : "#F3F4F6";
+  const accentColor = theme ? theme.accent : "#374151";
+  const tagBg = theme ? theme.light : "#E5E7EB";
+  const tagText = theme ? theme.accent : "#374151";
 
   const tags = normalizeTags(match.tags);
 

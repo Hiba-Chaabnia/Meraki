@@ -24,7 +24,7 @@ export function RoadmapSection({ hobbies, roadmaps }: RoadmapSectionProps) {
   const handleNext = () =>
     setCurrentIndex((prev) => (prev + 1) % hobbies.length);
 
-  const accentColor = currentHobby?.color ?? "var(--primary)";
+  const accentColor = "var(--primary)";
   const currentPhase = currentRoadmap?.phases[currentRoadmap.currentPhase] ?? null;
   const nextPhase = currentRoadmap?.phases[currentRoadmap.currentPhase + 1] ?? null;
 

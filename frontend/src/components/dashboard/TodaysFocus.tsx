@@ -77,7 +77,7 @@ export function TodaysFocus({
       <FocusCard
         title={activeChallenge.title}
         description={activeChallenge.description}
-        borderColor={activeChallenge.hobbyColor}
+        borderColor="#374151"
       >
         <div className="flex flex-wrap gap-3 mt-4">
           <Link href={`/dashboard/challenges/${activeChallenge.id}`}>
@@ -98,10 +98,10 @@ export function TodaysFocus({
         <FocusCard
           title={`Current focus: ${phase.title}`}
           description={phase.description}
-          borderColor={roadmap.hobbyColor}
+          borderColor="#374151"
         >
           <div className="flex flex-wrap gap-3 mt-4">
-            <Link href={`/dashboard/roadmap/${roadmap.userRoadmapId}`} className="text-sm font-medium hover:underline flex items-center gap-1" style={{ color: roadmap.hobbyColor }}>
+            <Link href={`/dashboard/roadmap/${roadmap.userRoadmapId}`} className="text-sm font-medium hover:underline flex items-center gap-1" style={{ color: "#374151" }}>
               View Roadmap
 
             </Link>

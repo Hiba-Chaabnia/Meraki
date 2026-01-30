@@ -32,7 +32,7 @@ export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps
         <div className="flex items-center justify-between mb-3">
           <span
             className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ backgroundColor: challenge.hobbyColor + "20", color: challenge.hobbyColor }}
+            style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
           >
             {challenge.hobbyName}
           </span>

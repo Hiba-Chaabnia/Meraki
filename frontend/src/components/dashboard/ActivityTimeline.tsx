@@ -30,11 +30,11 @@ export function ActivityTimeline({ items }: ActivityTimelineProps) {
           <Link href={item.href}>
             <div
               className="bg-white rounded-2xl border-2 shadow-sm p-4 hover:shadow-md transition-shadow flex items-center gap-4"
-              style={{ borderColor: item.color }}
+              style={{ borderColor: "#D1D5DB" }}
             >
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                style={{ backgroundColor: item.color + "20" }}
+                style={{ backgroundColor: "#F3F4F6" }}
               >
                 {item.icon}
               </div>
@@ -45,7 +45,7 @@ export function ActivityTimeline({ items }: ActivityTimelineProps) {
               <div className="text-right flex-shrink-0">
                 <span
                   className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ backgroundColor: item.color + "15", color: item.color }}
+                  style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
                 >
                   {item.type === "session" ? "Session" : "Challenge"}
                 </span>

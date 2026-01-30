@@ -112,7 +112,7 @@ export default function SessionsPage() {
                   ? "text-white"
                   : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               }`}
-              style={filterHobby === h.slug ? { backgroundColor: h.color } : undefined}
+              style={filterHobby === h.slug ? { backgroundColor: "#374151" } : undefined}
             >
               {h.name}
             </button>
@@ -127,7 +127,7 @@ export default function SessionsPage() {
                   <div className="flex items-start gap-4">
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
-                      style={{ backgroundColor: s.hobbyColor + "20" }}
+                      style={{ backgroundColor: "#F3F4F6" }}
                     >
                       {moodEmojis[s.mood]?.emoji ?? ""}
                     </div>
@@ -135,7 +135,7 @@ export default function SessionsPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span
                           className="text-xs font-bold px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: s.hobbyColor + "20", color: s.hobbyColor }}
+                          style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
                         >
                           {s.hobbyName}
                         </span>

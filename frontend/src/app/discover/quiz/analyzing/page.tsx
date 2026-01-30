@@ -10,17 +10,7 @@ import {
   pollDiscoveryStatus,
   DiscoveryStatusResponse,
 } from "@/app/actions/discovery";
-import { hobbyMeta } from "@/lib/hobbyData";
-
-interface MatchCard {
-  slug: string;
-  name: string;
-  tagline: string;
-  matchPercent: number;
-  color: string;
-  lightColor: string;
-  tags: string[];
-}
+import { formatSlug } from "@/lib/hobbyData";
 
 export default function AnalyzingPage() {
   const router = useRouter();
@@ -81,18 +71,13 @@ export default function AnalyzingPage() {
               );
 
               // Convert to card format and cache
-              const cards: MatchCard[] = response.result.matches.map((m) => {
-                const meta = hobbyMeta[m.hobby_slug];
-                return {
-                  slug: m.hobby_slug,
-                  name: meta?.name ?? m.hobby_slug,
-                  tagline: m.reasoning || "A great match for you!",
-                  matchPercent: m.match_percentage,
-                  color: meta?.color ?? "#B8A9E8",
-                  lightColor: meta?.lightColor ?? "#E8E2F7",
-                  tags: m.match_tags ?? [],
-                };
-              });
+              const cards = response.result.matches.map((m) => ({
+                slug: m.hobby_slug,
+                name: formatSlug(m.hobby_slug),
+                tagline: m.reasoning || "A great match for you!",
+                matchPercent: m.match_percentage,
+                tags: m.match_tags ?? [],
+              }));
 
               try {
                 sessionStorage.setItem("quiz-matches", JSON.stringify(cards));

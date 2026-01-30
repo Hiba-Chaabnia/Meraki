@@ -19,8 +19,6 @@ export interface ActiveHobby {
   userHobbyId: string;
   slug: string;
   name: string;
-  color: string;
-  lightColor: string;
   status: "active" | "paused";
   currentStreak: number;
   totalSessions: number;
@@ -44,7 +42,6 @@ export interface PracticeSession {
   id: string;
   hobbySlug: string;
   hobbyName: string;
-  hobbyColor: string;
   date: string;
   duration: number;
   mood: Mood;
@@ -61,7 +58,6 @@ export interface Challenge {
   id: string;
   hobbySlug: string;
   hobbyName: string;
-  hobbyColor: string;
   title: string;
   description: string;
   skills: string[];
@@ -111,7 +107,6 @@ export interface Roadmap {
   id: string;
   hobbySlug: string;
   hobbyName: string;
-  hobbyColor: string;
   title: string;
   description: string;
   phases: RoadmapPhase[];
@@ -127,7 +122,6 @@ export interface ActivityItem {
   title: string;
   subtitle: string;
   date: string;
-  color: string;
   icon: string;
   href: string;
 }

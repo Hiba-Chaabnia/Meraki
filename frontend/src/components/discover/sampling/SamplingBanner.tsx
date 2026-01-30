@@ -1,14 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { HobbyMeta } from "@/lib/hobbyData";
 
 interface SamplingBannerProps {
-  hobby: HobbyMeta;
+  hobbyName: string;
   encouragement?: string;
 }
 
-export function SamplingBanner({ hobby, encouragement }: SamplingBannerProps) {
+export function SamplingBanner({ hobbyName, encouragement }: SamplingBannerProps) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -18,15 +17,15 @@ export function SamplingBanner({ hobby, encouragement }: SamplingBannerProps) {
     >
       <div
         className="rounded-3xl overflow-hidden px-8 py-12 md:px-14 md:py-16 relative"
-        style={{ backgroundColor: hobby.lightColor }}
+        style={{ backgroundColor: "#F3F4F6" }}
       >
         <div
           className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-20"
-          style={{ backgroundColor: hobby.color }}
+          style={{ backgroundColor: "#374151" }}
         />
         <div
           className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full opacity-15"
-          style={{ backgroundColor: hobby.color }}
+          style={{ backgroundColor: "#374151" }}
         />
 
         <motion.div
@@ -37,12 +36,12 @@ export function SamplingBanner({ hobby, encouragement }: SamplingBannerProps) {
         >
           <p
             className="text-sm font-bold tracking-widest uppercase mb-3"
-            style={{ color: hobby.color }}
+            style={{ color: "#374151" }}
           >
             Your match
           </p>
           <h1 className="!text-3xl md:!text-5xl mb-4">
-            Let&apos;s Dip Your Toes Into {hobby.name}!
+            Let&apos;s Dip Your Toes Into {hobbyName}!
           </h1>
           <p className="text-gray-600 text-lg">
             {encouragement ||

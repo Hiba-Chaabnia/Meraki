@@ -80,7 +80,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
         <div className="flex items-center gap-2 mb-2">
           <span
             className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ backgroundColor: roadmap.hobbyColor + "25", color: roadmap.hobbyColor }}
+            style={{ backgroundColor: "#E5E7EB", color: "#374151" }}
           >
             {roadmap.hobbyName}
           </span>
@@ -99,7 +99,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${((roadmap.currentPhase + 1) / roadmap.totalPhases) * 100}%`,
-                backgroundColor: roadmap.hobbyColor,
+                backgroundColor: "#374151",
               }}
             />
           </div>
@@ -126,7 +126,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
                   ? "border-gray-200 bg-gray-50/50"
                   : "border-gray-100 opacity-60"
               }`}
-              style={isCurrent ? { borderColor: roadmap.hobbyColor } : undefined}
+              style={isCurrent ? { borderColor: "#374151" } : undefined}
             >
               <div className="flex items-start gap-3">
                 <div
@@ -137,7 +137,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
                       ? "text-white"
                       : "bg-gray-100 text-gray-400"
                   }`}
-                  style={isCurrent ? { backgroundColor: roadmap.hobbyColor } : undefined}
+                  style={isCurrent ? { backgroundColor: "#374151" } : undefined}
                 >
                   {isComplete ? <Check className="w-4 h-4" /> : phase.phase_number}
                 </div>
@@ -152,7 +152,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
                         <ul className="space-y-1">
                           {phase.goals.map((g, i) => (
                             <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                              <Target className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: roadmap.hobbyColor }} />
+                              <Target className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "#374151" }} />
                               {g}
                             </li>
                           ))}
@@ -190,7 +190,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
             onClick={handleAdvance}
             disabled={advancing}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer disabled:opacity-50"
-            style={{ backgroundColor: roadmap.hobbyColor }}
+            style={{ backgroundColor: "#374151" }}
           >
             {advancing ? "Advancing..." : `Complete Phase ${roadmap.currentPhase + 1} & Advance`}
           </button>
@@ -199,8 +199,8 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
 
       {isLastPhase && (
         <motion.div initial="hidden" animate="show" variants={fadeUp} className="mt-8 text-center">
-          <div className="rounded-2xl p-6" style={{ backgroundColor: roadmap.hobbyColor + "12" }}>
-            <p className="text-sm font-medium" style={{ color: roadmap.hobbyColor }}>
+          <div className="rounded-2xl p-6" style={{ backgroundColor: "#F9FAFB" }}>
+            <p className="text-sm font-medium" style={{ color: "#374151" }}>
               You&apos;re on the final phase! Complete it to finish your roadmap.
             </p>
           </div>

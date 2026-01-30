@@ -69,7 +69,7 @@ export function HobbyCard({ hobby, activeChallengeCount, onStatusChange, theme, 
           {/* Hover tint */}
           <div
             className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity rounded-2xl pointer-events-none"
-            style={{ backgroundColor: hobby.color }}
+            style={{ backgroundColor: "#374151" }}
           />
 
           <div className="relative z-10">

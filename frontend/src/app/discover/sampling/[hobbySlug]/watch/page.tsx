@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { getHobby } from "@/lib/hobbyData";
+import { formatSlug } from "@/lib/hobbyData";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { PUBLIC_API_URL } from "@/lib/config";
 import {
@@ -25,7 +25,7 @@ export default function WatchPage({
   params: Promise<{ hobbySlug: string }>;
 }) {
   const { hobbySlug } = use(params);
-  const hobby = getHobby(hobbySlug);
+  const hobby = { name: formatSlug(hobbySlug), color: "#374151", lightColor: "#F3F4F6" };
 
   const cached = videosCache.get(hobbySlug) ?? null;
   const [videos, setVideos] = useState<Video[] | null>(cached);
@@ -189,7 +189,7 @@ export default function WatchPage({
             >
               <div
                 className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl"
-                style={{ backgroundColor: hobby.lightColor }}
+                style={{ backgroundColor: "#F3F4F6" }}
               >
                 🎉
               </div>
@@ -204,7 +204,7 @@ export default function WatchPage({
               <Link
                 href="/dashboard"
                 className="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95"
-                style={{ backgroundColor: hobby.color }}
+                style={{ backgroundColor: "#374151" }}
               >
                 Go to Dashboard
               </Link>

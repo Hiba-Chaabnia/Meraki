@@ -6,7 +6,7 @@ import {
   pollDiscoveryStatus,
   DiscoveryStatusResponse,
 } from "@/app/actions/discovery";
-import { hobbyMeta } from "@/lib/hobbyData";
+import { formatSlug } from "@/lib/hobbyData";
 import type { MatchCard, HobbyMatchRow } from "@/lib/types/quiz";
 
 /* ─── Module-level cache ───
@@ -23,14 +23,11 @@ function cacheMatches(cards: MatchCard[]) {
 
 function dbMatchToCard(row: HobbyMatchRow): MatchCard {
   const slug = row.hobby_slug ?? "";
-  const meta = hobbyMeta[slug];
   return {
     slug,
-    name: meta?.name ?? slug,
+    name: formatSlug(slug),
     tagline: row.reasoning || "A great match based on your quiz answers!",
     matchPercent: row.match_percentage,
-    color: meta?.color ?? "#B8A9E8",
-    lightColor: meta?.lightColor ?? "#E8E2F7",
     tags: row.match_tags ?? [],
   };
 }
@@ -87,18 +84,13 @@ export function useQuizMatches() {
           if ("status" in pollResult) {
             const response = pollResult as DiscoveryStatusResponse;
             if (response.status === "completed" && response.result?.matches && response.result.matches.length > 0) {
-              const cards = response.result.matches.map((m) => {
-                const meta = hobbyMeta[m.hobby_slug];
-                return {
-                  slug: m.hobby_slug,
-                  name: meta?.name ?? m.hobby_slug,
-                  tagline: m.reasoning || "A great match for you!",
-                  matchPercent: m.match_percentage,
-                  color: meta?.color ?? "#B8A9E8",
-                  lightColor: meta?.lightColor ?? "#E8E2F7",
-                  tags: m.match_tags ?? [],
-                };
-              });
+              const cards = response.result.matches.map((m) => ({
+                slug: m.hobby_slug,
+                name: formatSlug(m.hobby_slug),
+                tagline: m.reasoning || "A great match for you!",
+                matchPercent: m.match_percentage,
+                tags: m.match_tags ?? [],
+              }));
               cacheMatches(cards);
               if (!cancelled) { setMatches(cards); setLoading(false); }
               return;

@@ -11,7 +11,7 @@ import { getSessions } from "@/app/actions/sessions";
 import { getUserChallenges, triggerChallengeGeneration, pollChallengeGenStatus } from "@/app/actions/challenges";
 import { getUserRoadmap, triggerRoadmapGeneration, pollRoadmapStatus } from "@/app/actions/roadmap";
 import { toActiveHobby, toPracticeSession, toChallenge, toRoadmap } from "@/lib/transformData";
-import { getHobby } from "@/lib/hobbyData";
+import { formatSlug } from "@/lib/hobbyData";
 import { moodEmojis } from "@/lib/dashboardData";
 import type { ActiveHobby, PracticeSession, Challenge, Roadmap } from "@/lib/dashboardData";
 import type { PracticeFeedback } from "@/app/actions/feedback";
@@ -29,7 +29,7 @@ const stagger = {
 
 export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const meta = getHobby(slug);
+  const meta = { name: formatSlug(slug), color: "#374151", lightColor: "#F3F4F6" };
 
   const [hobby, setHobby] = useState<ActiveHobby | null>(null);
   const [sessions, setSessions] = useState<PracticeSession[]>([]);

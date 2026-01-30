@@ -4,7 +4,7 @@ import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { getHobby } from "@/lib/hobbyData";
+import { formatSlug } from "@/lib/hobbyData";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import {
   triggerSamplingPreview,
@@ -90,7 +90,7 @@ export default function MicroPage({
   params: Promise<{ hobbySlug: string }>;
 }) {
   const { hobbySlug } = use(params);
-  const hobby = getHobby(hobbySlug);
+  const hobby = { name: formatSlug(hobbySlug) };
   const [started, setStarted] = useState(false);
   const [completed, setCompleted] = useState(false);
 

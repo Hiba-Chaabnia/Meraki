@@ -142,13 +142,13 @@ export default function ProgressPage() {
                 <div key={h.slug}>
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: h.color }} />
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#374151" }} />
                       <span className="text-sm font-medium text-gray-700">{h.name}</span>
                     </div>
                     <span className="text-xs text-gray-400">{h.totalSessions} sessions ({pct}%)</span>
                   </div>
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" as const }} className="h-full rounded-full" style={{ backgroundColor: h.color }} />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" as const }} className="h-full rounded-full" style={{ backgroundColor: "#374151" }} />
                   </div>
                 </div>
               );
@@ -167,7 +167,7 @@ export default function ProgressPage() {
               <div className="text-center p-4 rounded-xl bg-gray-50">
                 <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Day 1</p>
                 <span className="text-3xl block mb-2">{moodEmojis[firstSession.mood]?.emoji}</span>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: firstSession.hobbyColor + "20", color: firstSession.hobbyColor }}>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F3F4F6", color: "#374151" }}>
                   {firstSession.hobbyName}
                 </span>
                 <p className="text-xs text-gray-400 mt-2">{firstSession.duration} min</p>
@@ -179,10 +179,10 @@ export default function ProgressPage() {
                 </svg>
                 <span className="text-[10px] text-gray-400">{displayStats.daysSinceJoining} days</span>
               </div>
-              <div className="text-center p-4 rounded-xl" style={{ backgroundColor: latestSession.hobbyColor + "10" }}>
-                <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: latestSession.hobbyColor }}>Now</p>
+              <div className="text-center p-4 rounded-xl" style={{ backgroundColor: "#F9FAFB" }}>
+                <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: "#374151" }}>Now</p>
                 <span className="text-3xl block mb-2">{moodEmojis[latestSession.mood]?.emoji}</span>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: latestSession.hobbyColor + "20", color: latestSession.hobbyColor }}>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F3F4F6", color: "#374151" }}>
                   {latestSession.hobbyName}
                 </span>
                 <p className="text-xs text-gray-400 mt-2">{latestSession.duration} min</p>

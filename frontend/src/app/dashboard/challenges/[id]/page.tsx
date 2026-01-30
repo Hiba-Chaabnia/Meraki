@@ -122,10 +122,10 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
           </Link>
         </motion.div>
 
-        <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: challenge.hobbyColor + "15" }}>
+        <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: "#F3F4F6" }}>
           <div className="px-6 py-8 md:px-8 md:py-10">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: challenge.hobbyColor + "25", color: challenge.hobbyColor }}>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#E5E7EB", color: "#374151" }}>
                 {challenge.hobbyName}
               </span>
               <div className="flex items-center gap-1.5">
@@ -157,7 +157,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
             <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">Skills</h2>
             <div className="flex flex-wrap gap-2">
               {challenge.skills.map((skill) => (
-                <span key={skill} className="text-xs px-3 py-1.5 rounded-full font-medium" style={{ backgroundColor: challenge.hobbyColor + "15", color: challenge.hobbyColor }}>
+                <span key={skill} className="text-xs px-3 py-1.5 rounded-full font-medium" style={{ backgroundColor: "#F3F4F6", color: "#374151" }}>
                   {skill}
                 </span>
               ))}
@@ -180,7 +180,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
           <ul className="space-y-3">
             {challenge.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-3 text-sm text-gray-600">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5" style={{ backgroundColor: challenge.hobbyColor }}>
+                <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5" style={{ backgroundColor: "#374151" }}>
                   {i + 1}
                 </span>
                 {tip}
@@ -191,8 +191,8 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
 
         <AnimatePresence mode="wait">
           {isCompleted ? (
-            <motion.div key="completed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl p-8" style={{ backgroundColor: challenge.hobbyColor + "12" }}>
-              <SparklesIcon className="w-10 h-10 mx-auto mb-3" style={{ color: challenge.hobbyColor }} />
+            <motion.div key="completed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl p-8" style={{ backgroundColor: "#F9FAFB" }}>
+              <SparklesIcon className="w-10 h-10 mx-auto mb-3" style={{ color: "#374151" }} />
               <h2 className="!text-xl md:!text-2xl mb-2">Challenge Complete!</h2>
               <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">Great work on finishing this challenge. Your growth is showing!</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -212,7 +212,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
                   }}
                   disabled={generatingNext}
                   className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
-                  style={{ backgroundColor: challenge.hobbyColor }}
+                  style={{ backgroundColor: "#374151" }}
                 >
                   {generatingNext ? "Generating..." : "Generate Next Challenge"}
                 </button>
@@ -226,7 +226,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
               <button
                 onClick={() => setLoggerOpen(true)}
                 className="flex-1 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer"
-                style={{ backgroundColor: challenge.hobbyColor }}
+                style={{ backgroundColor: "#374151" }}
               >
                 Log &amp; Complete This Challenge
               </button>

@@ -10,7 +10,5 @@ export interface MatchCard {
   name: string;
   tagline: string;
   matchPercent: number;
-  color: string;
-  lightColor: string;
   tags: string[];
 }

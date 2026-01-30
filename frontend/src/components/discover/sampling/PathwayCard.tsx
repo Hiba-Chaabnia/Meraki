@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { CheckCircleIcon, StarIcon } from "@/components/ui/Icons";
-import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
+import type { SectionTheme } from "@/lib/sectionTheme";
 
 /* ─── Perk row ─── */
 function Perk({ children, theme }: { children: React.ReactNode; theme: SectionTheme }) {

@@ -1,7 +1,6 @@
 export interface QuizSection {
   id: string;
   title: string;
-  emoji: string;
 }
 
 export interface QuizQuestion {
@@ -19,47 +18,38 @@ export const sections: QuizSection[] = [
   {
     id: "time",
     title: "Time & Lifestyle",
-    emoji: "\u23f0",
   },
   {
     id: "creative",
     title: "Creative Preferences",
-    emoji: "\ud83c\udfa8",
   },
   {
     id: "learning",
     title: "Learning Style",
-    emoji: "\ud83d\udcda",
   },
   {
     id: "social",
     title: "Social & Space",
-    emoji: "\ud83c\udfe0",
   },
   {
     id: "budget",
     title: "Budget & Commitment",
-    emoji: "\ud83d\udcb0",
   },
   {
     id: "motivation",
     title: "Motivation & Mindset",
-    emoji: "\u2728",
   },
   {
     id: "sensory",
     title: "Sensory Preferences",
-    emoji: "\ud83e\udde0",
   },
   {
     id: "practical",
     title: "Practical Constraints",
-    emoji: "\ud83d\udee0\ufe0f",
   },
   {
     id: "reflection",
     title: "Final Reflection",
-    emoji: "\ud83d\udc96",
   },
 ];
 

@@ -7,9 +7,9 @@ import { motion } from "framer-motion";
 import { ArrowLeftIcon, HomeIcon } from "@/components/ui/Icons";
 import { PathwayCard } from "@/components/discover/sampling/PathwayCard";
 import { useSamplingPreview } from "@/hooks/useSamplingPreview";
-import { getHobby } from "@/lib/hobbyData";
+import { formatSlug } from "@/lib/hobbyData";
 
-import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
+import type { SectionTheme } from "@/lib/sectionTheme";
 
 /* ─── Themes ─── */
 const THEME_PRIMARY: SectionTheme = {
@@ -48,7 +48,7 @@ export default function SamplingPage({
   const { hobbySlug } = use(params);
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
-  const hobby = getHobby(hobbySlug);
+  const hobby = { name: formatSlug(hobbySlug) };
   const base = `/discover/sampling/${hobbySlug}`;
 
   const backHref = from === "dashboard" ? "/dashboard" : from === "discover" ? "/discover" : "/discover/quiz/results";

@@ -39,7 +39,7 @@ function buildActivityItems(sessions: PracticeSession[], challenges: Challenge[]
       title: s.hobbyName,
       subtitle: s.notes || `${s.duration} min practice`,
       date: s.date,
-      color: s.hobbyColor,
+      color: "#374151",
       icon: mood?.emoji ?? "",
       href: `/dashboard/sessions/${s.id}`,
     });
@@ -52,7 +52,7 @@ function buildActivityItems(sessions: PracticeSession[], challenges: Challenge[]
       title: c.title,
       subtitle: c.hobbyName,
       date: c.completedDate!,
-      color: c.hobbyColor,
+      color: "#374151",
       icon: "\u2714\uFE0F",
       href: `/dashboard/challenges/${c.id}`,
     });
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                     <Link key={h.slug} href={`/dashboard/hobby/${h.slug}`} className="flex items-center gap-3 group">
                       <div
                         className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: h.color }}
+                        style={{ backgroundColor: "#374151" }}
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{h.name}</p>

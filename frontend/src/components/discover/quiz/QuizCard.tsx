@@ -1,5 +1,5 @@
 import type { QuizQuestion } from "@/lib/quizData";
-import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
+import type { SectionTheme } from "@/lib/sectionTheme";
 import type { Answers } from "@/lib/hooks/useQuiz";
 import { QuestionCard } from "@/components/discover/quiz/QuestionCard";
 import { motion } from "framer-motion";

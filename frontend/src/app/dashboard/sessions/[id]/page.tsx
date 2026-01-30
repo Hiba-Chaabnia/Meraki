@@ -127,15 +127,15 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         </Link>
       </motion.div>
 
-      <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: session.hobbyColor + "15" }}>
+      <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: "#F3F4F6" }}>
         <div className="px-6 py-8 md:px-8 md:py-10">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ backgroundColor: session.hobbyColor + "25" }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ backgroundColor: "#E5E7EB" }}>
               {mood.emoji}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: session.hobbyColor + "25", color: session.hobbyColor }}>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#E5E7EB", color: "#374151" }}>
                   {session.hobbyName}
                 </span>
               </div>
@@ -195,9 +195,9 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
               className="rounded-2xl p-5 mb-6"
-              style={{ backgroundColor: session.hobbyColor + "12" }}
+              style={{ backgroundColor: "#F9FAFB" }}
             >
-              <p className="text-sm font-medium" style={{ color: session.hobbyColor }}>
+              <p className="text-sm font-medium" style={{ color: "#374151" }}>
                 {feedback.celebration}
               </p>
             </motion.div>
@@ -215,7 +215,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                 <ul className="space-y-2">
                   {feedback.observations.map((o, i) => (
                     <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                      <span className="mt-1 flex-shrink-0" style={{ color: session.hobbyColor }}>&#8226;</span>{o}
+                      <span className="mt-1 flex-shrink-0" style={{ color: "#374151" }}>&#8226;</span>{o}
                     </li>
                   ))}
                 </ul>

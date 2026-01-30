@@ -246,11 +246,11 @@ export default function ProfilePage() {
                 <div key={h.slug} className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: h.lightColor }}
+                    style={{ backgroundColor: "#F3F4F6" }}
                   >
                     <div
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: h.color }}
+                      style={{ backgroundColor: "#374151" }}
                     />
                   </div>
                   <div className="flex-1">

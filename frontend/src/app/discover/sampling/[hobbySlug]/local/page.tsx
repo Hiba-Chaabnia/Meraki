@@ -3,7 +3,7 @@
 import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { getHobby } from "@/lib/hobbyData";
+import { formatSlug } from "@/lib/hobbyData";
 import { PageLayout } from "@/components/layouts/PageLayout";
 import { useGoogleMaps, reverseGeocode } from "@/lib/useGoogleMaps";
 import {
@@ -68,7 +68,7 @@ export default function LocalPage({
   params: Promise<{ hobbySlug: string }>;
 }) {
   const { hobbySlug } = use(params);
-  const hobby = getHobby(hobbySlug);
+  const hobby = { name: formatSlug(hobbySlug), color: "#374151", lightColor: "#F3F4F6" };
 
   const { ready: mapsReady } = useGoogleMaps();
 
@@ -551,7 +551,7 @@ function SpotCard({
             </h3>
             <span
               className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
-              style={{ backgroundColor: hobby.lightColor, color: hobby.color }}
+              style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
             >
               {spot.type}
             </span>
@@ -588,7 +588,7 @@ function SpotCard({
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg active:scale-95"
-              style={{ backgroundColor: hobby.color }}
+              style={{ backgroundColor: "#374151" }}
             >
               Learn More
               <ExternalLinkIcon className="w-4 h-4" />
@@ -596,7 +596,7 @@ function SpotCard({
           ) : (
             <button
               className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg active:scale-95"
-              style={{ backgroundColor: hobby.color }}
+              style={{ backgroundColor: "#374151" }}
             >
               Learn More
             </button>
