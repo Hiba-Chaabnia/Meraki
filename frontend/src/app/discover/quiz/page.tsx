@@ -95,15 +95,6 @@ export default function QuizPage() {
   const lastIndex = quiz.sections.length - 1;
   const showSubmit = quiz.activeIndex === lastIndex && quiz.allComplete;
 
-  /* Loading screen after submit */
-  if (quiz.isSubmitted) {
-    return (
-      <div className="h-[100dvh] bg-[var(--background)] flex items-center justify-center">
-        <FlowerShape size={40} useGradient spin spinDuration={3} gradientId="loading-flower" />
-      </div>
-    );
-  }
-
   return (
     <div className="h-[100dvh] overflow-hidden bg-[var(--background)] flex flex-col">
       {/* ── Headline ── */}

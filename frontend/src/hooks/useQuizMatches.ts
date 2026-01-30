@@ -33,39 +33,25 @@ function dbMatchToCard(row: HobbyMatchRow): MatchCard {
 }
 
 export function useQuizMatches() {
-  const [matches, setMatches] = useState<MatchCard[] | null>(() => {
-    if (matchesCache.data !== null) return matchesCache.data;
-    if (typeof window === "undefined") return null;
+  // Only use module cache in initial state — no sessionStorage (avoids hydration mismatch)
+  const [matches, setMatches] = useState<MatchCard[] | null>(() => matchesCache.data);
+  const [loading, setLoading] = useState(matchesCache.data === null);
+
+  useEffect(() => {
+    // Always read sessionStorage first — it may have fresh data written by the analyzing page
+    // (e.g. module cache could be stale from a prior quiz run)
     try {
       const stored = sessionStorage.getItem("quiz-matches");
       if (stored) {
         const cards: MatchCard[] = JSON.parse(stored);
         if (cards.length > 0) {
           matchesCache.data = cards;
-          return cards;
+          setMatches(cards);
+          setLoading(false);
+          return;
         }
       }
     } catch (e) { console.warn("[Results] sessionStorage parse error:", e); }
-    return null;
-  });
-
-  const [loading, setLoading] = useState(matchesCache.data === null);
-
-  useEffect(() => {
-    if (matchesCache.data === null) {
-      try {
-        const stored = sessionStorage.getItem("quiz-matches");
-        if (stored) {
-          const cards: MatchCard[] = JSON.parse(stored);
-          if (cards.length > 0) {
-            matchesCache.data = cards;
-            setMatches(cards);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch { /* sessionStorage unavailable */ }
-    }
 
     if (matchesCache.data !== null) {
       setLoading(false);
