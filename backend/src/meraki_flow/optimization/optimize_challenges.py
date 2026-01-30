@@ -34,7 +34,7 @@ def load_current_prompt() -> str:
     return f"""{agent['backstory'].strip()}
 
 Design a single creative challenge for the user.
-Output JSON with: title, description, why_this_challenge, skills (list),
+Output JSON with: title, description, skills (list),
 difficulty (easy/medium/hard), estimated_time, tips (list), what_youll_learn (list)."""
 
 
@@ -67,7 +67,6 @@ def create_dataset() -> "opik.Dataset":
                 "description": "Paint a sunset using only 3 watercolors of your choice. Limiting your palette forces creative mixing.",
                 "difficulty": "easy",
                 "estimated_time": "30 minutes",
-                "why_this_challenge": "You've shown good color instincts - this challenge channels that into a beautiful constraint.",
                 "skills": ["color mixing", "wet-on-wet", "gradient"],
                 "tips": ["Start with the lightest color", "Work while the paper is still damp"],
                 "what_youll_learn": ["Limited palette techniques", "Color temperature"],
@@ -86,7 +85,6 @@ def create_dataset() -> "opik.Dataset":
                 "description": "Make a mug that's intentionally imperfect - embrace the wobble and make asymmetry the feature.",
                 "difficulty": "medium",
                 "estimated_time": "60 minutes",
-                "why_this_challenge": "You've mastered wall control - now let's play with that skill by breaking the rules on purpose.",
                 "skills": ["handle attachment", "form exploration", "intentional imperfection"],
                 "tips": ["Don't try to fix wobbles", "Think about what feels good to hold"],
                 "what_youll_learn": ["Handle attachment", "Wabi-sabi aesthetics"],
@@ -105,7 +103,6 @@ def create_dataset() -> "opik.Dataset":
                 "description": "Set a timer for 60 seconds and sketch 5 objects around you. Speed kills perfectionism!",
                 "difficulty": "easy",
                 "estimated_time": "10 minutes",
-                "why_this_challenge": "The time pressure makes it impossible to overthink. You'll surprise yourself with what appears on paper.",
                 "skills": ["quick observation", "loose line work", "letting go of perfection"],
                 "tips": ["Don't lift your pen", "Look at the object more than your paper"],
                 "what_youll_learn": ["Contour drawing basics", "The freedom of imperfection"],
@@ -124,7 +121,6 @@ def create_dataset() -> "opik.Dataset":
                 "description": "Knit a simple cowl using 2-3 colors in wide stripes. Same stitches you know, new visual impact.",
                 "difficulty": "medium",
                 "estimated_time": "2-3 sessions",
-                "why_this_challenge": "Your tension is solid - adding color changes will make your work pop without new techniques.",
                 "skills": ["color changes", "joining yarn", "circular knitting"],
                 "tips": ["Carry the unused color loosely up the side", "Pick colors that excite you"],
                 "what_youll_learn": ["Color change technique", "Working in the round"],
@@ -143,7 +139,6 @@ def create_dataset() -> "opik.Dataset":
                 "description": "Choose one ordinary object and photograph it from 5 dramatically different angles and distances.",
                 "difficulty": "medium",
                 "estimated_time": "45 minutes",
-                "why_this_challenge": "Your composition skills are strong - this pushes you to see familiar things in unfamiliar ways.",
                 "skills": ["perspective", "close-up/macro", "creative framing"],
                 "tips": ["Get low, get high, get close", "Try shooting through or around obstacles"],
                 "what_youll_learn": ["Perspective as storytelling", "Finding beauty in the mundane"],

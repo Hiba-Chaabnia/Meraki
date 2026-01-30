@@ -49,15 +49,17 @@ export async function triggerPracticeFeedback(
 
   const { data: session, error: sessError } = await supabase
     .from("practice_sessions")
-    .select("*, user_hobbies!inner(*, hobbies(*))")
+    .select("*, user_hobbies!inner(*)")
     .eq("id", sessionId)
     .eq("user_id", user.id)
     .single();
 
   if (sessError || !session) return { error: "Session not found" };
 
-  const hobby = session.user_hobbies?.hobbies;
-  const hobbyName = hobby?.name ?? "Unknown Hobby";
+  const hobbySlug = session.user_hobbies?.hobby_slug ?? "";
+  const hobbyName = hobbySlug
+    ? hobbySlug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
+    : "Unknown Hobby";
 
   const { data: recentSessions } = await supabase
     .from("practice_sessions")

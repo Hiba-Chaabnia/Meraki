@@ -169,21 +169,13 @@ def save_generated_challenge(
     if not user_id or not hobby_slug:
         return None
     sb = get_supabase()
-
-    # Look up hobby_id by slug
-    resp = sb.table("hobbies").select("id").eq("slug", hobby_slug).execute()
-    if not resp.data or len(resp.data) == 0:
-        return None
-    hobby_id = resp.data[0]["id"]
-
     now = datetime.now(timezone.utc).isoformat()
 
     # Insert challenge
     challenge_row = {
-        "hobby_id": hobby_id,
+        "hobby_slug": hobby_slug,
         "title": challenge_data.get("title", ""),
         "description": challenge_data.get("description", ""),
-        "why_this_challenge": challenge_data.get("why_this_challenge", ""),
         "skills": challenge_data.get("skills", []),
         "difficulty": challenge_data.get("difficulty", "easy"),
         "estimated_time": challenge_data.get("estimated_time", ""),
@@ -218,18 +210,10 @@ def save_nudge(
     if not user_id:
         return
     sb = get_supabase()
-
-    # Look up hobby_id by slug
-    hobby_id = None
-    if hobby_slug:
-        resp = sb.table("hobbies").select("id").eq("slug", hobby_slug).execute()
-        if resp.data and len(resp.data) > 0:
-            hobby_id = resp.data[0]["id"]
-
     now = datetime.now(timezone.utc).isoformat()
     sb.table("nudges").insert({
         "user_id": user_id,
-        "hobby_id": hobby_id,
+        "hobby_slug": hobby_slug or None,
         "nudge_type": nudge_data.get("nudge_type", ""),
         "message": nudge_data.get("message", ""),
         "suggested_action": nudge_data.get("suggested_action", ""),
@@ -248,19 +232,12 @@ def save_generated_roadmap(
     if not user_id or not hobby_slug:
         return None
     sb = get_supabase()
-
-    # Look up hobby_id by slug
-    resp = sb.table("hobbies").select("id").eq("slug", hobby_slug).execute()
-    if not resp.data or len(resp.data) == 0:
-        return None
-    hobby_id = resp.data[0]["id"]
-
     now = datetime.now(timezone.utc).isoformat()
     phases = roadmap_data.get("phases", [])
 
     # Insert roadmap
     roadmap_row = {
-        "hobby_id": hobby_id,
+        "hobby_slug": hobby_slug,
         "title": roadmap_data.get("title", ""),
         "description": roadmap_data.get("description", ""),
         "phases": phases,
@@ -291,28 +268,23 @@ def save_hobby_matches(
     user_id: str,
     matches: list[dict[str, Any]],
 ) -> None:
-    """Save discovery matches. Looks up hobby_id by slug and upserts into hobby_matches."""
+    """Save discovery matches. Upserts into hobby_matches keyed by hobby_slug."""
     if not user_id or not matches:
         return
     sb = get_supabase()
+    now = datetime.now(timezone.utc).isoformat()
     for match in matches:
         slug = match.get("hobby_slug", "")
         if not slug:
             continue
-        # Look up hobby_id by slug
-        resp = sb.table("hobbies").select("id").eq("slug", slug).execute()
-        if not resp.data or len(resp.data) == 0:
-            continue
-        hobby_id = resp.data[0]["id"]
-        now = datetime.now(timezone.utc).isoformat()
         sb.table("hobby_matches").upsert(
             {
                 "user_id": user_id,
-                "hobby_id": hobby_id,
+                "hobby_slug": slug,
                 "match_percentage": match.get("match_percentage", 0),
                 "match_tags": match.get("match_tags", []),
                 "reasoning": match.get("reasoning", ""),
                 "created_at": now,
             },
-            on_conflict="user_id,hobby_id",
+            on_conflict="user_id,hobby_slug",
         ).execute()

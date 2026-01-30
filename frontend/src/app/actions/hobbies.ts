@@ -1,8 +1,9 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/supabase/requireAuth";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SLUG_RE = /^[a-z0-9-]+$/;
 const HOBBY_STATUSES = new Set(["sampling", "active", "paused", "completed"]);
 
 export async function getUserHobbies() {
@@ -14,7 +15,7 @@ export async function getUserHobbies() {
 
   const { data, error } = await supabase
     .from("user_hobbies")
-    .select("*, hobbies(*)")
+    .select("*")
     .eq("user_id", user.id)
     .order("started_at", { ascending: false });
 
@@ -22,8 +23,8 @@ export async function getUserHobbies() {
   return { data };
 }
 
-export async function addUserHobby(hobbyId: string, status: "sampling" | "active" = "sampling") {
-  if (!hobbyId || !UUID_RE.test(hobbyId)) return { error: "Invalid hobby ID." };
+export async function addUserHobby(hobbySlug: string, status: "sampling" | "active" = "sampling") {
+  if (!hobbySlug || !SLUG_RE.test(hobbySlug)) return { error: "Invalid hobby slug." };
   if (!HOBBY_STATUSES.has(status)) return { error: "Invalid status." };
 
   const supabase = await createClient();
@@ -37,11 +38,10 @@ export async function addUserHobby(hobbyId: string, status: "sampling" | "active
     .upsert(
       {
         user_id: user.id,
-        hobby_id: hobbyId,
+        hobby_slug: hobbySlug,
         status,
-        updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id,hobby_id" },
+      { onConflict: "user_id,hobby_slug" },
     )
     .select()
     .single();
@@ -54,6 +54,7 @@ export async function updateHobbyStatus(
   userHobbyId: string,
   status: "sampling" | "active" | "paused" | "completed",
 ) {
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!userHobbyId || !UUID_RE.test(userHobbyId)) return { error: "Invalid user hobby ID." };
   if (!HOBBY_STATUSES.has(status)) return { error: "Invalid status." };
 
@@ -65,7 +66,7 @@ export async function updateHobbyStatus(
 
   const { data, error } = await supabase
     .from("user_hobbies")
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({ status })
     .eq("id", userHobbyId)
     .eq("user_id", user.id)
     .select()
@@ -75,51 +76,9 @@ export async function updateHobbyStatus(
   return { data };
 }
 
-export async function getAllHobbies() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("hobbies")
-    .select("*, hobby_categories(*)")
-    .order("name");
-
-  if (error) return { error: error.message };
-  return { data };
-}
-
 export async function addHobbyDirect(slug: string) {
   if (!slug || slug.length > 50) return { error: "Invalid slug." };
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
-  const { data: hobby, error: lookupError } = await supabase
-    .from("hobbies")
-    .select("id")
-    .eq("slug", slug)
-    .single();
-
-  if (lookupError || !hobby) return { error: "Hobby not found." };
-
-  const { data, error } = await supabase
-    .from("user_hobbies")
-    .upsert(
-      {
-        user_id: user.id,
-        hobby_id: hobby.id,
-        status: "active",
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,hobby_id" },
-    )
-    .select()
-    .single();
-
-  if (error) return { error: error.message };
-  return { data };
+  return addUserHobby(slug, "active");
 }
 
 export async function addCustomHobby(name: string) {
@@ -135,44 +94,19 @@ export async function addCustomHobby(name: string) {
 
   if (!slug) return { error: "Invalid hobby name." };
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
-  // Check if hobby with this slug already exists
-  const { data: existing } = await supabase
-    .from("hobbies")
-    .select("id")
-    .eq("slug", slug)
-    .single();
-
-  let hobbyId: string;
-
-  if (existing) {
-    hobbyId = existing.id;
-  } else {
-    const { data: created, error: createError } = await supabase
-      .from("hobbies")
-      .insert({ slug, name: trimmed })
-      .select("id")
-      .single();
-
-    if (createError || !created) return { error: createError?.message ?? "Failed to create hobby." };
-    hobbyId = created.id;
-  }
+  const auth = await requireAuth();
+  if ("error" in auth) return auth;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from("user_hobbies")
     .upsert(
       {
         user_id: user.id,
-        hobby_id: hobbyId,
+        hobby_slug: slug,
         status: "active",
-        updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id,hobby_id" },
+      { onConflict: "user_id,hobby_slug" },
     )
     .select()
     .single();

@@ -32,7 +32,6 @@ generate_challenge_task:
     {
       "title": "Catchy, exciting challenge title (3-6 words)",
       "description": "2-3 sentences describing what to do",
-      "why_this_challenge": "1-2 sentences explaining why this is perfect for them right now",
       "skills": ["skill1", "skill2"],
       "difficulty": "easy" | "medium" | "hard" | "stretch",
       "estimated_time": "30 minutes",

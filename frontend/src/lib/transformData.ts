@@ -7,18 +7,20 @@ import type {
   UserStats,
   Roadmap,
 } from "@/lib/dashboardData";
+import { hobbyMeta, formatSlug } from "@/lib/hobbyData";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/** Map a user_hobbies row (with joined hobbies) to ActiveHobby */
+/** Map a user_hobbies row to ActiveHobby */
 export function toActiveHobby(row: any): ActiveHobby {
-  const hobby = row.hobbies ?? {};
+  const slug = row.hobby_slug ?? "";
+  const meta = hobbyMeta[slug] ?? { name: formatSlug(slug), color: "#B8A9E8", lightColor: "#E8E2F7" };
   return {
     userHobbyId: row.id,
-    slug: hobby.slug ?? "",
-    name: hobby.name ?? "",
-    color: hobby.color ?? "#888",
-    lightColor: hobby.light_color ?? "#eee",
+    slug,
+    name: meta.name,
+    color: meta.color,
+    lightColor: meta.lightColor,
     status: row.status === "paused" ? "paused" : "active",
     currentStreak: 0,
     totalSessions: 0,
@@ -35,13 +37,14 @@ export function toActiveHobby(row: any): ActiveHobby {
 /** Map a practice_sessions row (with joins) to PracticeSession */
 export function toPracticeSession(row: any): PracticeSession {
   const userHobby = row.user_hobbies ?? {};
-  const hobby = userHobby.hobbies ?? {};
+  const slug = userHobby.hobby_slug ?? "";
+  const meta = hobbyMeta[slug] ?? { name: formatSlug(slug), color: "#B8A9E8", lightColor: "#E8E2F7" };
 
   return {
     id: row.id,
-    hobbySlug: hobby.slug ?? "",
-    hobbyName: hobby.name ?? "",
-    hobbyColor: hobby.color ?? "#888",
+    hobbySlug: slug,
+    hobbyName: meta.name,
+    hobbyColor: meta.color,
     date: row.created_at,
     duration: row.duration ?? 0,
     mood: (row.mood ?? "okay") as Mood,
@@ -51,19 +54,19 @@ export function toPracticeSession(row: any): PracticeSession {
   };
 }
 
-/** Map a user_challenges row (with joined challenges + hobbies) to Challenge */
+/** Map a user_challenges row (with joined challenges) to Challenge */
 export function toChallenge(row: any): Challenge {
   const ch = row.challenges ?? {};
-  const hobby = ch.hobbies ?? {};
+  const slug = ch.hobby_slug ?? "";
+  const meta = hobbyMeta[slug] ?? { name: formatSlug(slug), color: "#B8A9E8", lightColor: "#E8E2F7" };
 
   return {
     id: row.id,
-    hobbySlug: hobby.slug ?? "",
-    hobbyName: hobby.name ?? "",
-    hobbyColor: hobby.color ?? "#888",
+    hobbySlug: slug,
+    hobbyName: meta.name,
+    hobbyColor: meta.color,
     title: ch.title ?? "",
     description: ch.description ?? "",
-    whyThisChallenge: ch.why_this_challenge ?? "",
     skills: ch.skills ?? [],
     difficulty: ch.difficulty ?? "easy",
     estimatedTime: ch.estimated_time ?? "",
@@ -79,26 +82,25 @@ export function toChallenge(row: any): Challenge {
 export function toMilestone(row: any): Milestone {
   return {
     id: row.id,
+    slug: row.slug ?? "",
     title: row.title ?? "",
     description: row.description ?? "",
-    icon: row.icon ?? "",
     earned: !!row.earned,
     earnedDate: row.earnedDate ?? null,
   };
 }
 
-/** Map a user_roadmaps row (with joined roadmaps + hobbies) to Roadmap */
-export function toRoadmap(row: any, hobbies: any[]): Roadmap {
+/** Map a user_roadmaps row (with joined roadmaps) to Roadmap */
+export function toRoadmap(row: any): Roadmap {
   const roadmap = row.roadmaps ?? {};
   const hobbySlug = row.hobby_slug ?? "";
-  const hobby = hobbies.find((h: any) => (h.hobbies?.slug ?? h.slug) === hobbySlug);
-  const hobbyData = hobby?.hobbies ?? hobby ?? {};
+  const meta = hobbyMeta[hobbySlug] ?? { name: formatSlug(hobbySlug), color: "#B8A9E8", lightColor: "#E8E2F7" };
 
   return {
     id: roadmap.id ?? row.roadmap_id ?? "",
     hobbySlug,
-    hobbyName: hobbyData.name ?? hobbySlug,
-    hobbyColor: hobbyData.color ?? "#888",
+    hobbyName: meta.name,
+    hobbyColor: meta.color,
     title: roadmap.title ?? "",
     description: roadmap.description ?? "",
     phases: roadmap.phases ?? [],

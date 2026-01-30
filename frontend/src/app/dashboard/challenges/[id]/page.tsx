@@ -91,7 +91,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
 
   const handleLogAndComplete = async (data: SessionFormData) => {
     const hobbiesRes = await getUserHobbies();
-    const userHobby = hobbiesRes.data?.find((uh: any) => uh.hobbies?.slug === data.hobbySlug);
+    const userHobby = hobbiesRes.data?.find((uh: any) => uh.hobby_slug === data.hobbySlug);
     if (userHobby) {
       await createSession({
         userHobbyId: userHobby.id,
@@ -150,11 +150,6 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
               )}
             </div>
           </div>
-        </motion.div>
-
-        <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-2">Why This Challenge?</h2>
-          <p className="text-sm text-gray-600 leading-relaxed">{challenge.whyThisChallenge}</p>
         </motion.div>
 
         <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">

@@ -15,21 +15,10 @@ export interface UserPreferences {
   learning_style: 'visual' | 'hands-on' | 'reading' | 'video';
 }
 
-export interface Hobby {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  difficulty_level: 'beginner' | 'intermediate' | 'advanced';
-  time_commitment: 'quick' | 'moderate' | 'intensive';
-  cost_range: 'free' | 'low' | 'medium' | 'high';
-  image_url: string;
-}
-
 export interface UserHobby {
   id: string;
   user_id: string;
-  hobby_id: string;
+  hobby_slug: string;
   status: 'sampling' | 'active' | 'paused' | 'completed';
   started_at: Date;
   current_streak: number;
@@ -51,17 +40,9 @@ export interface Challenge {
   title: string;
   description: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  hobby_id: string;
+  hobby_slug: string;
   skills_targeted: string[];
   estimated_time: number; // in minutes
 }
 
 export type EmotionalRating = 'loved_it' | 'satisfying' | 'okay' | 'frustrated' | 'discouraged';
-
-export interface HobbyCategory {
-  id: string;
-  name: string;
-  description: string;
-  hobbies: string[];
-  image_url: string;
-}

@@ -22,11 +22,11 @@ function cacheMatches(cards: MatchCard[]) {
 }
 
 function dbMatchToCard(row: HobbyMatchRow): MatchCard {
-  const slug = row.hobbies?.slug ?? "";
+  const slug = row.hobby_slug ?? "";
   const meta = hobbyMeta[slug];
   return {
     slug,
-    name: meta?.name ?? row.hobbies?.name ?? slug,
+    name: meta?.name ?? slug,
     tagline: row.reasoning || "A great match based on your quiz answers!",
     matchPercent: row.match_percentage,
     color: meta?.color ?? "#B8A9E8",

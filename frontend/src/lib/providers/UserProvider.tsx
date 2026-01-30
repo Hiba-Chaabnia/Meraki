@@ -6,12 +6,10 @@ import type { User } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-type Settings = Database["public"]["Tables"]["user_settings"]["Row"];
 
 interface UserContextValue {
   user: User | null;
   profile: Profile | null;
-  settings: Settings | null;
   isLoading: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -20,7 +18,6 @@ interface UserContextValue {
 const UserContext = createContext<UserContextValue>({
   user: null,
   profile: null,
-  settings: null,
   isLoading: true,
   refreshProfile: async () => {},
   signOut: async () => {},
@@ -29,19 +26,14 @@ const UserContext = createContext<UserContextValue>({
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [settings, setSettings] = useState<Settings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const supabase = useMemo(() => createClient(), []);
 
   const fetchProfile = useCallback(
     async (userId: string) => {
-      const [profileRes, settingsRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", userId).single(),
-        supabase.from("user_settings").select("*").eq("id", userId).single(),
-      ]);
-      setProfile(profileRes.data);
-      setSettings(settingsRes.data);
+      const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
+      setProfile(data);
     },
     [supabase],
   );
@@ -54,7 +46,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
-    setSettings(null);
   }, [supabase]);
 
   useEffect(() => {
@@ -77,7 +68,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         await fetchProfile(newUser.id);
       } else {
         setProfile(null);
-        setSettings(null);
       }
     });
 
@@ -86,7 +76,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UserContext.Provider
-      value={{ user, profile, settings, isLoading, refreshProfile, signOut }}
+      value={{ user, profile, isLoading, refreshProfile, signOut }}
     >
       {children}
     </UserContext.Provider>

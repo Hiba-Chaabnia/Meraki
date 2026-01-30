@@ -81,7 +81,6 @@ class PracticeFeedbackOutput(BaseModel):
 class GeneratedChallenge(BaseModel):
     title: str
     description: str
-    why_this_challenge: str
     skills: list[str]
     difficulty: str
     estimated_time: str

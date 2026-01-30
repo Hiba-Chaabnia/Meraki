@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useUser } from "@/lib/hooks/useUser";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { updateSettings, changePassword, exportUserData, deleteAccount } from "@/app/actions/settings";
+import { updatePublicProfile, changePassword, exportUserData, deleteAccount } from "@/app/actions/settings";
 
 /* ─── Icons ─── */
 const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
@@ -52,13 +52,8 @@ function ToggleSwitch({
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, settings, refreshProfile } = useUser();
+  const { user, profile, refreshProfile } = useUser();
 
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
-  const [streakReminders, setStreakReminders] = useState(true);
-  const [challengeAlerts, setChallengeAlerts] = useState(true);
-  const [weeklyDigest, setWeeklyDigest] = useState(true);
   const [publicProfile, setPublicProfile] = useState(false);
 
   // Dialogs
@@ -68,25 +63,16 @@ export default function SettingsPage() {
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  // Sync from server settings
   useEffect(() => {
-    if (settings) {
-      setEmailNotifications(settings.email_notifications ?? true);
-      setPushNotifications(settings.push_notifications ?? false);
-      setStreakReminders(settings.streak_reminders ?? true);
-      setChallengeAlerts(settings.challenge_alerts ?? true);
-      setWeeklyDigest(settings.weekly_digest ?? true);
-      setPublicProfile(settings.public_profile ?? false);
+    if (profile) {
+      setPublicProfile(profile.public_profile ?? false);
     }
-  }, [settings]);
+  }, [profile]);
 
-  const handleToggle = async (
-    field: string,
-    value: boolean,
-    setter: (v: boolean) => void,
-  ) => {
-    setter(value);
-    await updateSettings({ [field]: value });
+  const handleTogglePublicProfile = async (value: boolean) => {
+    setPublicProfile(value);
+    await updatePublicProfile(value);
+    await refreshProfile();
   };
 
   const handleChangePassword = async () => {
@@ -238,118 +224,6 @@ export default function SettingsPage() {
           </motion.div>
         )}
 
-        {/* Notifications */}
-        <motion.div
-          variants={fadeUp}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
-        >
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-5">
-            Notifications
-          </h2>
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  Email Notifications
-                </p>
-                <p className="text-xs text-gray-400">
-                  Receive updates via email
-                </p>
-              </div>
-              <ToggleSwitch
-                enabled={emailNotifications}
-                onToggle={() =>
-                  handleToggle(
-                    "email_notifications",
-                    !emailNotifications,
-                    setEmailNotifications,
-                  )
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  Push Notifications
-                </p>
-                <p className="text-xs text-gray-400">
-                  Browser push notifications
-                </p>
-              </div>
-              <ToggleSwitch
-                enabled={pushNotifications}
-                onToggle={() =>
-                  handleToggle(
-                    "push_notifications",
-                    !pushNotifications,
-                    setPushNotifications,
-                  )
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  Streak Reminders
-                </p>
-                <p className="text-xs text-gray-400">
-                  Daily reminder to keep your streak alive
-                </p>
-              </div>
-              <ToggleSwitch
-                enabled={streakReminders}
-                onToggle={() =>
-                  handleToggle(
-                    "streak_reminders",
-                    !streakReminders,
-                    setStreakReminders,
-                  )
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  Challenge Alerts
-                </p>
-                <p className="text-xs text-gray-400">
-                  Notify when new challenges are available
-                </p>
-              </div>
-              <ToggleSwitch
-                enabled={challengeAlerts}
-                onToggle={() =>
-                  handleToggle(
-                    "challenge_alerts",
-                    !challengeAlerts,
-                    setChallengeAlerts,
-                  )
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  Weekly Digest
-                </p>
-                <p className="text-xs text-gray-400">
-                  Summary of your weekly progress
-                </p>
-              </div>
-              <ToggleSwitch
-                enabled={weeklyDigest}
-                onToggle={() =>
-                  handleToggle(
-                    "weekly_digest",
-                    !weeklyDigest,
-                    setWeeklyDigest,
-                  )
-                }
-              />
-            </div>
-          </div>
-        </motion.div>
-
         {/* Privacy */}
         <motion.div
           variants={fadeUp}
@@ -370,13 +244,7 @@ export default function SettingsPage() {
               </div>
               <ToggleSwitch
                 enabled={publicProfile}
-                onToggle={() =>
-                  handleToggle(
-                    "public_profile",
-                    !publicProfile,
-                    setPublicProfile,
-                  )
-                }
+                onToggle={() => handleTogglePublicProfile(!publicProfile)}
               />
             </div>
           </div>

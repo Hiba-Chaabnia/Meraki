@@ -21,8 +21,7 @@ export async function getActiveNudge(): Promise<{
   if ("error" in auth) return auth;
   const { supabase, user } = auth;
 
-  // nudges table is new — not in generated types yet, cast to any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("nudges")
     .select("id, nudge_type, message, suggested_action, action_data, urgency")
     .eq("user_id", user.id)
@@ -41,7 +40,7 @@ export async function dismissNudge(nudgeId: string): Promise<{ error?: string }>
   if ("error" in auth) return auth;
   const { supabase, user } = auth;
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("nudges")
     .update({ acted_on: true })
     .eq("id", nudgeId)

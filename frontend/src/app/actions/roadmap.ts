@@ -77,16 +77,12 @@ export async function pollRoadmapStatus(
   }
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Note: user_roadmaps and roadmaps tables are new (migration 008).
-// Supabase generated types don't include them yet. Using `any` casts until types are regenerated.
-
 export async function getUserRoadmap(hobbySlug: string) {
   const auth = await requireAuth();
   if ("error" in auth) return auth;
   const { supabase, user } = auth;
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("user_roadmaps")
     .select("*, roadmaps(*)")
     .eq("user_id", user.id)
@@ -104,7 +100,7 @@ export async function getUserRoadmaps() {
   if ("error" in auth) return auth;
   const { supabase, user } = auth;
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("user_roadmaps")
     .select("*, roadmaps(*)")
     .eq("user_id", user.id)
@@ -119,7 +115,7 @@ export async function advanceRoadmapPhase(userRoadmapId: string) {
   if ("error" in auth) return auth;
   const { supabase, user } = auth;
 
-  const { data: current, error: getErr } = await (supabase as any)
+  const { data: current, error: getErr } = await supabase
     .from("user_roadmaps")
     .select("current_phase, roadmaps(total_phases)")
     .eq("id", userRoadmapId)
@@ -132,7 +128,7 @@ export async function advanceRoadmapPhase(userRoadmapId: string) {
   const nextPhase = (current.current_phase ?? 0) + 1;
   if (nextPhase >= totalPhases) return { error: "Already at final phase" };
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("user_roadmaps")
     .update({ current_phase: nextPhase, updated_at: new Date().toISOString() })
     .eq("id", userRoadmapId)

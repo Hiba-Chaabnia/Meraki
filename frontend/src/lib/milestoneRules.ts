@@ -27,9 +27,9 @@ export const milestoneRules: MilestoneRule[] = [
   {
     slug: "building-momentum",
     title: "Building Momentum",
-    description: "Maintain a 7-day practice streak",
+    description: "Complete 7 practice sessions",
     icon: "fire",
-    check: (s) => s.longestStreak >= 7,
+    check: (s) => s.totalSessions >= 7,
   },
   {
     slug: "challenge-champion",
@@ -54,7 +54,7 @@ export const milestoneRules: MilestoneRule[] = [
   },
   {
     slug: "consistency-king",
-    title: "Consistency King",
+    title: "Consistency Legend",
     description: "Maintain a 30-day practice streak",
     icon: "crown",
     check: (s) => s.longestStreak >= 30,

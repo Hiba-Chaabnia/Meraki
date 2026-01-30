@@ -6,27 +6,12 @@ function sanitize(value: string): string {
   return value.replace(/<[^>]*>/g, "").trim();
 }
 
-export async function getProfile() {
-  const auth = await requireAuth();
-  if ("error" in auth) return auth;
-  const { supabase, user } = auth;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (error) return { error: error.message };
-  return { data };
-}
-
 export async function updateProfile(updates: {
   full_name?: string;
   bio?: string;
   location?: string;
-  pronouns?: string;
   avatar_url?: string | null;
+  public_profile?: boolean;
 }) {
   if (updates.full_name !== undefined && updates.full_name.length > 100)
     return { error: "Full name must be 100 characters or fewer." };
@@ -34,15 +19,12 @@ export async function updateProfile(updates: {
     return { error: "Bio must be 500 characters or fewer." };
   if (updates.location !== undefined && updates.location.length > 100)
     return { error: "Location must be 100 characters or fewer." };
-  if (updates.pronouns !== undefined && updates.pronouns.length > 50)
-    return { error: "Pronouns must be 50 characters or fewer." };
 
   const sanitized = {
     ...updates,
     ...(updates.full_name !== undefined && { full_name: sanitize(updates.full_name) }),
     ...(updates.bio !== undefined && { bio: sanitize(updates.bio) }),
     ...(updates.location !== undefined && { location: sanitize(updates.location) }),
-    ...(updates.pronouns !== undefined && { pronouns: sanitize(updates.pronouns) }),
   };
 
   const auth = await requireAuth();

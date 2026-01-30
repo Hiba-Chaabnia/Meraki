@@ -11,7 +11,7 @@ export async function getUserChallenges() {
 
   const { data, error } = await supabase
     .from("user_challenges")
-    .select("*, challenges(*, hobbies(*))")
+    .select("*, challenges(*)")
     .eq("user_id", user.id)
     .order("started_at", { ascending: false });
 
@@ -26,7 +26,7 @@ export async function getChallengeById(id: string) {
 
   const { data, error } = await supabase
     .from("user_challenges")
-    .select("*, challenges(*, hobbies(*))")
+    .select("*, challenges(*)")
     .eq("id", id)
     .eq("user_id", user.id)
     .single();

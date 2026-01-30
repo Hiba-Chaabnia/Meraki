@@ -7,6 +7,7 @@ import { getUserStats, getHeatmapData, getUserMilestones } from "@/app/actions/s
 import { getUserHobbies } from "@/app/actions/hobbies";
 import { getSessions } from "@/app/actions/sessions";
 import { toUserStats, toActiveHobby, toPracticeSession, toMilestone } from "@/lib/transformData";
+import { milestoneRules } from "@/lib/milestoneRules";
 import { moodEmojis } from "@/lib/dashboardData";
 import type { UserStats, ActiveHobby, PracticeSession, Milestone } from "@/lib/dashboardData";
 
@@ -198,7 +199,7 @@ export default function ProgressPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {earnedMilestones.map((m) => (
               <motion.div key={m.id} variants={fadeUp} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-                <span className="text-3xl block mb-2">{m.icon}</span>
+                <span className="text-3xl block mb-2">{milestoneRules.find((r) => r.slug === m.slug)?.icon ?? "🏅"}</span>
                 <p className="text-sm font-semibold text-gray-800">{m.title}</p>
                 <p className="text-[10px] text-gray-400 mt-0.5">{m.description}</p>
                 {m.earnedDate && (
@@ -219,7 +220,7 @@ export default function ProgressPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {unearnedMilestones.map((m) => (
                 <motion.div key={m.id} variants={fadeUp} className="bg-gray-50 rounded-2xl border border-gray-100 p-4 text-center opacity-60">
-                  <span className="text-3xl block mb-2 grayscale">{m.icon}</span>
+                  <span className="text-3xl block mb-2 grayscale">{milestoneRules.find((r) => r.slug === m.slug)?.icon ?? "🏅"}</span>
                   <p className="text-sm font-semibold text-gray-500">{m.title}</p>
                   <p className="text-[10px] text-gray-400 mt-0.5">{m.description}</p>
                 </motion.div>

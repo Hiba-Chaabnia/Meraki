@@ -55,7 +55,7 @@ export default function PrivacyPage() {
                                 <strong>Account Information:</strong> Email address, full name, password (encrypted)
                             </li>
                             <li>
-                                <strong>Profile Information:</strong> Bio, location, pronouns, avatar image
+                                <strong>Profile Information:</strong> Bio, location, avatar image
                             </li>
                             <li>
                                 <strong>Quiz Responses:</strong> Answers to our 23-question personality quiz about your preferences,

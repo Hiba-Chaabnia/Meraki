@@ -39,25 +39,14 @@ export async function saveHobbyMatches(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  // Look up hobby UUIDs from slugs
-  const slugs = matches.map((m) => m.hobbySlug);
-  const { data: hobbies, error: lookupError } = await supabase
-    .from("hobbies")
-    .select("id, slug")
-    .in("slug", slugs);
-  if (lookupError) return { error: lookupError.message };
-
-  const slugToId: Record<string, string> = {};
-  hobbies?.forEach((h) => { slugToId[h.slug] = h.id; });
-
   // Delete previous matches for this user
   await supabase.from("hobby_matches").delete().eq("user_id", user.id);
 
   const rows = matches
-    .filter((m) => slugToId[m.hobbySlug])
+    .filter((m) => m.hobbySlug)
     .map((m) => ({
       user_id: user.id,
-      hobby_id: slugToId[m.hobbySlug],
+      hobby_slug: m.hobbySlug,
       match_percentage: m.matchPercentage,
       match_tags: m.matchTags ?? [],
       reasoning: m.reasoning ?? "",
@@ -95,7 +84,7 @@ export async function getHobbyMatches() {
 
   const { data, error } = await supabase
     .from("hobby_matches")
-    .select("*, hobbies(*)")
+    .select("*")
     .eq("user_id", user.id)
     .order("match_percentage", { ascending: false });
 

@@ -27,8 +27,8 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
         getUserRoadmaps(),
         getUserHobbies(),
       ]);
-      if (roadmapsRes.data && hobbiesRes.data) {
-        const all = roadmapsRes.data.map((r: any) => toRoadmap(r, hobbiesRes.data));
+      if (roadmapsRes.data) {
+        const all = roadmapsRes.data.map((r: any) => toRoadmap(r));
         const found = all.find((r: Roadmap) => r.userRoadmapId === id);
         if (found) setRoadmap(found);
       }

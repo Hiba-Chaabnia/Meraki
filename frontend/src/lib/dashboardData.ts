@@ -64,7 +64,6 @@ export interface Challenge {
   hobbyColor: string;
   title: string;
   description: string;
-  whyThisChallenge: string;
   skills: string[];
   difficulty: ChallengeDifficulty;
   estimatedTime: string;
@@ -91,11 +90,11 @@ export type StreakDay = "practiced" | "thought" | "none";
 /* ─── Milestones ─── */
 export interface Milestone {
   id: string;
+  slug: string;
   title: string;
   description: string;
   earned: boolean;
   earnedDate: string | null;
-  icon: string;
 }
 
 /* ─── Roadmap ─── */

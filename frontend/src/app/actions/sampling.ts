@@ -382,26 +382,15 @@ export async function completeSampling(hobbySlug: string) {
   if ("error" in auth) return auth;
   const { supabase, user } = auth;
 
-  // Find the hobby by slug
-  const { data: hobby, error: hobbyError } = await supabase
-    .from("hobbies")
-    .select("id")
-    .eq("slug", hobbySlug)
-    .single();
-
-  if (hobbyError || !hobby) return { error: "Hobby not found" };
-
-  // Upsert into user_hobbies with "active" status
   const { data, error } = await supabase
     .from("user_hobbies")
     .upsert(
       {
         user_id: user.id,
-        hobby_id: hobby.id,
+        hobby_slug: hobbySlug,
         status: "active" as const,
-        updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id,hobby_id" },
+      { onConflict: "user_id,hobby_slug" },
     )
     .select()
     .single();

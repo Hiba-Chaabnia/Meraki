@@ -51,14 +51,14 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
 
       if (hobbiesRes.data) {
         const matched = hobbiesRes.data.find(
-          (h: any) => h.hobbies?.slug === slug
+          (h: any) => h.hobby_slug === slug
         );
         if (matched) setHobby(toActiveHobby(matched));
       }
 
       if (sessionsRes.data) {
         const hobbySessions = sessionsRes.data
-          .filter((s: any) => s.user_hobbies?.hobbies?.slug === slug)
+          .filter((s: any) => s.user_hobbies?.hobby_slug === slug)
           .map(toPracticeSession);
         setSessions(hobbySessions);
 
@@ -74,13 +74,13 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
 
       if (challengesRes.data) {
         const hobbyChallenges = challengesRes.data
-          .filter((c: any) => c.challenges?.hobbies?.slug === slug)
+          .filter((c: any) => c.challenges?.hobby_slug === slug)
           .map(toChallenge);
         setChallenges(hobbyChallenges);
       }
 
-      if (roadmapRes.data && hobbiesRes.data) {
-        setRoadmap(toRoadmap(roadmapRes.data, hobbiesRes.data));
+      if (roadmapRes.data) {
+        setRoadmap(toRoadmap(roadmapRes.data));
       }
     } catch (e) {
       console.error("Failed to load hobby page:", e);

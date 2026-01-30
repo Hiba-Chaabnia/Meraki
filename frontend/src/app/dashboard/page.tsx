@@ -114,8 +114,8 @@ export default function DashboardPage() {
       if (sessionsRes.data) setSessions(sessionsRes.data.map(toPracticeSession));
       if (challengesRes.data) setChallenges(challengesRes.data.map(toChallenge));
       if (nudgeRes.data) setNudge(nudgeRes.data);
-      if (roadmapsRes.data && hobbiesRes.data) {
-        setRoadmaps(roadmapsRes.data.map((r: any) => toRoadmap(r, hobbiesRes.data)));
+      if (roadmapsRes.data) {
+        setRoadmaps(roadmapsRes.data.map((r: any) => toRoadmap(r)));
       }
 
       // Background: trigger motivation check for inactive hobbies
@@ -127,7 +127,7 @@ export default function DashboardPage() {
             (Date.now() - new Date(lastSession.created_at).getTime()) / 86_400_000
           );
           if (daysSince >= 3) {
-            const slug = actives[0].hobbies?.slug;
+            const slug = actives[0].hobby_slug;
             if (slug) {
               triggerMotivationCheck(slug).catch((e) =>
                 console.error("[Dashboard] Motivation check failed:", e)

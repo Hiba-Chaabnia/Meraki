@@ -16,174 +16,57 @@ export interface Database {
           avatar_url: string | null;
           bio: string;
           location: string;
-          pronouns: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          full_name?: string;
-          avatar_url?: string | null;
-          bio?: string;
-          location?: string;
-          pronouns?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          full_name?: string;
-          avatar_url?: string | null;
-          bio?: string;
-          location?: string;
-          pronouns?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      user_settings: {
-        Row: {
-          id: string;
-          email_notifications: boolean;
-          push_notifications: boolean;
-          streak_reminders: boolean;
-          challenge_alerts: boolean;
-          weekly_digest: boolean;
           public_profile: boolean;
+          created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
-          email_notifications?: boolean;
-          push_notifications?: boolean;
-          streak_reminders?: boolean;
-          challenge_alerts?: boolean;
-          weekly_digest?: boolean;
+          full_name?: string;
+          avatar_url?: string | null;
+          bio?: string;
+          location?: string;
           public_profile?: boolean;
+          created_at?: string;
           updated_at?: string;
         };
         Update: {
-          email_notifications?: boolean;
-          push_notifications?: boolean;
-          streak_reminders?: boolean;
-          challenge_alerts?: boolean;
-          weekly_digest?: boolean;
+          id?: string;
+          full_name?: string;
+          avatar_url?: string | null;
+          bio?: string;
+          location?: string;
           public_profile?: boolean;
           updated_at?: string;
         };
         Relationships: [];
-      };
-      hobby_categories: {
-        Row: {
-          id: string;
-          name: string;
-          description: string;
-          image_url: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          description?: string;
-          image_url?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          name?: string;
-          description?: string;
-          image_url?: string | null;
-        };
-        Relationships: [];
-      };
-      hobbies: {
-        Row: {
-          id: string;
-          slug: string;
-          name: string;
-          category_id: string | null;
-          description: string;
-          difficulty_level: "beginner" | "intermediate" | "advanced";
-          time_commitment: "quick" | "moderate" | "intensive";
-          cost_range: "free" | "low" | "medium" | "high";
-          color: string;
-          light_color: string;
-          image_url: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          slug: string;
-          name: string;
-          category_id?: string | null;
-          description?: string;
-          difficulty_level?: "beginner" | "intermediate" | "advanced";
-          time_commitment?: "quick" | "moderate" | "intensive";
-          cost_range?: "free" | "low" | "medium" | "high";
-          color?: string;
-          light_color?: string;
-          image_url?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          slug?: string;
-          name?: string;
-          category_id?: string | null;
-          description?: string;
-          difficulty_level?: "beginner" | "intermediate" | "advanced";
-          time_commitment?: "quick" | "moderate" | "intensive";
-          cost_range?: "free" | "low" | "medium" | "high";
-          color?: string;
-          light_color?: string;
-          image_url?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "hobbies_category_id_fkey";
-            columns: ["category_id"];
-            isOneToOne: false;
-            referencedRelation: "hobby_categories";
-            referencedColumns: ["id"];
-          },
-        ];
       };
       user_hobbies: {
         Row: {
           id: string;
           user_id: string;
-          hobby_id: string;
+          hobby_slug: string;
           status: "sampling" | "active" | "paused" | "completed";
           started_at: string;
-          updated_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          hobby_id: string;
+          hobby_slug: string;
           status?: "sampling" | "active" | "paused" | "completed";
           started_at?: string;
-          updated_at?: string;
         };
         Update: {
           status?: "sampling" | "active" | "paused" | "completed";
-          updated_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "user_hobbies_hobby_id_fkey";
-            columns: ["hobby_id"];
-            isOneToOne: false;
-            referencedRelation: "hobbies";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
       challenges: {
         Row: {
           id: string;
-          hobby_id: string;
+          hobby_slug: string;
           title: string;
           description: string;
-          why_this_challenge: string;
           skills: string[];
           difficulty: "easy" | "medium" | "hard" | "stretch";
           estimated_time: string;
@@ -193,10 +76,9 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          hobby_id: string;
+          hobby_slug: string;
           title: string;
           description: string;
-          why_this_challenge?: string;
           skills?: string[];
           difficulty?: "easy" | "medium" | "hard" | "stretch";
           estimated_time?: string;
@@ -205,25 +87,16 @@ export interface Database {
           created_at?: string;
         };
         Update: {
-          hobby_id?: string;
+          hobby_slug?: string;
           title?: string;
           description?: string;
-          why_this_challenge?: string;
           skills?: string[];
           difficulty?: "easy" | "medium" | "hard" | "stretch";
           estimated_time?: string;
           tips?: string[];
           what_youll_learn?: string[];
         };
-        Relationships: [
-          {
-            foreignKeyName: "challenges_hobby_id_fkey";
-            columns: ["hobby_id"];
-            isOneToOne: false;
-            referencedRelation: "hobbies";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
       user_challenges: {
         Row: {
@@ -348,8 +221,6 @@ export interface Database {
           slug: string;
           title: string;
           description: string;
-          icon: string;
-          criteria: Json;
           created_at: string;
         };
         Insert: {
@@ -357,16 +228,12 @@ export interface Database {
           slug: string;
           title: string;
           description: string;
-          icon: string;
-          criteria?: Json;
           created_at?: string;
         };
         Update: {
           slug?: string;
           title?: string;
           description?: string;
-          icon?: string;
-          criteria?: Json;
         };
         Relationships: [];
       };
@@ -420,7 +287,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          hobby_id: string;
+          hobby_slug: string;
           match_percentage: number;
           match_tags: string[];
           reasoning: string;
@@ -429,7 +296,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          hobby_id: string;
+          hobby_slug: string;
           match_percentage: number;
           match_tags?: string[];
           reasoning?: string;
@@ -440,15 +307,7 @@ export interface Database {
           match_tags?: string[];
           reasoning?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "hobby_matches_hobby_id_fkey";
-            columns: ["hobby_id"];
-            isOneToOne: false;
-            referencedRelation: "hobbies";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
       sampling_results: {
         Row: {
@@ -496,6 +355,102 @@ export interface Database {
           created_at?: string;
         };
         Relationships: [];
+      };
+      nudges: {
+        Row: {
+          id: string;
+          user_id: string;
+          hobby_slug: string | null;
+          nudge_type: string;
+          message: string;
+          suggested_action: string;
+          action_data: string | null;
+          urgency: "gentle" | "check_in" | "re_engage";
+          acted_on: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          hobby_slug?: string | null;
+          nudge_type?: string;
+          message?: string;
+          suggested_action?: string;
+          action_data?: string | null;
+          urgency?: "gentle" | "check_in" | "re_engage";
+          acted_on?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          acted_on?: boolean;
+          hobby_slug?: string | null;
+          nudge_type?: string;
+          message?: string;
+          suggested_action?: string;
+          action_data?: string | null;
+          urgency?: "gentle" | "check_in" | "re_engage";
+        };
+        Relationships: [];
+      };
+      roadmaps: {
+        Row: {
+          id: string;
+          hobby_slug: string;
+          title: string;
+          description: string;
+          phases: Json;
+          total_phases: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          hobby_slug: string;
+          title?: string;
+          description?: string;
+          phases?: Json;
+          total_phases?: number;
+          created_at?: string;
+        };
+        Update: {
+          title?: string;
+          description?: string;
+          phases?: Json;
+          total_phases?: number;
+        };
+        Relationships: [];
+      };
+      user_roadmaps: {
+        Row: {
+          id: string;
+          user_id: string;
+          roadmap_id: string;
+          hobby_slug: string;
+          current_phase: number;
+          started_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          roadmap_id: string;
+          hobby_slug?: string;
+          current_phase?: number;
+          started_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          current_phase?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_roadmaps_roadmap_id_fkey";
+            columns: ["roadmap_id"];
+            isOneToOne: false;
+            referencedRelation: "roadmaps";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {

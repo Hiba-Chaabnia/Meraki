@@ -9,6 +9,7 @@ import { updateProfile } from "@/app/actions/profile";
 import { getUserStats, getUserMilestones } from "@/app/actions/stats";
 import { getUserHobbies } from "@/app/actions/hobbies";
 import { toUserStats, toActiveHobby, toMilestone } from "@/lib/transformData";
+import { milestoneRules } from "@/lib/milestoneRules";
 import type { UserStats, ActiveHobby, Milestone } from "@/lib/dashboardData";
 
 /* ─── Icons ─── */
@@ -45,7 +46,6 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
-  const [pronouns, setPronouns] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [hobbies, setHobbies] = useState<ActiveHobby[]>([]);
@@ -56,7 +56,6 @@ export default function ProfilePage() {
       setName(profile.full_name || "");
       setBio(profile.bio || "");
       setLocation(profile.location || "");
-      setPronouns(profile.pronouns || "");
     }
   }, [profile]);
 
@@ -105,7 +104,7 @@ export default function ProfilePage() {
   const initial = (name || "U").charAt(0).toUpperCase();
 
   const handleSave = async () => {
-    await updateProfile({ full_name: name, bio, location, pronouns });
+    await updateProfile({ full_name: name, bio, location });
     await refreshProfile();
     setEditing(false);
   };
@@ -157,12 +156,6 @@ export default function ProfilePage() {
                   className="w-full text-center text-xl font-bold border-b-2 border-[var(--secondary)] bg-transparent outline-none py-1"
                   placeholder="Your name"
                 />
-                <input
-                  value={pronouns}
-                  onChange={(e) => setPronouns(e.target.value)}
-                  className="w-full text-center text-sm text-gray-500 border-b border-gray-200 bg-transparent outline-none py-1"
-                  placeholder="Pronouns"
-                />
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
@@ -199,7 +192,6 @@ export default function ProfilePage() {
                 exit={{ opacity: 0 }}
               >
                 <h1 className="!text-2xl mb-0.5">{name || "Your Name"}</h1>
-                {pronouns && <p className="text-sm text-gray-400 mb-1">{pronouns}</p>}
                 {bio && (
                   <p className="text-sm text-gray-500 max-w-xs mx-auto mb-2">{bio}</p>
                 )}
@@ -304,7 +296,7 @@ export default function ProfilePage() {
                   key={m.id}
                   className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 text-center"
                 >
-                  <span className="text-2xl block mb-1">{m.icon}</span>
+                  <span className="text-2xl block mb-1">{milestoneRules.find((r) => r.slug === m.slug)?.icon ?? "🏅"}</span>
                   <p className="text-[11px] font-semibold text-gray-700">
                     {m.title}
                   </p>

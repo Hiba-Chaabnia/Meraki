@@ -73,7 +73,7 @@ export async function getSessions() {
     .from("practice_sessions")
     .select(
       `*,
-       user_hobbies!inner(*, hobbies(*))`,
+       user_hobbies!inner(*)`,
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -93,7 +93,7 @@ export async function getSessionById(id: string) {
     .from("practice_sessions")
     .select(
       `*,
-       user_hobbies!inner(*, hobbies(*)),
+       user_hobbies!inner(*),
        user_challenges(*, challenges(*))`,
     )
     .eq("id", id)
