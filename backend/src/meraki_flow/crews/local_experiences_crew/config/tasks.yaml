@@ -13,7 +13,7 @@ find_local_experiences_task:
     Do NOT call either tool multiple times with different queries — each tool
     already handles query variation internally.
 
-    From the combined results, select the best options and focus on:
+    From the combined results, select the best options (maximum 6 total) and focus on:
     - Single-session experiences only (no multi-week commitments)
     - Beginner-friendly environments where first-timers are welcome
     - Free community events, meetups, or trial classes
@@ -27,12 +27,12 @@ find_local_experiences_task:
     Also prepare general beginner tips for this hobby: what to expect, what to
     wear, what to bring, and how to not feel awkward as a first-timer.
   expected_output: >
-    Return a JSON object with the following structure:
+    Return a JSON object with the following structure (local_spots must contain at most 6 items):
     {
       "local_spots": [
         {
           "name": "Venue or event name",
-          "type": "Workshop" | "Drop-in Class" | "Meetup" | "Open Studio" | "Studio" | "Community Event",
+          "type": MUST be exactly one of: "Workshop", "Drop-in Class", "Open Studio", "Community Meetup", "Trial Class", "Pop-up Event" — no combinations, no other values,
           "address": "Full address or 'Online event'",
           "rating": 4.5 (if available, null otherwise),
           "reviews_count": 123 (if available, null otherwise),

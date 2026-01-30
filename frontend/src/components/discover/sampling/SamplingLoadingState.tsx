@@ -1,14 +1,14 @@
 import { FlowerSpinner } from "@/components/ui/FlowerSpinner";
 
-interface VideoLoadingStateProps {
+interface SamplingLoadingStateProps {
   message?: string;
   submessage?: string;
 }
 
-export function VideoLoadingState({
-  message = "Finding the best videos for you...",
+export function SamplingLoadingState({
+  message = "Loading...",
   submessage = "This may take a moment",
-}: VideoLoadingStateProps) {
+}: SamplingLoadingStateProps) {
   return (
     <div>
       <FlowerSpinner size={48} className="mx-auto mb-4" />

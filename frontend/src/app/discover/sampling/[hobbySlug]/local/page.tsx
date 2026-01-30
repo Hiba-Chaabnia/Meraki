@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { formatSlug } from "@/lib/hobbyData";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -10,13 +11,18 @@ import { LocationModal } from "@/components/discover/sampling/local/LocationModa
 import { SpotCard } from "@/components/discover/sampling/local/SpotCard";
 import { SpotFilters } from "@/components/discover/sampling/local/SpotFilters";
 import { GeneralTips } from "@/components/discover/sampling/local/GeneralTips";
+import { SamplingCTA } from "@/components/discover/sampling/SamplingCTA";
+import { SamplingLoadingState } from "@/components/discover/sampling/SamplingLoadingState";
+import { SamplingErrorState } from "@/components/discover/sampling/SamplingErrorState";
 import { MapPinIcon } from "@/components/ui/Icons";
+import { addHobbyDirect } from "@/app/actions/hobbies";
 import type { FilterType } from "@/components/discover/sampling/local/types";
 
-const FILTERS: FilterType[] = ["All", "Workshop", "Studio", "Class", "Meetup", "Drop-in Class"];
+const FILTERS: FilterType[] = ["All", "Workshop", "Drop-in Class", "Open Studio", "Community Meetup", "Trial Class", "Pop-up Event"];
 
 type DevState = "auto" | "empty" | "loading" | "results" | "error";
 const DEV_STATES: DevState[] = ["auto", "empty", "loading", "results", "error"];
+
 
 export default function LocalPage({
   params,
@@ -27,6 +33,15 @@ export default function LocalPage({
   const hobbyName = formatSlug(hobbySlug);
   const [filter, setFilter] = useState<FilterType>("All");
   const [devState, setDevState] = useState<DevState>("auto");
+  const [committing, setCommitting] = useState(false);
+  const router = useRouter();
+
+  async function handleCommit() {
+    setCommitting(true);
+    const { error } = await addHobbyDirect(hobbySlug);
+    if (!error) router.push(`/dashboard/hobby/${hobbySlug}`);
+    setCommitting(false);
+  }
 
   const {
     location,
@@ -114,82 +129,113 @@ export default function LocalPage({
             </motion.div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4">
-            {locationSet && (
-              <div className="flex justify-end mb-4">
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1.5"
-                >
-                  <MapPinIcon className="w-4 h-4" />
-                  Change location
-                </button>
-              </div>
-            )}
-
+          <div className="flex-1 flex flex-col w-full px-4">
+            {/* Loading state */}
             {showLoading && (
-              <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6 flex items-center gap-4">
-                <div className="animate-spin w-5 h-5 border-2 border-gray-300 border-t-[var(--primary)] rounded-full flex-shrink-0" />
-                <p className="text-gray-500">
-                  Searching for {hobbyName.toLowerCase()} spots near {location}…
-                </p>
-              </div>
-            )}
-
-            {showError && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
-                <p className="text-amber-800 text-sm">
-                  {apiError ?? "Something went wrong. Please try again."}
-                </p>
-                <button
-                  onClick={() => fetchLocalExperiences(location)}
-                  className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[var(--primary)] transition-all hover:shadow-lg active:scale-95"
+              <div className="flex-1 flex items-center justify-center">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="text-center"
                 >
-                  Retry
-                </button>
+                  <SamplingLoadingState
+                    message={`Searching for ${hobbyName.toLowerCase()} spots near ${location}…`}
+                  />
+                </motion.div>
               </div>
             )}
 
+            {/* Error state */}
+            {showError && (
+              <div className="flex-1 flex items-center justify-center">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="text-center"
+                >
+                  <SamplingErrorState message={apiError ?? "Something went wrong. Please try again."}>
+                    <button
+                      onClick={() => fetchLocalExperiences(location)}
+                      className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-[var(--background)] bg-[var(--primary)] text-sm font-semibold transition-all hover:shadow-lg active:scale-95"
+                    >
+                      Try again
+                    </button>
+                  </SamplingErrorState>
+                </motion.div>
+              </div>
+            )}
+
+            {/* Results state — 2 rows */}
             {showResults && (
-              <>
-                {generalTips && <GeneralTips tips={generalTips} />}
-
-                <div className="mb-6">
+              <div className="flex-1 flex flex-col gap-4 min-h-0">
+                {/* Row 1: Filters left · Change location right */}
+                <div className="flex items-center justify-between gap-4 px-2 py-1 rounded">
                   <SpotFilters filters={FILTERS} active={filter} onChange={setFilter} />
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="text-sm text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1.5 flex-shrink-0"
+                  >
+                    <MapPinIcon className="w-4 h-4" />
+                    Change location
+                  </button>
                 </div>
 
-                <div className="space-y-4">
-                  {filteredSpots.map((spot, index) => (
-                    <SpotCard
-                      key={spot.name || index}
-                      spot={spot}
-                      theme={index % 2 === 0 ? THEME_PRIMARY : THEME_SECONDARY}
-                      index={index}
-                    />
-                  ))}
-                </div>
+                {/* Row 2: Spot cards (3×2 grid) · Tips + CTA */}
+                <div className="flex-1 grid grid-cols-[3fr_1fr] gap-6 min-h-0">
+                  {/* Left column — 6 spots in 3 cols × 2 rows */}
+                  <div className="p-2">
+                    {filteredSpots.length === 0 ? (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="text-center space-y-4 py-12">
+                          <MapPinIcon className="w-10 h-10 text-gray-200 mx-auto" />
+                          <p className="text-gray-400">
+                            {filter !== "All"
+                              ? `No ${filter.toLowerCase()} spots found. Try a different filter!`
+                              : "No spots found for this location."}
+                          </p>
+                          {filter === "All" && (
+                            <button
+                              onClick={() => fetchLocalExperiences(location)}
+                              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-[var(--primary)] transition-all hover:shadow-lg active:scale-95"
+                            >
+                              Retry Search
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-4">
+                        {filteredSpots.slice(0, 6).map((spot, index) => (
+                          <SpotCard
+                            key={spot.name || index}
+                            spot={spot}
+                            theme={index % 2 === 0 ? THEME_PRIMARY : THEME_SECONDARY}
+                            index={index}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-                {filteredSpots.length === 0 && (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center space-y-4 py-12">
-                      <MapPinIcon className="w-10 h-10 text-gray-200 mx-auto" />
-                      <p className="text-gray-400">
-                        {filter !== "All"
-                          ? `No ${filter.toLowerCase()} spots found. Try a different filter!`
-                          : "No spots found for this location."}
-                      </p>
-                      {filter === "All" && (
-                        <button
-                          onClick={() => fetchLocalExperiences(location)}
-                          className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-[var(--primary)] transition-all hover:shadow-lg active:scale-95"
-                        >
-                          Retry Search
-                        </button>
-                      )}
+                  {/* Right column — GeneralTips (flex-1) + SamplingCTA (bottom) */}
+                  <div className="p-2 flex flex-col gap-2 min-h-0">
+                    <div>
+                      {generalTips && <GeneralTips tips={generalTips} />}
+                    </div>
+                    <div className="flex-shrink-0">
+                      <SamplingCTA
+                        hobbySlug={hobbySlug}
+                        hobbyName={hobbyName}
+                        currentPath="local"
+                        onCommit={handleCommit}
+                        committing={committing}
+                      />
                     </div>
                   </div>
-                )}
-              </>
+                </div>
+              </div>
             )}
           </div>
         )}

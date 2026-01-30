@@ -22,10 +22,10 @@ export function SpotCard({ spot, theme, index }: SpotCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
-      className="rounded-2xl border p-6"
-      style={{ backgroundColor: "white", borderColor: theme.border }}
+      className="rounded-2xl border-2 border-green-400 p-6 flex flex-col"
+      style={{ backgroundColor: "white" }}
     >
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3 flex-1">
         {/* Row 1: Name + Type badge */}
         <div className="flex items-center justify-between gap-3">
           <p className="!text-base !font-semibold !tracking-normal !text-gray-800 min-w-0 truncate">
@@ -63,13 +63,13 @@ export function SpotCard({ spot, theme, index }: SpotCardProps) {
           </div>
         )}
 
-        {/* Row 4: Learn More button (full width) */}
+        {/* Row 4: Learn More button (full width, pinned to bottom) */}
         {learnMoreUrl ? (
           <a
             href={learnMoreUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg active:scale-95"
+            className="mt-auto flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg active:scale-95"
             style={{ backgroundColor: theme.accent, color: theme.textOnAccent ?? "#fff" }}
           >
             Learn More
@@ -77,7 +77,7 @@ export function SpotCard({ spot, theme, index }: SpotCardProps) {
           </a>
         ) : (
           <button
-            className="w-full px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg active:scale-95"
+            className="mt-auto w-full px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg active:scale-95"
             style={{ backgroundColor: theme.accent, color: theme.textOnAccent ?? "#fff" }}
           >
             Learn More

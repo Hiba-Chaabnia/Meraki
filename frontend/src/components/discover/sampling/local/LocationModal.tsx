@@ -45,7 +45,7 @@ export function LocationModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="relative bg-white rounded-3xl shadow-2xl p-8 md:p-10 max-w-md w-full z-10"
+            className="relative bg-white rounded-3xl shadow-2xl p-8 md:p-10 max-w-md w-full z-10 border-2 border-blue-500"
           >
             {/* Close button */}
             <button

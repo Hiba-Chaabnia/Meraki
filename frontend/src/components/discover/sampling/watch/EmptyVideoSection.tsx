@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { VideoLoadingState } from "./VideoLoadingState";
+import { SamplingLoadingState } from "@/components/discover/sampling/SamplingLoadingState";
 import { EmptyVideoState } from "./EmptyVideoState";
 import { SamplingCTA } from "@/components/discover/sampling/SamplingCTA";
 
@@ -29,7 +29,7 @@ export function EmptyVideoSection({
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         {loading ? (
-          <VideoLoadingState />
+          <SamplingLoadingState message="Finding the best videos for you..." />
         ) : (
           <EmptyVideoState hobbyName={hobbyName} />
         )}

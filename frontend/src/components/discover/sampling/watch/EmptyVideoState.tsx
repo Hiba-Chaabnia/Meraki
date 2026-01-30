@@ -1,3 +1,4 @@
+import { SamplingErrorState } from "@/components/discover/sampling/SamplingErrorState";
 import { ExternalLinkIcon } from "@/components/ui/Icons";
 
 interface EmptyVideoStateProps {
@@ -6,10 +7,7 @@ interface EmptyVideoStateProps {
 
 export function EmptyVideoState({ hobbyName }: EmptyVideoStateProps) {
   return (
-    <div>
-      <p className="text-gray-500 mb-3">
-        We couldn&apos;t load curated videos right now,<br /> but you can search YouTube directly:
-      </p>
+    <SamplingErrorState message="We couldn't load curated videos right now, but you can search YouTube directly:">
       <a
         href={`https://www.youtube.com/results?search_query=${encodeURIComponent(hobbyName + " beginner tutorial")}`}
         target="_blank"
@@ -19,6 +17,6 @@ export function EmptyVideoState({ hobbyName }: EmptyVideoStateProps) {
         &ldquo;{hobbyName} beginner tutorial&rdquo;
         <ExternalLinkIcon className="w-4 h-4" />
       </a>
-    </div>
+    </SamplingErrorState>
   );
 }

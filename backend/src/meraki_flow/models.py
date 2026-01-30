@@ -4,7 +4,8 @@ These models are used with CrewAI's `output_pydantic` parameter to enforce
 structured JSON output from LLM tasks, eliminating fragile regex/brace-counting parsing.
 """
 
-from pydantic import BaseModel
+from typing import Literal
+from pydantic import BaseModel, Field
 
 
 # --- Sampling Preview Models ---
@@ -40,9 +41,11 @@ class CuratedVideos(BaseModel):
 
 # --- Local Experiences Models ---
 
+SpotType = Literal["Workshop", "Drop-in Class", "Open Studio", "Community Meetup", "Trial Class", "Pop-up Event"]
+
 class LocalSpotModel(BaseModel):
     name: str
-    type: str
+    type: SpotType
     address: str = ""
     rating: float | None = None
     reviews_count: int | None = None
@@ -61,7 +64,7 @@ class GeneralTipsModel(BaseModel):
 
 
 class LocalExperiencesOutput(BaseModel):
-    local_spots: list[LocalSpotModel]
+    local_spots: list[LocalSpotModel] = Field(max_length=6)
     general_tips: GeneralTipsModel
     search_location: str = ""
     hobby: str = ""
