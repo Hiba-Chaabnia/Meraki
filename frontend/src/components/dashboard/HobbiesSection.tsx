@@ -11,9 +11,10 @@ interface HobbiesSectionProps {
   challenges: Challenge[];
   onAddHobby: () => void;
   onStatusChange?: () => void;
+  onLogHobby?: (slug: string) => void;
 }
 
-export function HobbiesSection({ hobbies, challenges, onAddHobby, onStatusChange }: HobbiesSectionProps) {
+export function HobbiesSection({ hobbies, challenges, onAddHobby, onStatusChange, onLogHobby }: HobbiesSectionProps) {
   return (
     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-6">
@@ -39,13 +40,18 @@ export function HobbiesSection({ hobbies, challenges, onAddHobby, onStatusChange
             const activeChallengeCount = challenges.filter(
               (c) => c.hobbySlug === h.slug && (c.status === "active" || c.status === "upcoming")
             ).length;
+            const activeChallenge = challenges.find(
+              (c) => c.hobbySlug === h.slug && c.status === "active"
+            ) ?? null;
             const theme = index % 2 === 0 ? THEME_PRIMARY : THEME_SECONDARY;
             return (
               <HobbyCard
                 key={h.slug}
                 hobby={h}
                 activeChallengeCount={activeChallengeCount}
+                activeChallenge={activeChallenge}
                 onStatusChange={onStatusChange}
+                onLog={() => onLogHobby?.(h.slug)}
                 theme={theme}
                 compact
               />

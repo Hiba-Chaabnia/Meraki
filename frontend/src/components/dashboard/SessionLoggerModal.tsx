@@ -12,6 +12,7 @@ interface SessionLoggerModalProps {
   onSave: (data: SessionFormData) => void;
   hobbies: ActiveHobby[];
   activeChallenges?: Challenge[];
+  initialHobbySlug?: string;
 }
 
 export interface SessionFormData {
@@ -22,10 +23,10 @@ export interface SessionFormData {
   imageUrl?: string;
 }
 
-export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeChallenges }: SessionLoggerModalProps) {
+export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeChallenges, initialHobbySlug }: SessionLoggerModalProps) {
   const [phase, setPhase] = useState<"form" | "saved">("form");
   const [sessionType, setSessionType] = useState<"practice" | "thought">("practice");
-  const [hobbySlug, setHobbySlug] = useState(hobbies[0]?.slug ?? "");
+  const [hobbySlug, setHobbySlug] = useState(initialHobbySlug ?? hobbies[0]?.slug ?? "");
   const [duration, setDuration] = useState(30);
   const [notes, setNotes] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -38,13 +39,18 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
   const reset = useCallback(() => {
     setPhase("form");
     setSessionType("practice");
-    setHobbySlug(hobbies[0]?.slug ?? "");
+    setHobbySlug(initialHobbySlug ?? hobbies[0]?.slug ?? "");
     setDuration(30);
     setNotes("");
     setImageFile(null);
     setImagePreview(null);
     setSaving(false);
-  }, [hobbies]);
+  }, [hobbies, initialHobbySlug]);
+
+  // Sync pre-selected hobby when modal opens
+  useEffect(() => {
+    if (isOpen) setHobbySlug(initialHobbySlug ?? hobbies[0]?.slug ?? "");
+  }, [isOpen, initialHobbySlug, hobbies]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

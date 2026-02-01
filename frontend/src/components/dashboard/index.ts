@@ -1,4 +1,6 @@
 export { DashboardNav } from "./DashboardNav";
+export { HobbiesSection } from "./HobbiesSection";
+export { LogPracticeFAB } from "./LogPracticeFAB";
 export { StreakDisplay } from "./StreakDisplay";
 export { ChallengeCard } from "./ChallengeCard";
 export { SessionLoggerModal } from "./SessionLoggerModal";

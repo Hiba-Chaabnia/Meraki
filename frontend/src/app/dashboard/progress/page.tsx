@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
+import { SessionLoggerModal, LogPracticeFAB } from "@/components/dashboard";
+import type { SessionFormData } from "@/components/dashboard";
 import { getUserStats, getHeatmapData, getUserMilestones } from "@/app/actions/stats";
 import { getUserHobbies } from "@/app/actions/hobbies";
-import { getSessions } from "@/app/actions/sessions";
+import { getSessions, createSession } from "@/app/actions/sessions";
+import { triggerPracticeFeedback } from "@/app/actions/feedback";
+import { checkAndAwardMilestones } from "@/app/actions/milestones";
 import { toUserStats, toActiveHobby, toPracticeSession, toMilestone } from "@/lib/transformData";
 import { milestoneRules } from "@/lib/milestoneRules";
 import { moodEmojis } from "@/lib/dashboardData";
@@ -68,22 +73,44 @@ export default function ProgressPage() {
   const [hobbies, setHobbies] = useState<ActiveHobby[]>([]);
   const [sessions, setSessions] = useState<PracticeSession[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loggerOpen, setLoggerOpen] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [statsRes, heatRes, hobbiesRes, sessionsRes, milestonesRes] = await Promise.all([
-          getUserStats(), getHeatmapData(), getUserHobbies(), getSessions(), getUserMilestones(),
-        ]);
-        if (statsRes.data) setStats(toUserStats(statsRes.data));
-        if (heatRes.data) setHeatmap(heatRes.data);
-        if (hobbiesRes.data) setHobbies(hobbiesRes.data.filter((h: any) => h.status === "active" || h.status === "paused").map(toActiveHobby));
-        if (sessionsRes.data) setSessions(sessionsRes.data.map(toPracticeSession));
-        if (milestonesRes.data) setMilestones(milestonesRes.data.map(toMilestone));
-      } catch (e) { console.error("Failed to load progress:", e); }
-      finally { setIsLoading(false); }
-    })();
+  const fetchData = useCallback(async () => {
+    try {
+      const [statsRes, heatRes, hobbiesRes, sessionsRes, milestonesRes] = await Promise.all([
+        getUserStats(), getHeatmapData(), getUserHobbies(), getSessions(), getUserMilestones(),
+      ]);
+      if (statsRes.data) setStats(toUserStats(statsRes.data));
+      if (heatRes.data) setHeatmap(heatRes.data);
+      if (hobbiesRes.data) setHobbies(hobbiesRes.data.filter((h: any) => h.status === "active" || h.status === "paused").map(toActiveHobby));
+      if (sessionsRes.data) setSessions(sessionsRes.data.map(toPracticeSession));
+      if (milestonesRes.data) setMilestones(milestonesRes.data.map(toMilestone));
+    } catch (e) { console.error("Failed to load progress:", e); }
+    finally { setIsLoading(false); }
   }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleSaveSession = async (data: SessionFormData) => {
+    const hobby = hobbies.find((h) => h.slug === data.hobbySlug);
+    if (!hobby) return;
+    const result = await createSession({
+      userHobbyId: hobby.userHobbyId,
+      sessionType: data.type,
+      duration: data.duration,
+      notes: data.notes,
+      imageUrl: data.imageUrl,
+    });
+    if (result.data?.id) {
+      triggerPracticeFeedback(result.data.id).catch((e) =>
+        console.error("[Progress] Failed to trigger feedback:", e)
+      );
+    }
+    checkAndAwardMilestones().catch((e) =>
+      console.error("[Progress] Milestone check failed:", e)
+    );
+    fetchData();
+  };
 
   if (isLoading) return <PageSkeleton />;
 
@@ -92,10 +119,19 @@ export default function ProgressPage() {
   const unearnedMilestones = milestones.filter((m) => !m.earned);
 
   return (
+    <>
+    <SessionLoggerModal
+      isOpen={loggerOpen}
+      onClose={() => setLoggerOpen(false)}
+      onSave={handleSaveSession}
+      hobbies={hobbies}
+    />
     <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12">
-      <motion.div variants={fadeUp} className="mb-8">
-        <h1 className="!text-2xl md:!text-3xl mb-1">Your Progress</h1>
-        <p className="text-gray-500 text-sm">{displayStats.daysSinceJoining} days of creative exploration</p>
+      <motion.div variants={fadeUp} className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="!text-2xl md:!text-3xl mb-1">Your Progress</h1>
+          <p className="text-gray-500 text-sm">{displayStats.daysSinceJoining} days of creative exploration</p>
+        </div>
       </motion.div>
 
       <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
@@ -193,7 +229,7 @@ export default function ProgressPage() {
         );
       })()}
 
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="mb-8">
         <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Milestones</h2>
         {earnedMilestones.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -229,6 +265,39 @@ export default function ProgressPage() {
           </>
         )}
       </motion.div>
+
+      {/* Session Log */}
+      {sessions.length > 0 && (
+        <motion.div variants={fadeUp}>
+          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Session Log</h2>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+            {sessions.map((s) => (
+              <Link key={s.id} href={`/dashboard/sessions/${s.id}`}>
+                <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+                    style={{ backgroundColor: "#F3F4F6" }}
+                  >
+                    {moodEmojis[s.mood]?.emoji ?? ""}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-700">{s.hobbyName}</p>
+                    <p className="text-xs text-gray-400 truncate">{s.notes || `${s.duration} min practice`}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xs text-gray-400">
+                      {new Date(s.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </p>
+                    <p className="text-xs text-gray-300 mt-0.5">{s.duration} min</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </motion.div>
+    <LogPracticeFAB onClick={() => setLoggerOpen(true)} />
+    </>
   );
 }

@@ -2,40 +2,25 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Target, Compass, Zap } from "lucide-react";
-import type { ActiveHobby, Challenge, Roadmap } from "@/lib/dashboardData";
+import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
 import type { NudgeData } from "@/app/actions/nudges";
 
 interface TodaysFocusProps {
   hobbies: ActiveHobby[];
   activeChallenges: Challenge[];
   nudge: NudgeData | null;
-  roadmap: Roadmap | null;
-  onGenerateChallenge: () => void;
-  generatingChallenge: boolean;
   onDismissNudge: () => void;
 }
 
-export function TodaysFocus({
-  hobbies,
-  activeChallenges,
-  nudge,
-  roadmap,
-  onGenerateChallenge,
-  generatingChallenge,
-  onDismissNudge,
-}: TodaysFocusProps) {
-  // Priority 1: No hobbies
+export function TodaysFocus({ hobbies, activeChallenges, nudge, onDismissNudge }: TodaysFocusProps) {
+  // Priority 1: No hobbies — onboarding prompt
   if (hobbies.length === 0) {
     return (
-      <FocusCard
-        title="Start your creative journey"
-        description="Discover hobbies tailored to your personality and interests."
-      >
-        <div className="flex flex-wrap gap-3 mt-4">
+      <FocusCard title="Start your creative journey" description="Discover hobbies tailored to your personality and interests.">
+        <div className="mt-4">
           <Link href="/discover/quiz">
             <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
-              Take Quiz
+              Take the Quiz
             </button>
           </Link>
         </div>
@@ -46,11 +31,7 @@ export function TodaysFocus({
   // Priority 2: Motivation nudge
   if (nudge) {
     return (
-      <FocusCard
-        title={nudge.message}
-        description={nudge.suggested_action}
-        borderColor="var(--secondary)"
-      >
+      <FocusCard title={nudge.message} description={nudge.suggested_action} borderColor="var(--secondary)">
         <div className="flex flex-wrap gap-3 mt-4">
           {nudge.action_data && (
             <Link href={nudge.action_data}>
@@ -74,12 +55,8 @@ export function TodaysFocus({
   const activeChallenge = activeChallenges.find((c) => c.status === "active");
   if (activeChallenge) {
     return (
-      <FocusCard
-        title={activeChallenge.title}
-        description={activeChallenge.description}
-        borderColor="#374151"
-      >
-        <div className="flex flex-wrap gap-3 mt-4">
+      <FocusCard title={activeChallenge.title} description={activeChallenge.description} borderColor="#374151">
+        <div className="mt-4">
           <Link href={`/dashboard/challenges/${activeChallenge.id}`}>
             <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
               Continue Challenge
@@ -90,44 +67,8 @@ export function TodaysFocus({
     );
   }
 
-  // Priority 4: Has roadmap, show current phase
-  if (roadmap && roadmap.phases.length > 0) {
-    const phase = roadmap.phases[roadmap.currentPhase];
-    if (phase) {
-      return (
-        <FocusCard
-          title={`Current focus: ${phase.title}`}
-          description={phase.description}
-          borderColor="#374151"
-        >
-          <div className="flex flex-wrap gap-3 mt-4">
-            <Link href={`/dashboard/roadmap/${roadmap.userRoadmapId}`} className="text-sm font-medium hover:underline flex items-center gap-1" style={{ color: "#374151" }}>
-              View Roadmap
-
-            </Link>
-          </div>
-        </FocusCard>
-      );
-    }
-  }
-
-  // Priority 5: Default — generate challenge
-  return (
-    <FocusCard
-      title="Ready for a challenge?"
-      description="Get a personalized creative challenge based on your practice history."
-    >
-      <div className="mt-4 flex items-center justify-center">
-        <button
-          onClick={onGenerateChallenge}
-          disabled={generatingChallenge}
-          className="px-6 py-2.5 bg-[var(--primary)] text-white font-semibold rounded-full shadow-sm hover:shadow-md hover:scale-105 active:scale-95 disabled:opacity-70 disabled:hover:scale-100 transition-all duration-200"
-        >
-          {generatingChallenge ? "Generating..." : "Generate Challenge"}
-        </button>
-      </div>
-    </FocusCard>
-  );
+  // Nothing actionable — hide the banner entirely
+  return null;
 }
 
 function FocusCard({
@@ -149,13 +90,9 @@ function FocusCard({
       className="rounded-2xl border-2 bg-white p-6 shadow-sm"
       style={{ borderColor: borderColor ?? "var(--primary)" }}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-1">
-          <h3 className="font-serif text-lg font-semibold text-gray-800 mb-1">{title}</h3>
-          <p className="text-sm text-gray-500">{description}</p>
-          {children}
-        </div>
-      </div>
+      <h3 className="font-serif text-lg font-semibold text-gray-800 mb-1">{title}</h3>
+      <p className="text-sm text-gray-500">{description}</p>
+      {children}
     </motion.div>
   );
 }

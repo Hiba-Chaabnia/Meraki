@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { getUserRoadmaps, advanceRoadmapPhase } from "@/app/actions/roadmap";
-import { getUserHobbies } from "@/app/actions/hobbies";
 import { toRoadmap } from "@/lib/transformData";
 import type { Roadmap } from "@/lib/dashboardData";
 import { ArrowLeft, Check, ChevronRight, Target } from "lucide-react";
@@ -20,13 +19,11 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [advancing, setAdvancing] = useState(false);
+  const [confirmAdvance, setConfirmAdvance] = useState(false);
 
   const fetchRoadmap = async () => {
     try {
-      const [roadmapsRes, hobbiesRes] = await Promise.all([
-        getUserRoadmaps(),
-        getUserHobbies(),
-      ]);
+      const roadmapsRes = await getUserRoadmaps();
       if (roadmapsRes.data) {
         const all = roadmapsRes.data.map((r: any) => toRoadmap(r));
         const found = all.find((r: Roadmap) => r.userRoadmapId === id);
@@ -44,6 +41,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
   const handleAdvance = async () => {
     if (!roadmap || advancing) return;
     setAdvancing(true);
+    setConfirmAdvance(false);
     const res = await advanceRoadmapPhase(roadmap.userRoadmapId);
     if (!res.error) {
       setRoadmap({ ...roadmap, currentPhase: roadmap.currentPhase + 1 });
@@ -58,37 +56,38 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
         <p className="text-gray-400">Roadmap not found.</p>
         <Link href="/dashboard" className="text-sm text-[var(--secondary)] mt-2 inline-block">
-          Back to dashboard
+          Back to My Hobbies
         </Link>
       </div>
     );
   }
 
   const currentPhaseData = roadmap.phases[roadmap.currentPhase];
+  const nextPhase = roadmap.phases[roadmap.currentPhase + 1];
   const isLastPhase = roadmap.currentPhase >= roadmap.totalPhases - 1;
 
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12">
+      {/* Back link → hobby page */}
       <motion.div initial="hidden" animate="show" variants={fadeUp} className="mb-6">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Dashboard
+        <Link
+          href={`/dashboard/hobby/${roadmap.hobbySlug}`}
+          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> {roadmap.hobbyName}
         </Link>
       </motion.div>
 
       {/* Header */}
       <motion.div initial="hidden" animate="show" variants={fadeUp} className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <span
-            className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ backgroundColor: "#E5E7EB", color: "#374151" }}
-          >
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#E5E7EB", color: "#374151" }}>
             {roadmap.hobbyName}
           </span>
         </div>
         <h1 className="!text-2xl md:!text-3xl font-serif mb-2">{roadmap.title}</h1>
         <p className="text-sm text-gray-500">{roadmap.description}</p>
 
-        {/* Progress bar */}
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
             <span>Phase {roadmap.currentPhase + 1} of {roadmap.totalPhases}</span>
@@ -97,10 +96,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${((roadmap.currentPhase + 1) / roadmap.totalPhases) * 100}%`,
-                backgroundColor: "#374151",
-              }}
+              style={{ width: `${((roadmap.currentPhase + 1) / roadmap.totalPhases) * 100}%`, backgroundColor: "#374151" }}
             />
           </div>
         </div>
@@ -120,22 +116,14 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.06, duration: 0.4 }}
               className={`rounded-2xl border-2 p-6 transition-all ${
-                isCurrent
-                  ? "border-current shadow-md"
-                  : isComplete
-                  ? "border-gray-200 bg-gray-50/50"
-                  : "border-gray-100 opacity-60"
+                isCurrent ? "border-current shadow-md" : isComplete ? "border-gray-200 bg-gray-50/50" : "border-gray-100 opacity-60"
               }`}
               style={isCurrent ? { borderColor: "#374151" } : undefined}
             >
               <div className="flex items-start gap-3">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold ${
-                    isComplete
-                      ? "bg-green-100 text-green-600"
-                      : isCurrent
-                      ? "text-white"
-                      : "bg-gray-100 text-gray-400"
+                    isComplete ? "bg-green-100 text-green-600" : isCurrent ? "text-white" : "bg-gray-100 text-gray-400"
                   }`}
                   style={isCurrent ? { backgroundColor: "#374151" } : undefined}
                 >
@@ -173,9 +161,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
                     </>
                   )}
 
-                  {isFuture && (
-                    <p className="text-xs text-gray-400">{phase.time_per_week}/week</p>
-                  )}
+                  {isFuture && <p className="text-xs text-gray-400">{phase.time_per_week}/week</p>}
                 </div>
               </div>
             </motion.div>
@@ -183,17 +169,45 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
         })}
       </div>
 
-      {/* Advance button */}
+      {/* Advance phase */}
       {!isLastPhase && (
         <motion.div initial="hidden" animate="show" variants={fadeUp} className="mt-8 text-center">
-          <button
-            onClick={handleAdvance}
-            disabled={advancing}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer disabled:opacity-50"
-            style={{ backgroundColor: "#374151" }}
-          >
-            {advancing ? "Advancing..." : `Complete Phase ${roadmap.currentPhase + 1} & Advance`}
-          </button>
+          {confirmAdvance ? (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 inline-block text-left max-w-sm w-full">
+              <p className="text-sm font-semibold text-gray-800 mb-1">
+                Complete Phase {roadmap.currentPhase + 1}?
+              </p>
+              {nextPhase && (
+                <p className="text-sm text-gray-500 mb-4">
+                  You&apos;ll move on to <span className="font-medium text-gray-700">{nextPhase.title}</span>.
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmAdvance(false)}
+                  className="flex-1 py-2 rounded-xl text-sm font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAdvance}
+                  disabled={advancing}
+                  className="flex-1 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-md active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                  style={{ backgroundColor: "#374151" }}
+                >
+                  {advancing ? "Advancing..." : "Confirm"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmAdvance(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer"
+              style={{ backgroundColor: "#374151" }}
+            >
+              Complete Phase {roadmap.currentPhase + 1} &amp; Advance
+            </button>
+          )}
         </motion.div>
       )}
 
