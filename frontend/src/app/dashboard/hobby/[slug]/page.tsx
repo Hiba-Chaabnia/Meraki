@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Plus, Flame, Map, Tv, MapPin, Zap } from "lucide-react";
 import { ChallengeCard, SessionLoggerModal, LogPracticeFAB } from "@/components/dashboard";
 import type { SessionFormData } from "@/components/dashboard";
+import { Button } from "@/components/ui/Button";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { getUserHobbies } from "@/app/actions/hobbies";
 import { getSessions, createSession } from "@/app/actions/sessions";
@@ -13,7 +14,7 @@ import { getUserChallenges, triggerChallengeGeneration, pollChallengeGenStatus }
 import { getUserRoadmap, triggerRoadmapGeneration, pollRoadmapStatus } from "@/app/actions/roadmap";
 import { triggerPracticeFeedback } from "@/app/actions/feedback";
 import { checkAndAwardMilestones } from "@/app/actions/milestones";
-import { toActiveHobby, toPracticeSession, toChallenge, toRoadmap } from "@/lib/transformData";
+import { toActiveHobbies, toSessionsForHobby, toChallengesForHobby, toRoadmap } from "@/lib/transformData";
 import { formatSlug } from "@/lib/hobbyData";
 import { moodEmojis } from "@/lib/dashboardData";
 import type { ActiveHobby, PracticeSession, Challenge, Roadmap } from "@/lib/dashboardData";
@@ -47,19 +48,13 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         getUserRoadmap(slug),
       ]);
 
-      if (hobbiesRes.data) {
-        const active = hobbiesRes.data
-          .filter((h: any) => h.status === "active" || h.status === "paused")
-          .map(toActiveHobby);
-        setAllHobbies(active);
-        const matched = active.find((h) => h.slug === slug);
-        if (matched) setHobby(matched);
-      }
+      const active = toActiveHobbies(hobbiesRes.data ?? null);
+      setAllHobbies(active);
+      const matched = active.find((h) => h.slug === slug);
+      if (matched) setHobby(matched);
 
       if (sessionsRes.data) {
-        const hobbySessions = sessionsRes.data
-          .filter((s: any) => s.user_hobbies?.hobby_slug === slug)
-          .map(toPracticeSession);
+        const hobbySessions = toSessionsForHobby(sessionsRes.data, slug);
         setSessions(hobbySessions);
 
         const last3 = hobbySessions.slice(0, 3);
@@ -71,11 +66,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         setFeedbackMap(fbResults);
       }
 
-      if (challengesRes.data) {
-        setChallenges(
-          challengesRes.data.filter((c: any) => c.challenges?.hobby_slug === slug).map(toChallenge)
-        );
-      }
+      setChallenges(toChallengesForHobby(challengesRes.data ?? null, slug));
 
       if (roadmapRes.data) setRoadmap(toRoadmap(roadmapRes.data));
     } catch (e) {
@@ -182,13 +173,16 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
                 {hobby?.status === "active" ? "Active" : "Paused"} &middot; Day {hobby?.daysSinceStart ?? 0} of your journey
               </p>
             </div>
-            <button
+            <Button
               onClick={() => setLoggerOpen(true)}
-              className="relative z-10 flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-[var(--secondary)] text-[#1a1a1a] font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 text-sm"
+              variant="secondary"
+              shape="pill"
+              size="sm"
+              className="relative z-10 flex-shrink-0 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
             >
               <Plus className="w-4 h-4" />
               Log Practice
-            </button>
+            </Button>
           </div>
         </motion.div>
 

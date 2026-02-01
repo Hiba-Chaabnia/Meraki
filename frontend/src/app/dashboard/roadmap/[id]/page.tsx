@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { getUserRoadmaps, advanceRoadmapPhase } from "@/app/actions/roadmap";
-import { toRoadmap } from "@/lib/transformData";
+import { toRoadmaps } from "@/lib/transformData";
 import type { Roadmap } from "@/lib/dashboardData";
 import { ArrowLeft, Check, ChevronRight, Target } from "lucide-react";
 
@@ -22,8 +22,8 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
     try {
       const roadmapsRes = await getUserRoadmaps();
       if (roadmapsRes.data) {
-        const all = roadmapsRes.data.map((r: any) => toRoadmap(r));
-        const found = all.find((r: Roadmap) => r.userRoadmapId === id);
+        const all = toRoadmaps(roadmapsRes.data);
+        const found = all.find((r) => r.userRoadmapId === id);
         if (found) setRoadmap(found);
       }
     } catch (e) {

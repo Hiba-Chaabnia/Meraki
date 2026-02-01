@@ -9,7 +9,7 @@ import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { getChallengeById, completeChallenge, triggerChallengeGeneration, pollChallengeGenStatus } from "@/app/actions/challenges";
 import { getUserHobbies } from "@/app/actions/hobbies";
 import { createSession } from "@/app/actions/sessions";
-import { toChallenge, toActiveHobby } from "@/lib/transformData";
+import { toChallenge, toActiveHobbies } from "@/lib/transformData";
 import { difficultyConfig } from "@/lib/dashboardData";
 import type { Challenge, ActiveHobby } from "@/lib/dashboardData";
 import { checkAndAwardMilestones } from "@/app/actions/milestones";
@@ -57,7 +57,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
         setChallenge(ch);
         setIsCompleted(ch.status === "completed");
       } else { setError(true); }
-      if (hobbiesRes.data) setHobbies(hobbiesRes.data.filter((h: any) => h.status === "active" || h.status === "paused").map(toActiveHobby));
+      setHobbies(toActiveHobbies(hobbiesRes.data ?? null));
     } catch { setError(true); }
     finally { setIsLoading(false); }
   }, [id]);

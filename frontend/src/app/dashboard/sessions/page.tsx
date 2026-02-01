@@ -8,7 +8,7 @@ import type { SessionFormData } from "@/components/dashboard";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { getSessions, createSession } from "@/app/actions/sessions";
 import { getUserHobbies } from "@/app/actions/hobbies";
-import { toPracticeSession, toActiveHobby } from "@/lib/transformData";
+import { toPracticeSession, toActiveHobbies } from "@/lib/transformData";
 import { moodEmojis } from "@/lib/dashboardData";
 import { Plus, Filter } from "lucide-react";
 import type { PracticeSession, ActiveHobby } from "@/lib/dashboardData";
@@ -28,7 +28,7 @@ export default function SessionsPage() {
     try {
       const [sessionsRes, hobbiesRes] = await Promise.all([getSessions(), getUserHobbies()]);
       if (sessionsRes.data) setAllSessions(sessionsRes.data.map(toPracticeSession));
-      if (hobbiesRes.data) setHobbies(hobbiesRes.data.filter((h: any) => h.status === "active" || h.status === "paused").map(toActiveHobby));
+      setHobbies(toActiveHobbies(hobbiesRes.data ?? null));
     } catch (e) {
       console.error("Failed to load sessions:", e);
     } finally {

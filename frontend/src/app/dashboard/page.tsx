@@ -18,7 +18,7 @@ import { getUserChallenges } from "@/app/actions/challenges";
 import { triggerPracticeFeedback } from "@/app/actions/feedback";
 import { getActiveNudge, type NudgeData } from "@/app/actions/nudges";
 import { checkAndAwardMilestones } from "@/app/actions/milestones";
-import { toActiveHobby, toChallenge } from "@/lib/transformData";
+import { toActiveHobbies, toChallenge } from "@/lib/transformData";
 import { getGreeting } from "@/lib/dashboardData";
 import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
 
@@ -40,9 +40,7 @@ export default function DashboardPage() {
         getActiveNudge(),
       ]);
 
-      const activeHobbies = hobbiesRes.data
-        ? hobbiesRes.data.filter((h: any) => h.status === "active" || h.status === "paused").map(toActiveHobby)
-        : [];
+      const activeHobbies = toActiveHobbies(hobbiesRes.data ?? null);
       setHobbies(activeHobbies);
 
       if (challengesRes.data) setChallenges(challengesRes.data.map(toChallenge));

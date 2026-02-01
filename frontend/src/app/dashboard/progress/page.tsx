@@ -11,7 +11,7 @@ import { getUserHobbies } from "@/app/actions/hobbies";
 import { getSessions, createSession } from "@/app/actions/sessions";
 import { triggerPracticeFeedback } from "@/app/actions/feedback";
 import { checkAndAwardMilestones } from "@/app/actions/milestones";
-import { toUserStats, toActiveHobby, toPracticeSession, toMilestone } from "@/lib/transformData";
+import { toUserStats, toActiveHobbies, toPracticeSession, toMilestone } from "@/lib/transformData";
 import { milestoneRules } from "@/lib/milestoneRules";
 import { moodEmojis } from "@/lib/dashboardData";
 import type { UserStats, ActiveHobby, PracticeSession, Milestone } from "@/lib/dashboardData";
@@ -77,7 +77,7 @@ export default function ProgressPage() {
       ]);
       if (statsRes.data) setStats(toUserStats(statsRes.data));
       if (heatRes.data) setHeatmap(heatRes.data);
-      if (hobbiesRes.data) setHobbies(hobbiesRes.data.filter((h: any) => h.status === "active" || h.status === "paused").map(toActiveHobby));
+      setHobbies(toActiveHobbies(hobbiesRes.data ?? null));
       if (sessionsRes.data) setSessions(sessionsRes.data.map(toPracticeSession));
       if (milestonesRes.data) setMilestones(milestonesRes.data.map(toMilestone));
     } catch (e) { console.error("Failed to load progress:", e); }

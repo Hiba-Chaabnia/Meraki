@@ -119,6 +119,40 @@ export function toMilestone(row: MilestoneWithEarned): Milestone {
   };
 }
 
+/* ─── Collection helpers ─────────────────────────────────────────────────── */
+
+/** Filter raw user_hobbies data to active/paused and map to ActiveHobby[] */
+export function toActiveHobbies(data: UserHobbyRow[] | null): ActiveHobby[] {
+  return (data ?? [])
+    .filter((h) => h.status === "active" || h.status === "paused")
+    .map(toActiveHobby);
+}
+
+/** Filter sessions by hobby slug and map to PracticeSession[] */
+export function toSessionsForHobby(
+  data: SessionWithHobby[] | null,
+  hobbySlug: string
+): PracticeSession[] {
+  return (data ?? [])
+    .filter((s) => s.user_hobbies?.hobby_slug === hobbySlug)
+    .map(toPracticeSession);
+}
+
+/** Filter challenges by hobby slug and map to Challenge[] */
+export function toChallengesForHobby(
+  data: UserChallengeWithChallenge[] | null,
+  hobbySlug: string
+): Challenge[] {
+  return (data ?? [])
+    .filter((c) => c.challenges.hobby_slug === hobbySlug)
+    .map(toChallenge);
+}
+
+/** Map all user_roadmaps rows to Roadmap[] */
+export function toRoadmaps(data: UserRoadmapWithRoadmap[] | null): Roadmap[] {
+  return (data ?? []).map(toRoadmap);
+}
+
 /** Map a user_roadmaps row (with roadmaps join) to Roadmap */
 export function toRoadmap(row: UserRoadmapWithRoadmap): Roadmap {
   const roadmap = row.roadmaps;
