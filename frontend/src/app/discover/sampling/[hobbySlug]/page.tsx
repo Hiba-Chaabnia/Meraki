@@ -8,6 +8,7 @@ import { ArrowLeftIcon, HomeIcon } from "@/components/ui/Icons";
 import { PathwayCard } from "@/components/discover/sampling/PathwayCard";
 import { useSamplingPreview } from "@/hooks/useSamplingPreview";
 import { formatSlug } from "@/lib/hobbyData";
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
 
 import type { SectionTheme } from "@/lib/sectionTheme";
 
@@ -26,18 +27,6 @@ const THEME_SECONDARY: SectionTheme = {
   border: "#DDEB85",
   light: "#EBF4B8",
   textOnAccent: "#292929",
-};
-
-/* ─── Animation variants ─── */
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.12 } },
-};
-
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
 export default function SamplingPage({
@@ -76,7 +65,7 @@ export default function SamplingPage({
             <p className="text-2xl md:text-3xl font-semibold text-[var(--foreground)]">
               Dip your toes into <em className="font-bold lowercase">{hobby.name}</em>
             </p>
-            <p className="text-md md:text-lg font-medium text-[var(--foreground)] mt-2">
+            <p className="text-base md:text-lg font-medium text-[var(--foreground)] mt-2">
               Pick whatever sounds most fun to you. Zero commitment, just exploration.
             </p>
           </div>
@@ -114,7 +103,7 @@ export default function SamplingPage({
       {/* ── Pathway cards ── */}
       <motion.div
         className="w-full mx-auto px-4 py-12"
-        variants={stagger}
+        variants={staggerContainer(0.12)}
         initial="hidden"
         animate="show"
       >

@@ -125,7 +125,7 @@ export function useLocalExperiences(hobbySlug: string) {
             setGeneralTips(status.result.general_tips);
             setLoading(false);
             loadingRef.current = false;
-            saveLocalExperienceResult(hobbySlug, loc, status.result).catch(() => {});
+            saveLocalExperienceResult(hobbySlug, loc, status.result).catch((e) => console.error("[LocalExperiences] DB save failed:", e));
           } else if (status.status === "failed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setApiError(status.error || "Search failed");

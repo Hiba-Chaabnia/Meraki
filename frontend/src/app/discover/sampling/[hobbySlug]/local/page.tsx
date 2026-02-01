@@ -20,10 +20,6 @@ import type { FilterType } from "@/components/discover/sampling/local/types";
 
 const FILTERS: FilterType[] = ["All", "Workshop", "Drop-in Class", "Open Studio", "Community Meetup", "Trial Class", "Pop-up Event"];
 
-type DevState = "auto" | "empty" | "loading" | "results" | "error";
-const DEV_STATES: DevState[] = ["auto", "empty", "loading", "results", "error"];
-
-
 export default function LocalPage({
   params,
 }: {
@@ -32,7 +28,6 @@ export default function LocalPage({
   const { hobbySlug } = use(params);
   const hobbyName = formatSlug(hobbySlug);
   const [filter, setFilter] = useState<FilterType>("All");
-  const [devState, setDevState] = useState<DevState>("auto");
   const [committing, setCommitting] = useState(false);
   const router = useRouter();
 
@@ -67,10 +62,10 @@ export default function LocalPage({
       ? spots
       : spots.filter((s) => s.type.toLowerCase().includes(filter.toLowerCase()));
 
-  const showEmpty   = devState === "empty"   || (devState === "auto" && !locationSet);
-  const showLoading = devState === "loading" || (devState === "auto" && locationSet && loading);
-  const showError   = devState === "error"   || (devState === "auto" && !!apiError && !loading);
-  const showResults = devState === "results" || (devState === "auto" && locationSet && !loading);
+  const showEmpty   = !locationSet;
+  const showLoading = locationSet && loading;
+  const showError   = !!apiError && !loading;
+  const showResults = locationSet && !loading;
 
   return (
     <PageLayout
@@ -80,23 +75,6 @@ export default function LocalPage({
       backLabel="Back to sampling"
     >
       <div className="w-full flex-1 flex flex-col">
-        {/* Dev nav — fixed overlay, outside page layout */}
-        <div className="fixed top-0 left-0 right-0 z-[9999] flex items-center justify-center gap-1.5 py-1.5 bg-black/70 backdrop-blur-sm">
-          {DEV_STATES.map((s) => (
-            <button
-              key={s}
-              onClick={() => setDevState(s)}
-              className={`px-3 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                devState === s
-                  ? "bg-white text-black"
-                  : "text-white/50 hover:text-white"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
         <LocationModal
           show={showModal}
           onClose={() => setShowModal(false)}
