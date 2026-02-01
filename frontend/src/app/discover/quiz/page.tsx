@@ -12,7 +12,7 @@ import { ChevronLeftIcon, ChevronRightIcon, RotateIcon } from "@/components/disc
 
 /* ─── Layout constants (vw) ─── */
 const VW_PER_Q = 24;
-const VW_PAD = 6;
+const VW_PAD = 2;
 const MOBILE_CARD_W = 88;
 
 const CARD_THEMES: [SectionTheme, SectionTheme] = [

@@ -8,28 +8,11 @@ import { ProfileSkeleton } from "@/components/ui/LoadingSkeleton";
 import { updateProfile } from "@/app/actions/profile";
 import { getUserStats, getUserMilestones } from "@/app/actions/stats";
 import { getUserHobbies } from "@/app/actions/hobbies";
-import { toUserStats, toActiveHobby, toMilestone } from "@/lib/transformData";
+import { toUserStats, toActiveHobbies, toMilestone } from "@/lib/transformData";
 import { milestoneRules } from "@/lib/milestoneRules";
 import type { UserStats, ActiveHobby, Milestone } from "@/lib/dashboardData";
 import { fadeUp, staggerContainer } from "@/components/ui/animations";
-
-/* ─── Icons ─── */
-const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
-const PencilIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-  </svg>
-);
-const SettingsIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-  </svg>
-);
+import { ArrowLeftIcon, PencilIcon, SettingsIcon } from "@/components/ui/Icons";
 
 const stagger = staggerContainer(0.08);
 
@@ -61,12 +44,7 @@ export default function ProfilePage() {
           getUserMilestones(),
         ]);
         if (statsRes.data) setStats(toUserStats(statsRes.data));
-        if (hobbiesRes.data)
-          setHobbies(
-            hobbiesRes.data
-              .filter((h: any) => h.status === "active" || h.status === "paused")
-              .map(toActiveHobby),
-          );
+        setHobbies(toActiveHobbies(hobbiesRes.data ?? null));
         if (milestonesRes.data) setMilestones(milestonesRes.data.map(toMilestone));
       } catch (e) {
         console.error("Failed to load profile data:", e);
@@ -115,7 +93,7 @@ export default function ProfilePage() {
           href="/dashboard"
           className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeftIcon className="w-4 h-4" />
           Dashboard
         </Link>
         <Link

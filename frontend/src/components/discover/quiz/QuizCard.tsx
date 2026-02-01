@@ -19,6 +19,10 @@ interface QuizCardProps {
   onSetText: (questionId: number, value: string) => void;
   showSubmit?: boolean;
   onSubmit?: () => void;
+  /** Internal padding of the questions area in px. Defaults to 24 (= p-6). */
+  questionsPadding?: number;
+  /** Gap between question columns in desktop mode in px. Defaults to 24 (= gap-6). */
+  questionsGap?: number;
 }
 
 export function QuizCard({
@@ -33,6 +37,8 @@ export function QuizCard({
   onSetText,
   showSubmit,
   onSubmit,
+  questionsPadding = 24,
+  questionsGap = 28,
 }: QuizCardProps) {
   return (
     <div
@@ -48,10 +54,12 @@ export function QuizCard({
         >
           {/* Questions area */}
           <div
-            className={`p-6 pb-4 ${isDesktop
-              ? "flex flex-row items-center justify-center gap-6"
-              : "flex flex-col gap-8"
-              }`}
+            className={isDesktop ? "flex flex-row items-center justify-center" : "flex flex-col"}
+            style={{
+              padding: `${questionsPadding}px`,
+              paddingBottom: `${Math.max(questionsPadding - 8, 0)}px`,
+              gap: `${questionsGap}px`,
+            }}
           >
             {questions.map((q, qIdx) => (
               <div
@@ -111,7 +119,7 @@ export function QuizCard({
 
         {/* Submit Button - Desktop: Right of card, bottom aligned */}
         {isDesktop && showSubmit && onSubmit && (
-          <div className="absolute left-full bottom-0 ml-18 z-50">
+          <div className="absolute left-full bottom-0 ml-[4.5rem] z-50">
             <motion.div
               animate={{ rotate: [0, -3, 3, -2, 0] }}
               transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 3 }}

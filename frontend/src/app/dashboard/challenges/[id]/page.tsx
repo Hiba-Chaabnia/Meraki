@@ -14,26 +14,11 @@ import { difficultyConfig } from "@/lib/dashboardData";
 import type { Challenge, ActiveHobby } from "@/lib/dashboardData";
 import { checkAndAwardMilestones } from "@/app/actions/milestones";
 import { fadeUp, staggerContainer } from "@/components/ui/animations";
+import { ArrowLeftIcon, SparkleIcon, ClockIcon } from "@/components/ui/Icons";
 
-const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
-const ClockIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-  </svg>
-);
 const CheckCircleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-  </svg>
-);
-const SparklesIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
-    <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" opacity="0.6" />
   </svg>
 );
 
@@ -112,7 +97,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
       <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12">
         <motion.div variants={fadeUp} className="mb-6">
           <Link href="/dashboard/challenges" className="back-link">
-            <ArrowLeft className="w-4 h-4" /> All challenges
+            <ArrowLeftIcon className="w-4 h-4" /> All challenges
           </Link>
         </motion.div>
 
@@ -186,7 +171,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
         <AnimatePresence mode="wait">
           {isCompleted ? (
             <motion.div key="completed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl p-8 bg-gray-50">
-              <SparklesIcon className="w-10 h-10 mx-auto mb-3 text-gray-700" />
+              <SparkleIcon className="w-10 h-10 mx-auto mb-3 text-gray-700" />
               <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-2">Challenge Complete!</h2>
               <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">Great work on finishing this challenge. Your growth is showing!</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
