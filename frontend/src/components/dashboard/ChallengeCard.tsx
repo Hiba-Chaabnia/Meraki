@@ -30,10 +30,7 @@ export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps
       >
         {/* Top row: hobby badge + status */}
         <div className="flex items-center justify-between mb-3">
-          <span
-            className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
-          >
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-700">
             {challenge.hobbyName}
           </span>
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${status.bg} ${status.text}`}>
@@ -42,7 +39,7 @@ export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps
         </div>
 
         {/* Title */}
-        <h3 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-1">
+        <h3 className="card-heading mb-1">
           {challenge.title}
         </h3>
 
@@ -59,10 +56,8 @@ export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps
               {Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{
-                    backgroundColor: i < diff.dots ? diff.color : "#e5e7eb",
-                  }}
+                  className={`w-1.5 h-1.5 rounded-full ${i >= diff.dots ? "bg-gray-200" : ""}`}
+                  style={i < diff.dots ? { backgroundColor: diff.color } : undefined}
                 />
               ))}
             </div>

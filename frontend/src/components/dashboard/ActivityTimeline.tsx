@@ -4,6 +4,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import type { ActivityItem } from "@/lib/dashboardData";
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
+import { Card } from "@/components/ui/Card";
 
 interface ActivityTimelineProps {
   items: ActivityItem[];
@@ -12,30 +14,26 @@ interface ActivityTimelineProps {
 export function ActivityTimeline({ items }: ActivityTimelineProps) {
   if (items.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border-2 shadow-sm p-8 text-center" style={{ borderColor: "var(--primary)" }}>
-        <p className="text-sm text-gray-400">No recent activity yet. Log your first practice!</p>
-      </div>
+      <Card variant="bordered" borderColor="var(--primary)" padding="lg">
+        <p className="text-sm text-gray-400 text-center">
+          No recent activity yet. Log your first practice!
+        </p>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {items.map((item, idx) => (
-        <motion.div
-          key={item.id}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.05, duration: 0.3 }}
-        >
+    <motion.div
+      className="space-y-3"
+      variants={staggerContainer(0.05)}
+      initial="hidden"
+      animate="show"
+    >
+      {items.map((item) => (
+        <motion.div key={item.id} variants={fadeUp}>
           <Link href={item.href}>
-            <div
-              className="bg-white rounded-2xl border-2 shadow-sm p-4 hover:shadow-md transition-shadow flex items-center gap-4"
-              style={{ borderColor: "#D1D5DB" }}
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                style={{ backgroundColor: "#F3F4F6" }}
-              >
+            <div className="bg-white rounded-2xl border-2 border-gray-300 shadow-sm p-4 hover:shadow-md transition-shadow flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg bg-gray-100">
                 {item.icon}
               </div>
               <div className="flex-1 min-w-0">
@@ -43,10 +41,7 @@ export function ActivityTimeline({ items }: ActivityTimelineProps) {
                 <p className="text-xs text-gray-400 truncate">{item.subtitle}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
-                >
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-700">
                   {item.type === "session" ? "Session" : "Challenge"}
                 </span>
                 <p className="text-xs text-gray-400 mt-1">
@@ -66,6 +61,6 @@ export function ActivityTimeline({ items }: ActivityTimelineProps) {
           View all activity <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }

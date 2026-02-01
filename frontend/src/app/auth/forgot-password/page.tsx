@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div className="space-y-1">
-                <h1 className="!text-2xl font-serif font-bold text-gray-900">
+                <h1 className="text-2xl font-serif font-bold text-gray-900">
                   Forgot Your Password?
                 </h1>
                 <p className="text-sm text-gray-500">
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div className="space-y-1">
-                <h1 className="!text-2xl font-serif font-bold text-gray-900">
+                <h1 className="text-2xl font-serif font-bold text-gray-900">
                   Check Your Inbox
                 </h1>
                 <p className="text-sm text-gray-500">

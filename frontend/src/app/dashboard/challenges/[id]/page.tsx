@@ -13,6 +13,7 @@ import { toChallenge, toActiveHobby } from "@/lib/transformData";
 import { difficultyConfig } from "@/lib/dashboardData";
 import type { Challenge, ActiveHobby } from "@/lib/dashboardData";
 import { checkAndAwardMilestones } from "@/app/actions/milestones";
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
 
 const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,14 +37,7 @@ const SparklesIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-};
+const stagger = staggerContainer(0.08);
 
 export default function ChallengeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -117,27 +111,27 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12">
         <motion.div variants={fadeUp} className="mb-6">
-          <Link href="/dashboard/challenges" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors">
+          <Link href="/dashboard/challenges" className="back-link">
             <ArrowLeft className="w-4 h-4" /> All challenges
           </Link>
         </motion.div>
 
-        <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: "#F3F4F6" }}>
+        <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden mb-6 bg-gray-100">
           <div className="px-6 py-8 md:px-8 md:py-10">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#E5E7EB", color: "#374151" }}>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-200 text-gray-700">
                 {challenge.hobbyName}
               </span>
               <div className="flex items-center gap-1.5">
                 <div className="flex gap-0.5">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: i < diff.dots ? diff.color : "#e5e7eb" }} />
+                    <div key={i} className={`w-1.5 h-1.5 rounded-full ${i >= diff.dots ? "bg-gray-200" : ""}`} style={i < diff.dots ? { backgroundColor: diff.color } : undefined} />
                   ))}
                 </div>
                 <span className="text-xs text-gray-400">{diff.label}</span>
               </div>
             </div>
-            <h1 className="!text-2xl md:!text-3xl mb-2">{challenge.title}</h1>
+            <h1 className="page-title mb-2">{challenge.title}</h1>
             <p className="text-gray-600">{challenge.description}</p>
             <div className="flex items-center gap-4 mt-4">
               <span className="inline-flex items-center gap-1.5 text-sm text-gray-500">
@@ -154,17 +148,17 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
 
         <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">Skills</h2>
+            <h2 className="card-heading mb-3">Skills</h2>
             <div className="flex flex-wrap gap-2">
               {challenge.skills.map((skill) => (
-                <span key={skill} className="text-xs px-3 py-1.5 rounded-full font-medium" style={{ backgroundColor: "#F3F4F6", color: "#374151" }}>
+                <span key={skill} className="text-xs px-3 py-1.5 rounded-full font-medium bg-gray-100 text-gray-700">
                   {skill}
                 </span>
               ))}
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">What You&apos;ll Learn</h2>
+            <h2 className="card-heading mb-3">What You&apos;ll Learn</h2>
             <ul className="space-y-2">
               {challenge.whatYoullLearn.map((item, i) => (
                 <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
@@ -176,11 +170,11 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
         </motion.div>
 
         <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">Tips</h2>
+          <h2 className="card-heading mb-3">Tips</h2>
           <ul className="space-y-3">
             {challenge.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-3 text-sm text-gray-600">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5" style={{ backgroundColor: "#374151" }}>
+                <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5 bg-gray-700">
                   {i + 1}
                 </span>
                 {tip}
@@ -191,9 +185,9 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
 
         <AnimatePresence mode="wait">
           {isCompleted ? (
-            <motion.div key="completed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl p-8" style={{ backgroundColor: "#F9FAFB" }}>
-              <SparklesIcon className="w-10 h-10 mx-auto mb-3" style={{ color: "#374151" }} />
-              <h2 className="!text-xl md:!text-2xl mb-2">Challenge Complete!</h2>
+            <motion.div key="completed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl p-8 bg-gray-50">
+              <SparklesIcon className="w-10 h-10 mx-auto mb-3 text-gray-700" />
+              <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-2">Challenge Complete!</h2>
               <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">Great work on finishing this challenge. Your growth is showing!</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
@@ -211,8 +205,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
                     }, 2500);
                   }}
                   disabled={generatingNext}
-                  className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
-                  style={{ backgroundColor: "#374151" }}
+                  className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer bg-gray-700"
                 >
                   {generatingNext ? "Generating..." : "Generate Next Challenge"}
                 </button>
@@ -225,8 +218,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
             <motion.div key="actions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setLoggerOpen(true)}
-                className="flex-1 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer"
-                style={{ backgroundColor: "#374151" }}
+                className="flex-1 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer bg-gray-700"
               >
                 Log &amp; Complete This Challenge
               </button>

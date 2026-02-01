@@ -36,25 +36,29 @@
   body {
     font-family: var(--font-mulish), ui-sans-serif, system-ui, sans-serif;
   }
+}
 
-  h1 {
+@layer components {
+  /* Landing hero display heading — Chopard, no size (set per-use) */
+  .display-heading {
     font-family: var(--font-chopard), ui-serif, Georgia, serif;
-    @apply font-medium text-4xl md:text-6xl text-gray-900 leading-[1.1];
+    @apply font-medium leading-[1.1];
   }
 
-  h2 {
+  /* Dashboard/app page h1 */
+  .page-title {
     font-family: var(--font-chopard), ui-serif, Georgia, serif;
-    @apply font-medium text-4xl md:text-6xl text-gray-900 leading-tight;
+    @apply font-medium text-2xl md:text-3xl text-gray-900 leading-tight;
   }
 
-  h3 {
-    font-family: var(--font-alegreya), ui-serif, Georgia, serif;
-    @apply text-lg font-bold tracking-widest text-gray-500;
+  /* Card section h2 */
+  .card-heading {
+    @apply text-base font-semibold tracking-normal text-gray-800;
   }
 
-  p {
-    font-family: var(--font-mulish), ui-sans-serif, system-ui, sans-serif;
-    @apply text-gray-700 leading-relaxed;
+  /* Breadcrumb back links */
+  .back-link {
+    @apply inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors;
   }
 }
 

@@ -35,13 +35,15 @@ export function StreakDisplay({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: i * 0.05, type: "spring", stiffness: 400 }}
-              className="w-7 h-7 rounded-full flex items-center justify-center"
+              className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                status !== "practiced" && status !== "thought" ? "border-2 border-gray-200" : ""
+              }`}
               style={
                 status === "practiced"
                   ? { backgroundColor: accentColor }
                   : status === "thought"
                   ? { backgroundColor: accentColor, opacity: 0.45 }
-                  : { backgroundColor: "transparent", border: "2px solid #e5e7eb" }
+                  : undefined
               }
             >
               {status === "practiced" && (

@@ -11,6 +11,7 @@ import { getUserHobbies } from "@/app/actions/hobbies";
 import { toUserStats, toActiveHobby, toMilestone } from "@/lib/transformData";
 import { milestoneRules } from "@/lib/milestoneRules";
 import type { UserStats, ActiveHobby, Milestone } from "@/lib/dashboardData";
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
 
 /* ─── Icons ─── */
 const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
@@ -30,15 +31,7 @@ const SettingsIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-};
+const stagger = staggerContainer(0.08);
 
 export default function ProfilePage() {
   const { profile, refreshProfile } = useUser();
@@ -191,7 +184,7 @@ export default function ProfilePage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <h1 className="!text-2xl mb-0.5">{name || "Your Name"}</h1>
+                <h1 className="text-2xl font-medium text-gray-900 mb-0.5">{name || "Your Name"}</h1>
                 {bio && (
                   <p className="text-sm text-gray-500 max-w-xs mx-auto mb-2">{bio}</p>
                 )}
@@ -237,7 +230,7 @@ export default function ProfilePage() {
           variants={fadeUp}
           className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
         >
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">
+          <h2 className="card-heading mb-4">
             My Hobbies
           </h2>
           {hobbies.length > 0 ? (
@@ -245,12 +238,10 @@ export default function ProfilePage() {
               {hobbies.map((h) => (
                 <div key={h.slug} className="flex items-center gap-3">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: "#F3F4F6" }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-gray-100"
                   >
                     <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: "#374151" }}
+                      className="w-3 h-3 rounded-full bg-gray-700"
                     />
                   </div>
                   <div className="flex-1">
@@ -286,7 +277,7 @@ export default function ProfilePage() {
 
         {/* Milestones showcase */}
         <motion.div variants={fadeUp}>
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">
+          <h2 className="card-heading mb-4">
             Milestones
           </h2>
           {earnedMilestones.length > 0 ? (

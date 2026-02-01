@@ -57,7 +57,7 @@ export default function HeroSection() {
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
           <motion.h1
             variants={fadeUp}
-            className="!text-5xl md:!text-7xl max-w-3xl mx-auto mb-6 hero-shine"
+            className="display-heading text-5xl md:text-7xl max-w-3xl mx-auto mb-6 hero-shine"
           >
             Fall in <em>Love</em> <br />
             with the <em>Art</em> of Making

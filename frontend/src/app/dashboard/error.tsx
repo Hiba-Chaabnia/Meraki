@@ -16,7 +16,7 @@ export default function DashboardError({
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-16 text-center">
-      <h2 className="!text-2xl mb-2">Something went wrong</h2>
+      <h2 className="text-2xl mb-2">Something went wrong</h2>
       <p className="text-gray-500 text-sm mb-6">
         We couldn&apos;t load your dashboard. Please try again.
       </p>

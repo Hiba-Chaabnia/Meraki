@@ -8,6 +8,7 @@ import { updateHobbyStatus } from "@/app/actions/hobbies";
 import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
 import type { SectionTheme } from "@/lib/sectionTheme";
 import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface HobbyCardProps {
   hobby: ActiveHobby;
@@ -52,7 +53,7 @@ export function HobbyCard({ hobby, activeChallengeCount, activeChallenge, onStat
       className="bg-white shadow-sm text-gray-300 hover:text-[var(--primary)] flex-shrink-0"
     >
       {toggling ? (
-        <div className="animate-spin w-3.5 h-3.5 border-2 border-gray-300/40 border-t-gray-400 rounded-full" />
+        <Spinner size="xs" variant="subtle" />
       ) : hobby.status === "active" ? (
         <Pause className="w-3.5 h-3.5" />
       ) : (

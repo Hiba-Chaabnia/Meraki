@@ -14,6 +14,8 @@ import {
   pollPracticeFeedbackStatus,
   type PracticeFeedback,
 } from "@/app/actions/feedback";
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
+import { Spinner } from "@/components/ui/Spinner";
 
 const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -26,14 +28,7 @@ const ClockIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-};
+const stagger = staggerContainer(0.08);
 
 export default function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -122,20 +117,20 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12">
       <motion.div variants={fadeUp} className="mb-6">
-        <Link href="/dashboard/sessions" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors">
+        <Link href="/dashboard/sessions" className="back-link">
           <ArrowLeft className="w-4 h-4" /> All sessions
         </Link>
       </motion.div>
 
-      <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden mb-6" style={{ backgroundColor: "#F3F4F6" }}>
+      <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden mb-6 bg-gray-100">
         <div className="px-6 py-8 md:px-8 md:py-10">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ backgroundColor: "#E5E7EB" }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 bg-gray-200">
               {mood.emoji}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#E5E7EB", color: "#374151" }}>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-200 text-gray-700">
                   {session.hobbyName}
                 </span>
               </div>
@@ -154,7 +149,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
       </motion.div>
 
       <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">Session Notes</h2>
+        <h2 className="card-heading mb-3">Session Notes</h2>
         <p className="text-sm text-gray-600 leading-relaxed">{session.notes || "No notes for this session."}</p>
       </motion.div>
 
@@ -181,7 +176,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
           className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
         >
           <div className="flex items-center gap-3">
-            <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
+            <Spinner size="sm" variant="subtle" />
             <p className="text-sm text-gray-500">Generating AI feedback...</p>
           </div>
         </motion.div>
@@ -194,10 +189,9 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="rounded-2xl p-5 mb-6"
-              style={{ backgroundColor: "#F9FAFB" }}
+              className="rounded-2xl p-5 mb-6 bg-gray-50"
             >
-              <p className="text-sm font-medium" style={{ color: "#374151" }}>
+              <p className="text-sm font-medium text-gray-700">
                 {feedback.celebration}
               </p>
             </motion.div>
@@ -211,11 +205,11 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
           >
             {feedback.observations.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">Observations</h2>
+                <h2 className="card-heading mb-3">Observations</h2>
                 <ul className="space-y-2">
                   {feedback.observations.map((o, i) => (
                     <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                      <span className="mt-1 flex-shrink-0" style={{ color: "#374151" }}>&#8226;</span>{o}
+                      <span className="mt-1 flex-shrink-0 text-gray-700">&#8226;</span>{o}
                     </li>
                   ))}
                 </ul>
@@ -224,7 +218,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
 
             {feedback.growth.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">Growth</h2>
+                <h2 className="card-heading mb-3">Growth</h2>
                 <ul className="space-y-2">
                   {feedback.growth.map((g, i) => (
                     <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
@@ -243,7 +237,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               transition={{ duration: 0.4, delay: 0.16 }}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
             >
-              <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">Try Next</h2>
+              <h2 className="card-heading mb-3">Try Next</h2>
               <ul className="space-y-2">
                 {feedback.suggestions.map((s, i) => (
                   <li key={i} className="text-sm text-gray-600 flex items-start gap-2">

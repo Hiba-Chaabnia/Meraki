@@ -1,15 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-
 import { Flame, Calendar } from "lucide-react";
 import { getGreeting } from "@/lib/dashboardData";
 import type { UserStats } from "@/lib/dashboardData";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
+import { fadeUp } from "@/components/ui/animations";
 
 interface HeroBannerProps {
   displayName: string;
@@ -23,11 +18,7 @@ export function HeroBanner({ displayName, stats, onLogPractice }: HeroBannerProp
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         {/* Left Content: Greeting & Stats */}
         <div className="flex-1 space-y-3">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-          >
+          <motion.div variants={fadeUp} initial="hidden" animate="show">
             <h1 className="text-3xl md:text-5xl font-serif font-medium text-gray-900 leading-tight">
               {getGreeting(displayName)}
             </h1>
@@ -67,7 +58,7 @@ export function HeroBanner({ displayName, stats, onLogPractice }: HeroBannerProp
         >
           <button
             onClick={onLogPractice}
-            className="px-8 py-3 bg-[var(--secondary)] text-[#1a1a1a] font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
+            className="px-8 py-3 bg-[var(--secondary)] text-gray-900 font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
           >
             Log Practice
           </button>

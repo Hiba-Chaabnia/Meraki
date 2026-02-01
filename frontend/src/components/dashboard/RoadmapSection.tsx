@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { ActiveHobby, Roadmap } from "@/lib/dashboardData";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 interface RoadmapSectionProps {
   hobbies: ActiveHobby[];
@@ -29,7 +30,7 @@ export function RoadmapSection({ hobbies, roadmaps }: RoadmapSectionProps) {
   const nextPhase = currentRoadmap?.phases[currentRoadmap.currentPhase + 1] ?? null;
 
   return (
-    <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col h-full">
+    <Card radius="3xl" padding="lg" className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-serif text-xl text-[var(--foreground)]">My Roadmap</h3>
@@ -127,6 +128,6 @@ export function RoadmapSection({ hobbies, roadmaps }: RoadmapSectionProps) {
           )}
         </>
       )}
-    </div>
+    </Card>
   );
 }

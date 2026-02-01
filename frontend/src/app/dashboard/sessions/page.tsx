@@ -13,15 +13,9 @@ import { moodEmojis } from "@/lib/dashboardData";
 import { Plus, Filter } from "lucide-react";
 import type { PracticeSession, ActiveHobby } from "@/lib/dashboardData";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
 
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
+const stagger = staggerContainer(0.06);
 
 export default function SessionsPage() {
   const [loggerOpen, setLoggerOpen] = useState(false);
@@ -77,7 +71,7 @@ export default function SessionsPage() {
       >
         <motion.div variants={fadeUp} className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="!text-2xl md:!text-3xl mb-1">Practice Sessions</h1>
+            <h1 className="page-title mb-1">Practice Sessions</h1>
             <p className="text-gray-500 text-sm">
               {allSessions.length} sessions logged
             </p>
@@ -109,10 +103,9 @@ export default function SessionsPage() {
               onClick={() => setFilterHobby(h.slug)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 filterHobby === h.slug
-                  ? "text-white"
+                  ? "bg-gray-800 text-white"
                   : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               }`}
-              style={filterHobby === h.slug ? { backgroundColor: "#374151" } : undefined}
             >
               {h.name}
             </button>
@@ -126,16 +119,14 @@ export default function SessionsPage() {
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
                   <div className="flex items-start gap-4">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
-                      style={{ backgroundColor: "#F3F4F6" }}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-xl bg-gray-100"
                     >
                       {moodEmojis[s.mood]?.emoji ?? ""}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span
-                          className="text-xs font-bold px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
+                          className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
                         >
                           {s.hobbyName}
                         </span>

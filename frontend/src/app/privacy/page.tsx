@@ -26,7 +26,7 @@ export default function PrivacyPage() {
 
             {/* Content */}
             <div className="max-w-4xl mx-auto px-4 md:px-8 py-12 md:py-16">
-                <h1 className="!text-4xl md:!text-5xl mb-4">Privacy Policy</h1>
+                <h1 className="text-4xl md:text-5xl mb-4">Privacy Policy</h1>
                 <p className="text-gray-500 mb-8">
                     Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                 </p>
@@ -46,9 +46,9 @@ export default function PrivacyPage() {
 
                     {/* Section 1 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">1. Information We Collect</h2>
+                        <h2 className="text-2xl font-bold mb-4">1. Information We Collect</h2>
 
-                        <h3 className="!text-lg !font-semibold mb-3">1.1 Information You Provide</h3>
+                        <h3 className="text-lg font-semibold mb-3">1.1 Information You Provide</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">When you use Meraki, you may provide:</p>
                         <ul className="list-disc pl-6 text-gray-600 space-y-2 mb-4">
                             <li>
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
                             </li>
                         </ul>
 
-                        <h3 className="!text-lg !font-semibold mb-3">1.2 Automatically Collected Information</h3>
+                        <h3 className="text-lg font-semibold mb-3">1.2 Automatically Collected Information</h3>
                         <ul className="list-disc pl-6 text-gray-600 space-y-2 mb-4">
                             <li>
                                 <strong>Usage Data:</strong> Pages visited, features used, time spent on the platform
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
                             </li>
                         </ul>
 
-                        <h3 className="!text-lg !font-semibold mb-3">1.3 Location Data (Optional)</h3>
+                        <h3 className="text-lg font-semibold mb-3">1.3 Location Data (Optional)</h3>
                         <p className="text-gray-600 leading-relaxed">
                             When you use the "Find Nearby" feature to discover local workshops and classes, we may request your
                             location. This data is used only for that search and is never stored on our servers.
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
 
                     {/* Section 2 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">2. How We Use Your Information</h2>
+                        <h2 className="text-2xl font-bold mb-4">2. How We Use Your Information</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">We use your information to:</p>
                         <ul className="list-disc pl-6 text-gray-600 space-y-2">
                             <li>
@@ -125,7 +125,7 @@ export default function PrivacyPage() {
 
                     {/* Section 3 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">3. How We Store Your Data</h2>
+                        <h2 className="text-2xl font-bold mb-4">3. How We Store Your Data</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Your data is stored securely using <strong>Supabase</strong>, a PostgreSQL database platform with
                             enterprise-grade security:
@@ -145,12 +145,12 @@ export default function PrivacyPage() {
 
                     {/* Section 4 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">4. Third-Party Services</h2>
+                        <h2 className="text-2xl font-bold mb-4">4. Third-Party Services</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Meraki integrates with the following third-party services:
                         </p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">4.1 Google OAuth</h3>
+                        <h3 className="text-lg font-semibold mb-3">4.1 Google OAuth</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             If you sign in with Google, we receive your email address and name from Google. We don't access your
                             Gmail, Google Drive, or other Google services. Review{" "}
@@ -165,7 +165,7 @@ export default function PrivacyPage() {
                             .
                         </p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">4.2 Google Maps API</h3>
+                        <h3 className="text-lg font-semibold mb-3">4.2 Google Maps API</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             The "Find Nearby" feature uses Google Maps to search for local workshops and classes. Your location is
                             sent to Google for this search but is not stored by Meraki. Review{" "}
@@ -180,7 +180,7 @@ export default function PrivacyPage() {
                             .
                         </p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">4.3 AI Services (Future)</h3>
+                        <h3 className="text-lg font-semibold mb-3">4.3 AI Services (Future)</h3>
                         <p className="text-gray-600 leading-relaxed">
                             We plan to use AI services (such as OpenAI or similar) to generate personalized feedback and hobby
                             recommendations. Your practice session notes may be sent to these services, but we will never include
@@ -190,7 +190,7 @@ export default function PrivacyPage() {
 
                     {/* Section 5 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">5. Data Sharing & Disclosure</h2>
+                        <h2 className="text-2xl font-bold mb-4">5. Data Sharing & Disclosure</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             <strong>We do not sell your personal data. Period.</strong>
                         </p>
@@ -215,21 +215,21 @@ export default function PrivacyPage() {
 
                     {/* Section 6 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">6. Your Privacy Rights</h2>
+                        <h2 className="text-2xl font-bold mb-4">6. Your Privacy Rights</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">You have the right to:</p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">6.1 Access Your Data</h3>
+                        <h3 className="text-lg font-semibold mb-3">6.1 Access Your Data</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             View all your data through your Profile and Settings pages. You can also export your complete data as a
                             JSON file from Settings → Export My Data.
                         </p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">6.2 Correct Your Data</h3>
+                        <h3 className="text-lg font-semibold mb-3">6.2 Correct Your Data</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Update your profile information, bio, and settings at any time through your Profile page.
                         </p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">6.3 Delete Your Data</h3>
+                        <h3 className="text-lg font-semibold mb-3">6.3 Delete Your Data</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Delete your account and all associated data from Settings → Delete Account. This action is permanent and
                             cannot be undone. We will delete:
@@ -242,13 +242,13 @@ export default function PrivacyPage() {
                             <li>Progress data, streaks, and milestones</li>
                         </ul>
 
-                        <h3 className="!text-lg !font-semibold mb-3">6.4 Opt-Out of Communications</h3>
+                        <h3 className="text-lg font-semibold mb-3">6.4 Opt-Out of Communications</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Control your notification preferences in Settings. You can disable email notifications, streak reminders,
                             challenge alerts, and weekly digests.
                         </p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">6.5 GDPR Rights (EU Users)</h3>
+                        <h3 className="text-lg font-semibold mb-3">6.5 GDPR Rights (EU Users)</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             If you're in the European Union, you have additional rights under GDPR:
                         </p>
@@ -259,7 +259,7 @@ export default function PrivacyPage() {
                             <li>Right to lodge a complaint with a supervisory authority</li>
                         </ul>
 
-                        <h3 className="!text-lg !font-semibold mb-3 mt-4">6.6 CCPA Rights (California Users)</h3>
+                        <h3 className="text-lg font-semibold mb-3 mt-4">6.6 CCPA Rights (California Users)</h3>
                         <p className="text-gray-600 leading-relaxed">
                             California residents have the right to know what personal information we collect, request deletion, and
                             opt-out of data sales (which we don't do anyway).
@@ -268,7 +268,7 @@ export default function PrivacyPage() {
 
                     {/* Section 7 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">7. Cookies & Tracking</h2>
+                        <h2 className="text-2xl font-bold mb-4">7. Cookies & Tracking</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">We use cookies for:</p>
                         <ul className="list-disc pl-6 text-gray-600 space-y-2 mb-4">
                             <li>
@@ -288,7 +288,7 @@ export default function PrivacyPage() {
 
                     {/* Section 8 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">8. Children's Privacy</h2>
+                        <h2 className="text-2xl font-bold mb-4">8. Children's Privacy</h2>
                         <p className="text-gray-600 leading-relaxed">
                             Meraki is not intended for children under 13. We do not knowingly collect personal information from
                             children under 13. If you're a parent and believe your child has provided us with personal information,
@@ -298,7 +298,7 @@ export default function PrivacyPage() {
 
                     {/* Section 9 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">9. Data Retention</h2>
+                        <h2 className="text-2xl font-bold mb-4">9. Data Retention</h2>
                         <p className="text-gray-600 leading-relaxed">
                             We retain your data for as long as your account is active. When you delete your account, we permanently
                             delete your data within 30 days. Some anonymized, aggregated data may be retained for analytics purposes
@@ -308,7 +308,7 @@ export default function PrivacyPage() {
 
                     {/* Section 10 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">10. International Users</h2>
+                        <h2 className="text-2xl font-bold mb-4">10. International Users</h2>
                         <p className="text-gray-600 leading-relaxed">
                             Meraki is operated globally. If you're accessing Meraki from outside the country where our servers are
                             located, your data may be transferred across borders. We ensure appropriate safeguards are in place to
@@ -318,7 +318,7 @@ export default function PrivacyPage() {
 
                     {/* Section 11 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">11. Security</h2>
+                        <h2 className="text-2xl font-bold mb-4">11. Security</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             We take security seriously and implement industry-standard measures:
                         </p>
@@ -337,7 +337,7 @@ export default function PrivacyPage() {
 
                     {/* Section 12 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">12. Changes to This Policy</h2>
+                        <h2 className="text-2xl font-bold mb-4">12. Changes to This Policy</h2>
                         <p className="text-gray-600 leading-relaxed">
                             We may update this Privacy Policy from time to time. We'll notify you of significant changes by posting a
                             notice on our website or sending you an email. The "Last updated" date at the top will always reflect the
@@ -347,7 +347,7 @@ export default function PrivacyPage() {
 
                     {/* Section 13 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">13. Contact Us</h2>
+                        <h2 className="text-2xl font-bold mb-4">13. Contact Us</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             If you have questions, concerns, or requests regarding your privacy, please contact us:
                         </p>

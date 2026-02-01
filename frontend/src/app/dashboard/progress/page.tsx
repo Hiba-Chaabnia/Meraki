@@ -16,14 +16,9 @@ import { milestoneRules } from "@/lib/milestoneRules";
 import { moodEmojis } from "@/lib/dashboardData";
 import type { UserStats, ActiveHobby, PracticeSession, Milestone } from "@/lib/dashboardData";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
+
+const stagger = staggerContainer(0.06);
 
 const heatColors: Record<number, string> = {
   0: "#f3f4f6",
@@ -129,7 +124,7 @@ export default function ProgressPage() {
     <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12">
       <motion.div variants={fadeUp} className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="!text-2xl md:!text-3xl mb-1">Your Progress</h1>
+          <h1 className="page-title mb-1">Your Progress</h1>
           <p className="text-gray-500 text-sm">{displayStats.daysSinceJoining} days of creative exploration</p>
         </div>
       </motion.div>
@@ -151,7 +146,7 @@ export default function ProgressPage() {
       </motion.div>
 
       <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
-        <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Practice Activity</h2>
+        <h2 className="card-heading mb-4">Practice Activity</h2>
         {heatmap.length > 0 ? (
           <>
             <div className="overflow-x-auto pb-2"><HeatmapGrid data={heatmap} /></div>
@@ -170,7 +165,7 @@ export default function ProgressPage() {
 
       {hobbies.length > 0 && (
         <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Hobby Breakdown</h2>
+          <h2 className="card-heading mb-4">Hobby Breakdown</h2>
           <div className="space-y-4">
             {hobbies.map((h) => {
               const pct = displayStats.totalSessions > 0 ? Math.round((h.totalSessions / displayStats.totalSessions) * 100) : 0;
@@ -178,13 +173,13 @@ export default function ProgressPage() {
                 <div key={h.slug}>
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#374151" }} />
+                      <div className="w-3 h-3 rounded-full bg-gray-700" />
                       <span className="text-sm font-medium text-gray-700">{h.name}</span>
                     </div>
                     <span className="text-xs text-gray-400">{h.totalSessions} sessions ({pct}%)</span>
                   </div>
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" as const }} className="h-full rounded-full" style={{ backgroundColor: "#374151" }} />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" as const }} className="h-full rounded-full bg-gray-700" />
                   </div>
                 </div>
               );
@@ -198,12 +193,12 @@ export default function ProgressPage() {
         const latestSession = sessions[0];
         return (
           <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
-            <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-5">Your Journey</h2>
+            <h2 className="card-heading mb-5">Your Journey</h2>
             <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
               <div className="text-center p-4 rounded-xl bg-gray-50">
                 <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Day 1</p>
                 <span className="text-3xl block mb-2">{moodEmojis[firstSession.mood]?.emoji}</span>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F3F4F6", color: "#374151" }}>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                   {firstSession.hobbyName}
                 </span>
                 <p className="text-xs text-gray-400 mt-2">{firstSession.duration} min</p>
@@ -215,10 +210,10 @@ export default function ProgressPage() {
                 </svg>
                 <span className="text-[10px] text-gray-400">{displayStats.daysSinceJoining} days</span>
               </div>
-              <div className="text-center p-4 rounded-xl" style={{ backgroundColor: "#F9FAFB" }}>
-                <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: "#374151" }}>Now</p>
+              <div className="text-center p-4 rounded-xl bg-gray-50">
+                <p className="text-xs font-bold tracking-widest uppercase mb-2 text-gray-700">Now</p>
                 <span className="text-3xl block mb-2">{moodEmojis[latestSession.mood]?.emoji}</span>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F3F4F6", color: "#374151" }}>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                   {latestSession.hobbyName}
                 </span>
                 <p className="text-xs text-gray-400 mt-2">{latestSession.duration} min</p>
@@ -230,7 +225,7 @@ export default function ProgressPage() {
       })()}
 
       <motion.div variants={fadeUp} className="mb-8">
-        <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Milestones</h2>
+        <h2 className="card-heading mb-4">Milestones</h2>
         {earnedMilestones.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {earnedMilestones.map((m) => (
@@ -269,14 +264,13 @@ export default function ProgressPage() {
       {/* Session Log */}
       {sessions.length > 0 && (
         <motion.div variants={fadeUp}>
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Session Log</h2>
+          <h2 className="card-heading mb-4">Session Log</h2>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
             {sessions.map((s) => (
               <Link key={s.id} href={`/dashboard/sessions/${s.id}`}>
                 <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                    style={{ backgroundColor: "#F3F4F6" }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg bg-gray-100"
                   >
                     {moodEmojis[s.mood]?.emoji ?? ""}
                   </div>

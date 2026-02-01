@@ -9,10 +9,7 @@ import { toRoadmap } from "@/lib/transformData";
 import type { Roadmap } from "@/lib/dashboardData";
 import { ArrowLeft, Check, ChevronRight, Target } from "lucide-react";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
+import { fadeUp } from "@/components/ui/animations";
 
 export default function RoadmapDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -72,7 +69,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
       <motion.div initial="hidden" animate="show" variants={fadeUp} className="mb-6">
         <Link
           href={`/dashboard/hobby/${roadmap.hobbySlug}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
+          className="back-link"
         >
           <ArrowLeft className="w-4 h-4" /> {roadmap.hobbyName}
         </Link>
@@ -81,11 +78,11 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
       {/* Header */}
       <motion.div initial="hidden" animate="show" variants={fadeUp} className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: "#E5E7EB", color: "#374151" }}>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-200 text-gray-700">
             {roadmap.hobbyName}
           </span>
         </div>
-        <h1 className="!text-2xl md:!text-3xl font-serif mb-2">{roadmap.title}</h1>
+        <h1 className="text-2xl md:text-3xl font-medium text-gray-900 leading-tight mb-2">{roadmap.title}</h1>
         <p className="text-sm text-gray-500">{roadmap.description}</p>
 
         <div className="mt-4">
@@ -95,8 +92,8 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${((roadmap.currentPhase + 1) / roadmap.totalPhases) * 100}%`, backgroundColor: "#374151" }}
+              className="h-full rounded-full transition-all duration-500 bg-gray-700"
+              style={{ width: `${((roadmap.currentPhase + 1) / roadmap.totalPhases) * 100}%` }}
             />
           </div>
         </div>
@@ -116,16 +113,14 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.06, duration: 0.4 }}
               className={`rounded-2xl border-2 p-6 transition-all ${
-                isCurrent ? "border-current shadow-md" : isComplete ? "border-gray-200 bg-gray-50/50" : "border-gray-100 opacity-60"
+                isCurrent ? "border-gray-700 shadow-md" : isComplete ? "border-gray-200 bg-gray-50/50" : "border-gray-100 opacity-60"
               }`}
-              style={isCurrent ? { borderColor: "#374151" } : undefined}
             >
               <div className="flex items-start gap-3">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold ${
-                    isComplete ? "bg-green-100 text-green-600" : isCurrent ? "text-white" : "bg-gray-100 text-gray-400"
+                    isComplete ? "bg-green-100 text-green-600" : isCurrent ? "bg-gray-700 text-white" : "bg-gray-100 text-gray-400"
                   }`}
-                  style={isCurrent ? { backgroundColor: "#374151" } : undefined}
                 >
                   {isComplete ? <Check className="w-4 h-4" /> : phase.phase_number}
                 </div>
@@ -140,7 +135,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
                         <ul className="space-y-1">
                           {phase.goals.map((g, i) => (
                             <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                              <Target className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "#374151" }} />
+                              <Target className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-gray-700" />
                               {g}
                             </li>
                           ))}
@@ -192,8 +187,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
                 <button
                   onClick={handleAdvance}
                   disabled={advancing}
-                  className="flex-1 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-md active:scale-[0.98] cursor-pointer disabled:opacity-50"
-                  style={{ backgroundColor: "#374151" }}
+                  className="flex-1 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-md active:scale-[0.98] cursor-pointer disabled:opacity-50 bg-gray-700"
                 >
                   {advancing ? "Advancing..." : "Confirm"}
                 </button>
@@ -202,8 +196,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
           ) : (
             <button
               onClick={() => setConfirmAdvance(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer"
-              style={{ backgroundColor: "#374151" }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer bg-gray-700"
             >
               Complete Phase {roadmap.currentPhase + 1} &amp; Advance
             </button>
@@ -213,8 +206,8 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
 
       {isLastPhase && (
         <motion.div initial="hidden" animate="show" variants={fadeUp} className="mt-8 text-center">
-          <div className="rounded-2xl p-6" style={{ backgroundColor: "#F9FAFB" }}>
-            <p className="text-sm font-medium" style={{ color: "#374151" }}>
+          <div className="rounded-2xl p-6 bg-gray-50">
+            <p className="text-sm font-medium text-gray-700">
               You&apos;re on the final phase! Complete it to finish your roadmap.
             </p>
           </div>

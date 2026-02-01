@@ -117,7 +117,7 @@ export default function LocalPage({
               className="text-center"
             >
               <MapPinIcon className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-              <p className="!text-xl text-gray-400 mb-2">
+              <p className="text-xl text-gray-400 mb-2">
                 Add your location to see spots near you
               </p>
               <button

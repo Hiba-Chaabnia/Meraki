@@ -6,16 +6,10 @@ import { ChallengeCard } from "@/components/dashboard";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { getUserChallenges } from "@/app/actions/challenges";
 import { toChallenge } from "@/lib/transformData";
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
 import type { ChallengeStatus, Challenge } from "@/lib/dashboardData";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
+const stagger = staggerContainer(0.06);
 
 const tabs: { key: ChallengeStatus | "all"; label: string }[] = [
   { key: "all", label: "All" },
@@ -48,7 +42,7 @@ export default function ChallengesPage() {
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12">
       <motion.div variants={fadeUp} className="mb-6">
-        <h1 className="!text-2xl md:!text-3xl mb-1">Challenges</h1>
+        <h1 className="page-title mb-1">Challenges</h1>
         <p className="text-gray-500 text-sm">
           {activeCount} active &middot; {completedCount} completed
         </p>

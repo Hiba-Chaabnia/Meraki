@@ -5,6 +5,8 @@ import { HobbyCard } from "./HobbyCard";
 import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
 import { THEME_PRIMARY, THEME_SECONDARY } from "@/lib/sectionTheme";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface HobbiesSectionProps {
   hobbies: ActiveHobby[];
@@ -16,7 +18,7 @@ interface HobbiesSectionProps {
 
 export function HobbiesSection({ hobbies, challenges, onAddHobby, onStatusChange, onLogHobby }: HobbiesSectionProps) {
   return (
-    <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+    <Card radius="3xl" padding="lg">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-serif text-xl text-[var(--foreground)]">My Hobbies</h3>
         <Button
@@ -59,11 +61,12 @@ export function HobbiesSection({ hobbies, challenges, onAddHobby, onStatusChange
           })}
         </div>
       ) : (
-        <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
-          <p className="text-gray-400 mb-1">No hobbies yet.</p>
-          <p className="text-sm text-gray-400">Add your first hobby to get started!</p>
-        </div>
+        <EmptyState
+          title="No hobbies yet."
+          description="Add your first hobby to get started!"
+          bordered
+        />
       )}
-    </div>
+    </Card>
   );
 }

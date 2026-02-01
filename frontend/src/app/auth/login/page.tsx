@@ -26,7 +26,7 @@ export default function LoginPage() {
       <div className="space-y-6">
         {/* Heading */}
         <div className="space-y-1">
-          <h1 className="!text-3xl font-serif font-bold text-gray-900">
+          <h1 className="text-3xl font-serif font-bold text-gray-900">
             Welcome Back
           </h1>
           <p className="text-sm text-gray-500">

@@ -19,15 +19,9 @@ import { moodEmojis } from "@/lib/dashboardData";
 import type { ActiveHobby, PracticeSession, Challenge, Roadmap } from "@/lib/dashboardData";
 import type { PracticeFeedback } from "@/app/actions/feedback";
 import { getSessionFeedback } from "@/app/actions/feedback";
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-};
+const stagger = staggerContainer(0.08);
 
 export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -183,7 +177,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
               style={{ backgroundColor: meta.color }}
             />
             <div className="relative z-10">
-              <h1 className="!text-2xl md:!text-4xl mb-2">{meta.name}</h1>
+              <h1 className="text-2xl md:text-4xl font-medium text-gray-900 leading-tight mb-2">{meta.name}</h1>
               <p className="text-gray-600">
                 {hobby?.status === "active" ? "Active" : "Paused"} &middot; Day {hobby?.daysSinceStart ?? 0} of your journey
               </p>
@@ -216,7 +210,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
 
         {/* Current Challenge */}
         <motion.div variants={fadeUp} className="mb-8">
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Current Challenge</h2>
+          <h2 className="card-heading mb-4">Current Challenge</h2>
           {activeChallenges.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {activeChallenges.map((c) => <ChallengeCard key={c.id} challenge={c} />)}
@@ -242,7 +236,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
 
         {/* Learning Roadmap */}
         <motion.div variants={fadeUp} className="mb-8">
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Learning Roadmap</h2>
+          <h2 className="card-heading mb-4">Learning Roadmap</h2>
           {roadmap ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <div className="flex items-center gap-3 mb-3">
@@ -289,7 +283,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
 
         {/* Recent Sessions */}
         <motion.div variants={fadeUp} className="mb-8">
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Recent Sessions</h2>
+          <h2 className="card-heading mb-4">Recent Sessions</h2>
           {recentSessions.length > 0 ? (
             <div className="space-y-3">
               {recentSessions.map((s) => {
@@ -330,7 +324,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         {/* Completed Challenges */}
         {completedChallenges.length > 0 && (
           <motion.div variants={fadeUp} className="mb-8">
-            <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Completed Challenges</h2>
+            <h2 className="card-heading mb-4">Completed Challenges</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {completedChallenges.map((c) => <ChallengeCard key={c.id} challenge={c} />)}
             </div>
@@ -339,7 +333,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
 
         {/* Go deeper */}
         <motion.div variants={fadeUp}>
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-4">Go deeper with {meta.name}</h2>
+          <h2 className="card-heading mb-4">Go deeper with {meta.name}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link href={`/discover/sampling/${slug}/watch`} className="group">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow flex items-center gap-4">

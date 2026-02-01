@@ -154,7 +154,7 @@ export default function AnalyzingPage() {
         className="text-center max-w-md space-y-6"
       >
         <div className="w-16 h-16 border-4 border-[var(--lavender)] border-t-transparent rounded-full animate-spin mx-auto" />
-        <h1 className="!text-2xl md:!text-3xl">Analyzing Your Profile</h1>
+        <h1 className="page-title">Analyzing Your Profile</h1>
         <p className="text-gray-500">{status}</p>
         {error && (
           <div className="space-y-3">

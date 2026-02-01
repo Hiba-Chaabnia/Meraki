@@ -26,7 +26,7 @@ export default function TermsPage() {
 
             {/* Content */}
             <div className="max-w-4xl mx-auto px-4 md:px-8 py-12 md:py-16">
-                <h1 className="!text-4xl md:!text-5xl mb-4">Terms of Service</h1>
+                <h1 className="text-4xl md:text-5xl mb-4">Terms of Service</h1>
                 <p className="text-gray-500 mb-8">
                     Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                 </p>
@@ -34,7 +34,7 @@ export default function TermsPage() {
                 <div className="prose prose-gray max-w-none">
                     {/* Section 1 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">1. Acceptance of Terms</h2>
+                        <h2 className="text-2xl font-bold mb-4">1. Acceptance of Terms</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Welcome to Meraki! By accessing or using our platform, you agree to be bound by these Terms of Service
                             and our Privacy Policy. If you don't agree with any part of these terms, please don't use our service.
@@ -47,8 +47,8 @@ export default function TermsPage() {
 
                     {/* Section 2 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">2. User Accounts</h2>
-                        <h3 className="!text-lg !font-semibold mb-3">2.1 Registration</h3>
+                        <h2 className="text-2xl font-bold mb-4">2. User Accounts</h2>
+                        <h3 className="text-lg font-semibold mb-3">2.1 Registration</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             To access certain features, you'll need to create an account. You agree to:
                         </p>
@@ -59,13 +59,13 @@ export default function TermsPage() {
                             <li>Notify us immediately of any unauthorized access to your account</li>
                         </ul>
 
-                        <h3 className="!text-lg !font-semibold mb-3">2.2 Age Requirement</h3>
+                        <h3 className="text-lg font-semibold mb-3">2.2 Age Requirement</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             You must be at least 13 years old to use Meraki. If you're under 18, you should have your parent or
                             guardian's permission to use our service.
                         </p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">2.3 Account Responsibility</h3>
+                        <h3 className="text-lg font-semibold mb-3">2.3 Account Responsibility</h3>
                         <p className="text-gray-600 leading-relaxed">
                             You're responsible for all activity that occurs under your account. We're not liable for any loss or
                             damage arising from your failure to maintain account security.
@@ -74,8 +74,8 @@ export default function TermsPage() {
 
                     {/* Section 3 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">3. User Content</h2>
-                        <h3 className="!text-lg !font-semibold mb-3">3.1 Your Content</h3>
+                        <h2 className="text-2xl font-bold mb-4">3. User Content</h2>
+                        <h3 className="text-lg font-semibold mb-3">3.1 Your Content</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             You retain all rights to the content you create on Meraki, including:
                         </p>
@@ -86,14 +86,14 @@ export default function TermsPage() {
                             <li>Profile information and bio</li>
                         </ul>
 
-                        <h3 className="!text-lg !font-semibold mb-3">3.2 License to Us</h3>
+                        <h3 className="text-lg font-semibold mb-3">3.2 License to Us</h3>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             By uploading content to Meraki, you grant us a limited license to store, display, and process your
                             content solely for the purpose of providing and improving our service. We will never sell your content or
                             use it for advertising purposes.
                         </p>
 
-                        <h3 className="!text-lg !font-semibold mb-3">3.3 Content Standards</h3>
+                        <h3 className="text-lg font-semibold mb-3">3.3 Content Standards</h3>
                         <p className="text-gray-600 leading-relaxed">
                             You agree not to upload content that is illegal, offensive, harassing, or infringes on others' rights.
                             We reserve the right to remove content that violates these standards.
@@ -102,7 +102,7 @@ export default function TermsPage() {
 
                     {/* Section 4 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">4. Our Content & Intellectual Property</h2>
+                        <h2 className="text-2xl font-bold mb-4">4. Our Content & Intellectual Property</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             All content provided by Meraki, including but not limited to:
                         </p>
@@ -121,7 +121,7 @@ export default function TermsPage() {
 
                     {/* Section 5 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">5. AI-Generated Content</h2>
+                        <h2 className="text-2xl font-bold mb-4">5. AI-Generated Content</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Meraki uses artificial intelligence to provide personalized feedback, hobby recommendations, and
                             insights. Please note:
@@ -140,7 +140,7 @@ export default function TermsPage() {
 
                     {/* Section 6 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">6. Acceptable Use</h2>
+                        <h2 className="text-2xl font-bold mb-4">6. Acceptable Use</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">You agree NOT to:</p>
                         <ul className="list-disc pl-6 text-gray-600 space-y-2">
                             <li>Use Meraki for any illegal purpose</li>
@@ -155,7 +155,7 @@ export default function TermsPage() {
 
                     {/* Section 7 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">7. Termination</h2>
+                        <h2 className="text-2xl font-bold mb-4">7. Termination</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             You can delete your account at any time through your Settings page. Upon deletion:
                         </p>
@@ -171,7 +171,7 @@ export default function TermsPage() {
 
                     {/* Section 8 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">8. Disclaimers</h2>
+                        <h2 className="text-2xl font-bold mb-4">8. Disclaimers</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Meraki is provided "as is" without warranties of any kind. We don't guarantee that:
                         </p>
@@ -189,7 +189,7 @@ export default function TermsPage() {
 
                     {/* Section 9 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">9. Limitation of Liability</h2>
+                        <h2 className="text-2xl font-bold mb-4">9. Limitation of Liability</h2>
                         <p className="text-gray-600 leading-relaxed">
                             To the maximum extent permitted by law, Meraki and its creators shall not be liable for any indirect,
                             incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether
@@ -200,7 +200,7 @@ export default function TermsPage() {
 
                     {/* Section 10 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">10. Changes to Terms</h2>
+                        <h2 className="text-2xl font-bold mb-4">10. Changes to Terms</h2>
                         <p className="text-gray-600 leading-relaxed">
                             We may update these Terms of Service from time to time. We'll notify you of significant changes by
                             posting a notice on our website or sending you an email. Your continued use of Meraki after changes are
@@ -210,7 +210,7 @@ export default function TermsPage() {
 
                     {/* Section 11 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">11. Governing Law</h2>
+                        <h2 className="text-2xl font-bold mb-4">11. Governing Law</h2>
                         <p className="text-gray-600 leading-relaxed">
                             These Terms shall be governed by and construed in accordance with the laws of your jurisdiction, without
                             regard to its conflict of law provisions.
@@ -219,7 +219,7 @@ export default function TermsPage() {
 
                     {/* Section 12 */}
                     <section className="mb-10">
-                        <h2 className="!text-2xl !font-bold mb-4">12. Contact Us</h2>
+                        <h2 className="text-2xl font-bold mb-4">12. Contact Us</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             If you have questions about these Terms of Service, please contact us at:
                         </p>

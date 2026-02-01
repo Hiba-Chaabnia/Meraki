@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useUser } from "@/lib/hooks/useUser";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { updatePublicProfile, changePassword, exportUserData, deleteAccount } from "@/app/actions/settings";
+import { fadeUp, staggerContainer } from "@/components/ui/animations";
 
 /* ─── Icons ─── */
 const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
@@ -15,15 +16,7 @@ const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-};
+const stagger = staggerContainer(0.08);
 
 function ToggleSwitch({
   enabled,
@@ -166,7 +159,7 @@ export default function SettingsPage() {
             onClick={() => setPasswordDialog(false)}
           />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-            <h3 className="!text-lg !font-bold !tracking-normal mb-4">
+            <h3 className="text-lg font-bold tracking-normal mb-4">
               Change Password
             </h3>
             <input
@@ -207,7 +200,7 @@ export default function SettingsPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-8">
         <motion.div variants={fadeUp} className="mb-8">
-          <h1 className="!text-2xl md:!text-3xl mb-1">Settings</h1>
+          <h1 className="page-title mb-1">Settings</h1>
           <p className="text-gray-500 text-sm">
             Manage your account and preferences
           </p>
@@ -229,7 +222,7 @@ export default function SettingsPage() {
           variants={fadeUp}
           className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
         >
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-5">
+          <h2 className="card-heading mb-5">
             Privacy
           </h2>
           <div className="space-y-5">
@@ -255,7 +248,7 @@ export default function SettingsPage() {
           variants={fadeUp}
           className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
         >
-          <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-5">
+          <h2 className="card-heading mb-5">
             Account
           </h2>
           <div className="space-y-4">
@@ -287,7 +280,7 @@ export default function SettingsPage() {
           variants={fadeUp}
           className="bg-white rounded-2xl border border-red-100 shadow-sm p-6"
         >
-          <h2 className="!text-base !font-semibold !tracking-normal text-red-600 mb-3">
+          <h2 className="text-base font-semibold tracking-normal text-red-600 mb-3">
             Danger Zone
           </h2>
           <p className="text-sm text-gray-500 mb-4">

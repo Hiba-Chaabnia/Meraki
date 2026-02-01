@@ -28,7 +28,7 @@ export function SpotCard({ spot, theme, index }: SpotCardProps) {
       <div className="flex flex-col gap-3 flex-1">
         {/* Row 1: Name + Type badge */}
         <div className="flex items-center justify-between gap-3">
-          <p className="!text-base !font-semibold !tracking-normal !text-gray-800 min-w-0 truncate">
+          <p className="text-base font-semibold tracking-normal text-gray-800 min-w-0 truncate">
             {spot.name}
           </p>
           <span

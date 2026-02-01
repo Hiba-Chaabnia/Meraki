@@ -63,7 +63,7 @@ export function LocationModal({
               >
                 <MapPinIcon className="w-7 h-7 text-[var(--background)]" />
               </div>
-              <p className="!text-xl md:!text-2xl mb-2">
+              <p className="text-xl md:text-2xl font-medium text-gray-900 mb-2">
                 Where are you located?
               </p>
               <p className="text-gray-500 text-sm">
