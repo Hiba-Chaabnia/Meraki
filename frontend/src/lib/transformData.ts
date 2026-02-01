@@ -1,3 +1,4 @@
+import type { Database } from "@/types/database.types";
 import type {
   ActiveHobby,
   PracticeSession,
@@ -9,33 +10,70 @@ import type {
 } from "@/lib/dashboardData";
 import { formatSlug } from "@/lib/hobbyData";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* ─── DB row aliases ─────────────────────────────────────────────────────── */
+
+type Tables = Database["public"]["Tables"];
+
+type UserHobbyRow = Tables["user_hobbies"]["Row"];
+type PracticeSessionRow = Tables["practice_sessions"]["Row"];
+type ChallengesRow = Tables["challenges"]["Row"];
+type UserChallengeRow = Tables["user_challenges"]["Row"];
+type MilestoneRow = Tables["milestones"]["Row"];
+type RoadmapRow = Tables["roadmaps"]["Row"];
+type UserRoadmapRow = Tables["user_roadmaps"]["Row"];
+
+/* ─── Join shapes returned by Supabase select queries ────────────────────── */
+
+type SessionWithHobby = PracticeSessionRow & {
+  user_hobbies: UserHobbyRow;
+};
+
+type UserChallengeWithChallenge = UserChallengeRow & {
+  challenges: ChallengesRow;
+};
+
+type MilestoneWithEarned = MilestoneRow & {
+  earned: boolean;
+  earnedDate: string | null;
+};
+
+type UserRoadmapWithRoadmap = UserRoadmapRow & {
+  roadmaps: RoadmapRow;
+};
+
+/** Shape of the get_user_stats RPC result (always snake_case from Postgres). */
+type UserStatsRpc = {
+  current_streak: number;
+  longest_streak: number;
+  total_sessions: number;
+  total_hours: number;
+  challenges_completed: number;
+  hobbies_explored: number;
+  days_since_joining: number;
+};
+
+/* ─── Mappers ────────────────────────────────────────────────────────────── */
 
 /** Map a user_hobbies row to ActiveHobby */
-export function toActiveHobby(row: any): ActiveHobby {
-  const slug = row.hobby_slug ?? "";
+export function toActiveHobby(row: UserHobbyRow): ActiveHobby {
   return {
     userHobbyId: row.id,
-    slug,
-    name: formatSlug(slug),
+    slug: row.hobby_slug,
+    name: formatSlug(row.hobby_slug),
     status: row.status === "paused" ? "paused" : "active",
     currentStreak: 0,
     totalSessions: 0,
     daysSinceStart: Math.max(
       1,
-      Math.floor(
-        (Date.now() - new Date(row.started_at).getTime()) / 86_400_000,
-      ),
+      Math.floor((Date.now() - new Date(row.started_at).getTime()) / 86_400_000),
     ),
     lastSessionDaysAgo: 0,
   };
 }
 
-/** Map a practice_sessions row (with joins) to PracticeSession */
-export function toPracticeSession(row: any): PracticeSession {
-  const userHobby = row.user_hobbies ?? {};
-  const slug = userHobby.hobby_slug ?? "";
-
+/** Map a practice_sessions row (with user_hobbies join) to PracticeSession */
+export function toPracticeSession(row: SessionWithHobby): PracticeSession {
+  const slug = row.user_hobbies.hobby_slug;
   return {
     id: row.id,
     hobbySlug: slug,
@@ -49,15 +87,13 @@ export function toPracticeSession(row: any): PracticeSession {
   };
 }
 
-/** Map a user_challenges row (with joined challenges) to Challenge */
-export function toChallenge(row: any): Challenge {
-  const ch = row.challenges ?? {};
-  const slug = ch.hobby_slug ?? "";
-
+/** Map a user_challenges row (with challenges join) to Challenge */
+export function toChallenge(row: UserChallengeWithChallenge): Challenge {
+  const ch = row.challenges;
   return {
     id: row.id,
-    hobbySlug: slug,
-    hobbyName: formatSlug(slug),
+    hobbySlug: ch.hobby_slug,
+    hobbyName: formatSlug(ch.hobby_slug),
     title: ch.title ?? "",
     description: ch.description ?? "",
     skills: ch.skills ?? [],
@@ -72,7 +108,7 @@ export function toChallenge(row: any): Challenge {
 }
 
 /** Map a milestones row (with earned info) to Milestone */
-export function toMilestone(row: any): Milestone {
+export function toMilestone(row: MilestoneWithEarned): Milestone {
   return {
     id: row.id,
     slug: row.slug ?? "",
@@ -83,26 +119,24 @@ export function toMilestone(row: any): Milestone {
   };
 }
 
-/** Map a user_roadmaps row (with joined roadmaps) to Roadmap */
-export function toRoadmap(row: any): Roadmap {
-  const roadmap = row.roadmaps ?? {};
-  const hobbySlug = row.hobby_slug ?? "";
-
+/** Map a user_roadmaps row (with roadmaps join) to Roadmap */
+export function toRoadmap(row: UserRoadmapWithRoadmap): Roadmap {
+  const roadmap = row.roadmaps;
   return {
-    id: roadmap.id ?? row.roadmap_id ?? "",
-    hobbySlug,
-    hobbyName: formatSlug(hobbySlug),
+    id: roadmap.id ?? "",
+    hobbySlug: row.hobby_slug,
+    hobbyName: formatSlug(row.hobby_slug),
     title: roadmap.title ?? "",
     description: roadmap.description ?? "",
-    phases: roadmap.phases ?? [],
+    phases: (roadmap.phases as Roadmap["phases"]) ?? [],
     currentPhase: row.current_phase ?? 0,
-    totalPhases: roadmap.total_phases ?? (roadmap.phases?.length ?? 0),
-    userRoadmapId: row.id ?? "",
+    totalPhases: roadmap.total_phases ?? 0,
+    userRoadmapId: row.id,
   };
 }
 
 /** Map the get_user_stats RPC result to UserStats */
-export function toUserStats(data: any): UserStats {
+export function toUserStats(data: UserStatsRpc | string | null): UserStats {
   if (!data) {
     return {
       currentStreak: 0,
@@ -114,14 +148,14 @@ export function toUserStats(data: any): UserStats {
       daysSinceJoining: 0,
     };
   }
-  const d = typeof data === "string" ? JSON.parse(data) : data;
+  const d: UserStatsRpc = typeof data === "string" ? JSON.parse(data) : data;
   return {
-    currentStreak: d.current_streak ?? d.currentStreak ?? 0,
-    longestStreak: d.longest_streak ?? d.longestStreak ?? 0,
-    totalSessions: d.total_sessions ?? d.totalSessions ?? 0,
-    totalHours: d.total_hours ?? d.totalHours ?? 0,
-    challengesCompleted: d.challenges_completed ?? d.challengesCompleted ?? 0,
-    hobbiesExplored: d.hobbies_explored ?? d.hobbiesExplored ?? 0,
-    daysSinceJoining: d.days_since_joining ?? d.daysSinceJoining ?? 0,
+    currentStreak:       d.current_streak       ?? 0,
+    longestStreak:       d.longest_streak       ?? 0,
+    totalSessions:       d.total_sessions       ?? 0,
+    totalHours:          d.total_hours          ?? 0,
+    challengesCompleted: d.challenges_completed ?? 0,
+    hobbiesExplored:     d.hobbies_explored     ?? 0,
+    daysSinceJoining:    d.days_since_joining   ?? 0,
   };
 }

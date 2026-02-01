@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { formatSlug } from "@/lib/hobbyData";
 import { PageLayout } from "@/components/layouts/PageLayout";
-import { PUBLIC_API_URL } from "@/lib/config";
+import { CLIENT_API_URL } from "@/lib/config";
 import {
   triggerSamplingPreview,
   type SamplingPreviewResult,
@@ -56,7 +56,7 @@ export default function WatchPage({
     async function pollBackend(jobId: string) {
       pollTimer = setInterval(async () => {
         try {
-          const res = await fetch(`${PUBLIC_API_URL}/sampling/preview/${jobId}`);
+          const res = await fetch(`${CLIENT_API_URL}/sampling/preview/${jobId}`);
           if (cancelled) return;
           if (!res.ok) {
             if (pollTimer) clearInterval(pollTimer);
@@ -98,7 +98,7 @@ export default function WatchPage({
       const jobIdParam = searchParams.get("jobId");
       if (jobIdParam) {
         try {
-          const res = await fetch(`${PUBLIC_API_URL}/sampling/preview/${jobIdParam}`);
+          const res = await fetch(`${CLIENT_API_URL}/sampling/preview/${jobIdParam}`);
           if (cancelled) return;
           if (res.ok) {
             const data = await res.json();
@@ -118,7 +118,7 @@ export default function WatchPage({
       try {
         const storedJobId = sessionStorage.getItem(`sampling-job-${hobbySlug}`);
         if (storedJobId) {
-          const res = await fetch(`${PUBLIC_API_URL}/sampling/preview/${storedJobId}`);
+          const res = await fetch(`${CLIENT_API_URL}/sampling/preview/${storedJobId}`);
           if (!cancelled && res.ok) {
             const data = await res.json();
             if (data.status === "completed" && data.result) {

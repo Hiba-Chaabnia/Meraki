@@ -1,7 +1,7 @@
 "use server";
 
 import { requireAuth } from "@/lib/supabase/requireAuth";
-import { API_URL } from "@/lib/config";
+import { SERVER_API_URL } from "@/lib/config";
 
 export interface PracticeFeedback {
   observations: string[];
@@ -89,7 +89,7 @@ export async function triggerPracticeFeedback(
     .join(", ");
 
   try {
-    const response = await fetch(`${API_URL}/practice/feedback`, {
+    const response = await fetch(`${SERVER_API_URL}/practice/feedback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -119,7 +119,7 @@ export async function pollPracticeFeedbackStatus(
   jobId: string
 ): Promise<FeedbackStatusResponse | { error: string }> {
   try {
-    const response = await fetch(`${API_URL}/practice/feedback/${jobId}`);
+    const response = await fetch(`${SERVER_API_URL}/practice/feedback/${jobId}`);
     if (!response.ok) return { error: `API error: ${response.status}` };
     return await response.json();
   } catch (e) {

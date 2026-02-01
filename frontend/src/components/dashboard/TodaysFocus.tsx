@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
 import type { NudgeData } from "@/app/actions/nudges";
+import { Button } from "@/components/ui/Button";
 
 interface TodaysFocusProps {
   hobbies: ActiveHobby[];
@@ -18,11 +18,7 @@ export function TodaysFocus({ hobbies, activeChallenges, nudge, onDismissNudge }
     return (
       <FocusCard title="Start your creative journey" description="Discover hobbies tailored to your personality and interests.">
         <div className="mt-4">
-          <Link href="/discover/quiz">
-            <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
-              Take the Quiz
-            </button>
-          </Link>
+          <Button href="/discover/quiz" variant="primary">Take the Quiz</Button>
         </div>
       </FocusCard>
     );
@@ -34,15 +30,11 @@ export function TodaysFocus({ hobbies, activeChallenges, nudge, onDismissNudge }
       <FocusCard title={nudge.message} description={nudge.suggested_action} borderColor="var(--secondary)">
         <div className="flex flex-wrap gap-3 mt-4">
           {nudge.action_data && (
-            <Link href={nudge.action_data}>
-              <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
-                Let&apos;s Go
-              </button>
-            </Link>
+            <Button href={nudge.action_data} variant="primary">Let&apos;s Go</Button>
           )}
           <button
             onClick={onDismissNudge}
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors cursor-pointer px-3"
+            className="body-sm text-gray-400 hover:text-gray-600 transition-colors cursor-pointer px-3"
           >
             Dismiss
           </button>
@@ -57,11 +49,9 @@ export function TodaysFocus({ hobbies, activeChallenges, nudge, onDismissNudge }
     return (
       <FocusCard title={activeChallenge.title} description={activeChallenge.description} borderColor="#374151">
         <div className="mt-4">
-          <Link href={`/dashboard/challenges/${activeChallenge.id}`}>
-            <button className="px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors">
-              Continue Challenge
-            </button>
-          </Link>
+          <Button href={`/dashboard/challenges/${activeChallenge.id}`} variant="primary">
+            Continue Challenge
+          </Button>
         </div>
       </FocusCard>
     );

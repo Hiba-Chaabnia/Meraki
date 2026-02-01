@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/requireAuth";
 import { formatSlug } from "@/lib/hobbyData";
-import { API_URL } from "@/lib/config";
+import { SERVER_API_URL } from "@/lib/config";
 import type { Json } from "@/types/database.types";
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -134,7 +134,7 @@ export async function triggerSamplingPreview(hobbySlug: string): Promise<{
   const hobbyName = formatSlug(hobbySlug);
 
   try {
-    const response = await fetch(`${API_URL}/sampling/preview`, {
+    const response = await fetch(`${SERVER_API_URL}/sampling/preview`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -166,7 +166,7 @@ export async function pollSamplingPreviewStatus(
   jobId: string
 ): Promise<SamplingPreviewStatusResponse | { error: string }> {
   try {
-    const response = await fetch(`${API_URL}/sampling/preview/${jobId}`, {
+    const response = await fetch(`${SERVER_API_URL}/sampling/preview/${jobId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -213,7 +213,7 @@ export async function triggerLocalExperiences(
   const hobbyName = formatSlug(hobbySlug);
 
   try {
-    const response = await fetch(`${API_URL}/sampling/local`, {
+    const response = await fetch(`${SERVER_API_URL}/sampling/local`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -245,7 +245,7 @@ export async function pollLocalExperiencesStatus(
   jobId: string
 ): Promise<LocalExperiencesStatusResponse | { error: string }> {
   try {
-    const response = await fetch(`${API_URL}/sampling/local/${jobId}`, {
+    const response = await fetch(`${SERVER_API_URL}/sampling/local/${jobId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

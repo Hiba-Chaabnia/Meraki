@@ -5,6 +5,7 @@ import { Flame, Calendar } from "lucide-react";
 import { getGreeting } from "@/lib/dashboardData";
 import type { UserStats } from "@/lib/dashboardData";
 import { fadeUp } from "@/components/ui/animations";
+import { Button } from "@/components/ui/Button";
 
 interface HeroBannerProps {
   displayName: string;
@@ -31,13 +32,13 @@ export function HeroBanner({ displayName, stats, onLogPractice }: HeroBannerProp
             transition={{ delay: 0.1 }}
             className="flex flex-wrap items-center gap-4 text-sm text-gray-500 font-medium"
           >
-            <span className="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-100 rounded-full shadow-sm">
+            <span className="stat-chip">
               <Calendar className="w-4 h-4 text-[var(--primary)]" />
               Day {stats.daysSinceJoining}
             </span>
 
             {stats.currentStreak > 0 && (
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-100 rounded-full shadow-sm">
+              <span className="stat-chip">
                 <Flame className="w-4 h-4 text-[var(--coral)]" />
                 {stats.currentStreak}-day streak
               </span>
@@ -56,12 +57,15 @@ export function HeroBanner({ displayName, stats, onLogPractice }: HeroBannerProp
           transition={{ delay: 0.2 }}
           className="flex-shrink-0"
         >
-          <button
+          <Button
             onClick={onLogPractice}
-            className="px-8 py-3 bg-[var(--secondary)] text-gray-900 font-bold rounded-full shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
+            variant="secondary"
+            size="lg"
+            shape="pill"
+            className="shadow-md hover:shadow-lg font-bold"
           >
             Log Practice
-          </button>
+          </Button>
         </motion.div>
       </div>
     </div>

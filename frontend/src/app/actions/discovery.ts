@@ -1,7 +1,7 @@
 "use server";
 
 import { requireAuth } from "@/lib/supabase/requireAuth";
-import { API_URL } from "@/lib/config";
+import { SERVER_API_URL } from "@/lib/config";
 
 export interface DiscoveryJobResponse {
   job_id: string;
@@ -51,7 +51,7 @@ export async function triggerDiscovery(): Promise<{
   });
 
   try {
-    const response = await fetch(`${API_URL}/discovery`, {
+    const response = await fetch(`${SERVER_API_URL}/discovery`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: user.id, ...quizData }),
@@ -77,7 +77,7 @@ export async function pollDiscoveryStatus(
   jobId: string
 ): Promise<DiscoveryStatusResponse | { error: string }> {
   try {
-    const response = await fetch(`${API_URL}/discovery/${jobId}`, {
+    const response = await fetch(`${SERVER_API_URL}/discovery/${jobId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });

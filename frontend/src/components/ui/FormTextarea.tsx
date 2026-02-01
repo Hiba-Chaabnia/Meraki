@@ -14,7 +14,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
     return (
       <div>
         {label && (
-          <label className="text-sm font-medium text-gray-600 mb-1.5 block">
+          <label className="form-label">
             {label}
             {labelSuffix && (
               <span className="text-gray-400 font-normal ml-1">{labelSuffix}</span>

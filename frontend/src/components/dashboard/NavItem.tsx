@@ -54,7 +54,7 @@ export function NavItem({ item, active, collapsed = false, mobile = false, onNav
         transition={iconSpring}
         className="flex-shrink-0"
       >
-        <item.Icon className="w-[18px] h-[18px]" />
+        <item.Icon className="w-5 h-5" />
       </motion.div>
       <span className="whitespace-nowrap truncate">{displayLabel}</span>
     </Link>

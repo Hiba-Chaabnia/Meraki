@@ -88,7 +88,7 @@ export function HobbyCard({ hobby, activeChallengeCount, activeChallenge, onStat
                     {hobby.currentStreak}d
                   </span>
                 )}
-                <span className="text-xs text-gray-400">
+                <span className="caption">
                   {lastPracticedLabel(hobby.lastSessionDaysAgo)}
                 </span>
               </div>
@@ -101,20 +101,20 @@ export function HobbyCard({ hobby, activeChallengeCount, activeChallenge, onStat
         <div className="flex items-center gap-1 px-4 pb-3 pt-0">
           <button
             onClick={(e) => { e.stopPropagation(); onLog?.(); }}
-            className="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors text-center cursor-pointer"
+            className="card-action-btn"
           >
             Log
           </button>
           <Link
             href={challengeHref}
-            className="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors text-center"
+            className="card-action-btn"
             onClick={(e) => e.stopPropagation()}
           >
             {challengeLabel}
           </Link>
           <Link
             href={`/discover/sampling/${hobby.slug}`}
-            className="flex-1 py-1.5 rounded-lg text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors text-center"
+            className="card-action-btn"
             onClick={(e) => e.stopPropagation()}
           >
             Explore
@@ -139,7 +139,7 @@ export function HobbyCard({ hobby, activeChallengeCount, activeChallenge, onStat
           </h3>
           <div className="flex items-center gap-1.5 shrink-0">
             <span
-              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              className={`badge-sm ${
                 hobby.status === "active" ? "bg-green-50 text-green-600" : "bg-gray-50 text-gray-400"
               }`}
             >
@@ -149,8 +149,8 @@ export function HobbyCard({ hobby, activeChallengeCount, activeChallenge, onStat
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 pt-4 mt-auto">
-          <p className="text-xs text-gray-400">{hobby.totalSessions} Sessions</p>
-          <p className="text-xs text-gray-400">{activeChallengeCount} Active Challenges</p>
+          <p className="caption">{hobby.totalSessions} Sessions</p>
+          <p className="caption">{activeChallengeCount} Active Challenges</p>
         </div>
       </motion.div>
     </Link>

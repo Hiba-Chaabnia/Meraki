@@ -30,10 +30,10 @@ export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps
       >
         {/* Top row: hobby badge + status */}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-700">
+          <span className="badge bg-gray-100 text-gray-700 font-bold">
             {challenge.hobbyName}
           </span>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${status.bg} ${status.text}`}>
+          <span className={`badge-sm ${status.bg} ${status.text}`}>
             {status.label}
           </span>
         </div>
@@ -44,7 +44,7 @@ export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps
         </h3>
 
         {!compact && (
-          <p className="text-sm text-gray-500 line-clamp-2 mb-3">
+          <p className="body-sm line-clamp-2 mb-3">
             {challenge.description}
           </p>
         )}
@@ -61,9 +61,9 @@ export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps
                 />
               ))}
             </div>
-            <span className="text-xs text-gray-400">{diff.label}</span>
+            <span className="caption">{diff.label}</span>
           </div>
-          <span className="text-xs text-gray-400 flex items-center gap-1">
+          <span className="caption flex items-center gap-1">
             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 6v6l4 2" />

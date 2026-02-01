@@ -37,14 +37,14 @@ export function ActivityTimeline({ items }: ActivityTimelineProps) {
                 {item.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-700">{item.title}</p>
-                <p className="text-xs text-gray-400 truncate">{item.subtitle}</p>
+                <p className="label">{item.title}</p>
+                <p className="caption truncate">{item.subtitle}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-700">
+                <span className="badge-sm bg-gray-100 text-gray-700">
                   {item.type === "session" ? "Session" : "Challenge"}
                 </span>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="caption mt-1">
                   {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </p>
               </div>

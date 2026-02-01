@@ -2,7 +2,7 @@
 
 import { requireAuth } from "@/lib/supabase/requireAuth";
 import { formatSlug } from "@/lib/hobbyData";
-import { API_URL } from "@/lib/config";
+import { SERVER_API_URL } from "@/lib/config";
 
 export interface NudgeData {
   id: string;
@@ -90,7 +90,7 @@ export async function triggerMotivationCheck(
   const skipRate = total > 0 ? skipped / total : 0;
 
   try {
-    const response = await fetch(`${API_URL}/motivation/check`, {
+    const response = await fetch(`${SERVER_API_URL}/motivation/check`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -3,6 +3,7 @@
 import React from "react";
 import { createClient } from "@/lib/supabase/client";
 import GoogleSvg from "./GoogleSvg";
+import { Button } from "@/components/ui/Button";
 
 export default function OAuthSection() {
   async function handleGoogleSignIn() {
@@ -31,14 +32,18 @@ export default function OAuthSection() {
       </div>
 
       {/* Google */}
-      <button
+      <Button
         type="button"
         onClick={handleGoogleSignIn}
-        className="w-full flex items-center justify-center gap-3 p-3 text-sm font-medium border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+        variant="outline"
+        fullWidth
+        outlineColor="#d1d5db"
+        outlineHoverColor="#9ca3af"
+        className="gap-3 bg-white hover:bg-gray-50 text-gray-700"
       >
         {GoogleSvg}
         Google
-      </button>
+      </Button>
     </>
   );
 }

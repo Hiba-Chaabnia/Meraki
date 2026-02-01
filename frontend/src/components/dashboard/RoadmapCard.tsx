@@ -27,8 +27,8 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
 
         <div className="mb-3">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-700">{roadmap.title}</span>
-            <span className="text-xs text-gray-400">
+            <span className="label">{roadmap.title}</span>
+            <span className="caption">
               Phase {roadmap.currentPhase + 1}/{roadmap.totalPhases}
             </span>
           </div>
@@ -41,8 +41,8 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
         </div>
 
         {phase && (
-          <p className="text-sm text-gray-500 mb-4 line-clamp-2">
-            <span className="font-medium text-gray-600">{phase.title}</span>
+          <p className="body-sm mb-4 line-clamp-2">
+            <span className="label-sm">{phase.title}</span>
             {" — "}
             {phase.description}
           </p>

@@ -1,19 +1,11 @@
+import type { UserStats } from "@/lib/dashboardData";
+
 export interface MilestoneRule {
   slug: string;
   title: string;
   description: string;
   icon: string;
-  check: (stats: MilestoneStats) => boolean;
-}
-
-export interface MilestoneStats {
-  totalSessions: number;
-  currentStreak: number;
-  longestStreak: number;
-  challengesCompleted: number;
-  hobbiesExplored: number;
-  totalHours: number;
-  daysSinceJoining: number;
+  check: (stats: UserStats) => boolean;
 }
 
 export const milestoneRules: MilestoneRule[] = [

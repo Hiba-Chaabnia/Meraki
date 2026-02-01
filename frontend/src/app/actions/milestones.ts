@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { milestoneRules, type MilestoneStats } from "@/lib/milestoneRules";
+import { milestoneRules } from "@/lib/milestoneRules";
+import type { UserStats } from "@/lib/dashboardData";
 
 export async function checkAndAwardMilestones(): Promise<{ awarded?: string[]; error?: string }> {
   const supabase = await createClient();
@@ -17,14 +18,14 @@ export async function checkAndAwardMilestones(): Promise<{ awarded?: string[]; e
   if (statsErr) return { error: statsErr.message };
 
   const d = typeof rawStats === "string" ? JSON.parse(rawStats) : rawStats;
-  const stats: MilestoneStats = {
-    totalSessions: d?.total_sessions ?? d?.totalSessions ?? 0,
-    currentStreak: d?.current_streak ?? d?.currentStreak ?? 0,
-    longestStreak: d?.longest_streak ?? d?.longestStreak ?? 0,
-    challengesCompleted: d?.challenges_completed ?? d?.challengesCompleted ?? 0,
-    hobbiesExplored: d?.hobbies_explored ?? d?.hobbiesExplored ?? 0,
-    totalHours: d?.total_hours ?? d?.totalHours ?? 0,
-    daysSinceJoining: d?.days_since_joining ?? d?.daysSinceJoining ?? 0,
+  const stats: UserStats = {
+    totalSessions:        d?.total_sessions        ?? 0,
+    currentStreak:        d?.current_streak        ?? 0,
+    longestStreak:        d?.longest_streak        ?? 0,
+    challengesCompleted:  d?.challenges_completed  ?? 0,
+    hobbiesExplored:      d?.hobbies_explored      ?? 0,
+    totalHours:           d?.total_hours           ?? 0,
+    daysSinceJoining:     d?.days_since_joining    ?? 0,
   };
 
   // Get all milestone definitions

@@ -2,7 +2,7 @@
 
 import { requireAuth } from "@/lib/supabase/requireAuth";
 import { formatSlug } from "@/lib/hobbyData";
-import { API_URL } from "@/lib/config";
+import { SERVER_API_URL } from "@/lib/config";
 
 export async function triggerRoadmapGeneration(
   hobbySlug: string
@@ -42,7 +42,7 @@ export async function triggerRoadmapGeneration(
     .join(", ");
 
   try {
-    const response = await fetch(`${API_URL}/roadmap/generate`, {
+    const response = await fetch(`${SERVER_API_URL}/roadmap/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -69,7 +69,7 @@ export async function pollRoadmapStatus(
   jobId: string
 ): Promise<{ status: string; result?: any; error?: string | null }> {
   try {
-    const response = await fetch(`${API_URL}/roadmap/generate/${jobId}`);
+    const response = await fetch(`${SERVER_API_URL}/roadmap/generate/${jobId}`);
     if (!response.ok) return { status: "failed", error: `API error: ${response.status}` };
     return await response.json();
   } catch (e) {

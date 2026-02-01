@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/Button";
 import { type FilterType } from "./types";
 
 interface SpotFiltersProps {
@@ -10,17 +11,18 @@ export function SpotFilters({ filters, active, onChange }: SpotFiltersProps) {
   return (
     <div className="flex flex-wrap gap-2 rounded">
       {filters.map((f) => (
-        <button
+        <Button
           key={f}
           onClick={() => onChange(f)}
-          className={`text-sm transition-colors whitespace-nowrap rounded-full px-1.5 py-0.5 ${
-            active === f
-              ? "text-white font-semibold bg-[var(--primary)]"
-              : "text-gray-400 border border-gray-300 hover:text-[var(--secondary)] hover:border-[var(--secondary)]"
-          }`}
+          variant={active === f ? "primary" : "outline"}
+          size="sm"
+          shape="pill"
+          aria-pressed={active === f}
+          outlineColor="#d1d5db"
+          outlineHoverColor="var(--secondary)"
         >
           {f}
-        </button>
+        </Button>
       ))}
     </div>
   );

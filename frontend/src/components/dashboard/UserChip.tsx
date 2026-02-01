@@ -12,6 +12,14 @@ interface UserChipProps {
   onSignOut: () => void;
 }
 
+function Avatar({ initial, ring }: { initial: string; ring?: boolean }) {
+  return (
+    <div className={`w-full h-full rounded-full bg-[var(--primary)] flex items-center justify-center transition-all ${ring ? "ring-2 ring-offset-1 ring-[var(--secondary)]" : ""}`}>
+      <span className="text-sm font-semibold text-[var(--white)]">{initial}</span>
+    </div>
+  );
+}
+
 export function UserChip({ displayName, displayInitial, expanded, onSignOut }: UserChipProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -71,10 +79,10 @@ export function UserChip({ displayName, displayInitial, expanded, onSignOut }: U
             open ? "bg-[var(--white-muted)]" : "hover:bg-[var(--white-muted)]"
           }`}
         >
-          <div className="h-full aspect-square rounded-full bg-[var(--primary)] flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-semibold text-[var(--white)]">{displayInitial}</span>
+          <div className="h-full aspect-square flex-shrink-0">
+            <Avatar initial={displayInitial} ring={open} />
           </div>
-          <span className="text-sm font-medium text-gray-700 truncate">{displayName}</span>
+          <span className="label truncate">{displayName}</span>
         </button>
       ) : (
         <button
@@ -84,13 +92,7 @@ export function UserChip({ displayName, displayInitial, expanded, onSignOut }: U
             open ? "bg-[var(--white-muted)]" : "hover:bg-[var(--white-muted)]"
           }`}
         >
-          <div
-            className={`w-full h-full rounded-full bg-[var(--primary)] flex items-center justify-center transition-all ${
-              open ? "ring-2 ring-offset-1 ring-[var(--secondary)]" : ""
-            }`}
-          >
-            <span className="text-sm font-semibold text-[var(--white)]">{displayInitial}</span>
-          </div>
+          <Avatar initial={displayInitial} ring={open} />
         </button>
       )}
     </div>

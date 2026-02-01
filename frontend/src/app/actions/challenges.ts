@@ -2,7 +2,7 @@
 
 import { requireAuth } from "@/lib/supabase/requireAuth";
 import { formatSlug } from "@/lib/hobbyData";
-import { API_URL } from "@/lib/config";
+import { SERVER_API_URL } from "@/lib/config";
 
 export async function getUserChallenges() {
   const auth = await requireAuth();
@@ -120,7 +120,7 @@ export async function triggerChallengeGeneration(
     .join(", ");
 
   try {
-    const response = await fetch(`${API_URL}/challenges/generate`, {
+    const response = await fetch(`${SERVER_API_URL}/challenges/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -150,7 +150,7 @@ export async function pollChallengeGenStatus(
   jobId: string
 ): Promise<{ status: string; result?: any; error?: string | null }> {
   try {
-    const response = await fetch(`${API_URL}/challenges/generate/${jobId}`);
+    const response = await fetch(`${SERVER_API_URL}/challenges/generate/${jobId}`);
     if (!response.ok) return { status: "failed", error: `API error: ${response.status}` };
     return await response.json();
   } catch (e) {

@@ -198,7 +198,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
 
               {/* Hobby selector */}
               <div>
-                <label className="text-sm font-medium text-gray-600 mb-1.5 block">
+                <label className="form-label">
                   Which hobby?
                 </label>
                 {hobbies.length > 0 ? (
@@ -227,9 +227,9 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                 <>
                   {/* Duration slider */}
                   <div>
-                    <label className="text-sm font-medium text-gray-600 mb-1.5 block">
+                    <label className="form-label">
                       Duration:{" "}
-                      <span className="font-bold" style={{ color: "var(--secondary)" }}>
+                      <span className="font-bold text-[var(--secondary)]">
                         {duration} min
                       </span>
                     </label>
@@ -267,7 +267,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
               {/* Image upload (practice only) */}
               {sessionType === "practice" && (
                 <div>
-                  <label className="text-sm font-medium text-gray-600 mb-1.5 block">
+                  <label className="form-label">
                     Photo of your practice{" "}
                     <span className="text-gray-400 font-normal">(optional)</span>
                   </label>
@@ -307,18 +307,19 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
               )}
 
               {/* Save button */}
-              <button
+              <Button
                 onClick={handleSave}
                 disabled={hobbies.length === 0 || saving}
-                className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                style={{ backgroundColor: "var(--secondary)" }}
+                variant="secondary"
+                fullWidth
+                className="hover:shadow-lg"
               >
                 {saving ? (
                   <Spinner size="sm" variant="white" />
                 ) : (
                   sessionType === "thought" ? "Log Thought" : "Save Session"
                 )}
-              </button>
+              </Button>
             </div>
           </motion.div>
         )}

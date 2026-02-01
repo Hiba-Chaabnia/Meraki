@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { ChevronDownIcon } from "@/components/ui/Icons";
 import { type LocalExperiencesResult } from "@/app/actions/sampling";
 
@@ -25,12 +24,8 @@ export function GeneralTips({ tips }: GeneralTipsProps) {
   const visibleItems = TIP_ITEMS.filter((item) => tips[item.key]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="p-2 mb-6"
-    >
-      <p className="text-md font-semibold tracking-widest text-gray-500 mb-4">
+    <div className="p-2 mb-6">
+      <p className="text-base font-semibold tracking-widest text-gray-500 mb-4">
         Tips for your first visit
       </p>
       <div>
@@ -41,19 +36,21 @@ export function GeneralTips({ tips }: GeneralTipsProps) {
           >
             <button
               onClick={() => toggle(item.key)}
+              aria-expanded={openItem === item.key}
+              aria-controls={`tip-${item.key}`}
               className="w-full flex items-center justify-between py-2"
             >
-              <span className="text-sm font-medium text-gray-700">{item.label}</span>
+              <span className="label">{item.label}</span>
               <ChevronDownIcon
                 className={`w-4 h-4 text-gray-400 transition-transform ${openItem === item.key ? "rotate-180" : ""}`}
               />
             </button>
             {openItem === item.key && (
-              <p className="text-sm text-gray-500 pb-3">{tips[item.key]}</p>
+              <p id={`tip-${item.key}`} className="body-sm pb-3">{tips[item.key]}</p>
             )}
           </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }

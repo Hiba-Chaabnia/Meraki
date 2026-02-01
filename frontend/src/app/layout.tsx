@@ -22,18 +22,8 @@ const mulish = Mulish({
 
 const chopard = localFont({
   src: [
-    { path: "./fonts/Chopard ExtraLight.ttf", weight: "200", style: "normal" },
-    { path: "./fonts/Chopard ExtraLightItalic.ttf", weight: "200", style: "italic" },
-    { path: "./fonts/Chopard Light.ttf", weight: "300", style: "normal" },
-    { path: "./fonts/Chopard LightItalic.ttf", weight: "300", style: "italic" },
-    { path: "./fonts/Chopard Regular.ttf", weight: "400", style: "normal" },
-    { path: "./fonts/Chopard RegularItalic.ttf", weight: "400", style: "italic" },
     { path: "./fonts/Chopard Medium.ttf", weight: "500", style: "normal" },
     { path: "./fonts/Chopard MediumItalic.ttf", weight: "500", style: "italic" },
-    { path: "./fonts/Chopard SemiBold.ttf", weight: "600", style: "normal" },
-    { path: "./fonts/Chopard SemiBoldItalic.ttf", weight: "600", style: "italic" },
-    { path: "./fonts/Chopard Bold.ttf", weight: "700", style: "normal" },
-    { path: "./fonts/Chopard BoldItalic.ttf", weight: "700", style: "italic" },
   ],
   variable: "--font-chopard",
 });

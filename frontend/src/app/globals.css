@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* ─── Tailwind v4 design tokens ─────────────────────────────────────────────
+   Creates bg-primary, text-primary, bg-secondary, etc. as utility classes.
+   The :root variables below remain for var(--primary) usage in inline styles.
+   ────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-primary:       #5396F4;
+  --color-secondary:     #CFE251;
+  --color-accent:        #FFD64D;
+  --color-coral:         #FF9149;
+  --color-surface:       #FFF9F5;
+  --color-surface-muted: #F5EFE9;
+}
+
 :root {
   /* Background & Foreground */
   --background: #FFF9F5;
@@ -39,26 +52,62 @@
 }
 
 @layer components {
-  /* Landing hero display heading — Chopard, no size (set per-use) */
+  /* ── Landing hero display heading — Chopard, no size (set per-use) ── */
   .display-heading {
     font-family: var(--font-chopard), ui-serif, Georgia, serif;
     @apply font-medium leading-[1.1];
   }
 
-  /* Dashboard/app page h1 */
+  /* ── Dashboard/app page h1 ── */
   .page-title {
     font-family: var(--font-chopard), ui-serif, Georgia, serif;
     @apply font-medium text-2xl md:text-3xl text-gray-900 leading-tight;
   }
 
-  /* Card section h2 */
+  /* ── Card section h2 ── */
   .card-heading {
     @apply text-base font-semibold tracking-normal text-gray-800;
   }
 
-  /* Breadcrumb back links */
+  /* ── Breadcrumb back links ── */
   .back-link {
     @apply inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors;
+  }
+
+  /* ─── Typography catalog ─────────────────────────────────────────────────
+     Replace scattered inline text combos with these semantic classes.
+     ──────────────────────────────────────────────────────────────────────── */
+  /** Primary body label — text-sm font-medium text-gray-700 */
+  .label     { @apply text-sm font-medium text-gray-700; }
+  /** Smaller label — text-xs font-medium text-gray-600 */
+  .label-sm  { @apply text-xs font-medium text-gray-600; }
+  /** Muted small text — text-xs text-gray-400 */
+  .caption   { @apply text-xs text-gray-400; }
+  /** Secondary body copy — text-sm text-gray-500 */
+  .body-sm   { @apply text-sm text-gray-500; }
+  /** Form field label — block, with bottom margin */
+  .form-label { @apply text-sm font-medium text-gray-600 mb-1.5 block; }
+
+  /* ─── Badge catalog ──────────────────────────────────────────────────────
+     Apply colour classes alongside (e.g. .badge.bg-gray-100.text-gray-700).
+     ──────────────────────────────────────────────────────────────────────── */
+  .badge    { @apply inline-flex items-center px-2.5 py-1   rounded-full text-xs font-medium; }
+  .badge-sm { @apply inline-flex items-center px-2   py-0.5 rounded-full text-xs font-medium; }
+  .badge-lg { @apply inline-flex items-center px-3   py-1.5 rounded-full text-sm font-medium; }
+
+  /* ─── Stat chip — hero-banner inline metrics ─────────────────────────── */
+  .stat-chip {
+    @apply flex items-center gap-1.5 px-3 py-1
+           bg-white border border-gray-100 rounded-full shadow-sm
+           text-sm text-gray-500 font-medium;
+  }
+
+  /* ─── Card quick-action button (compact HobbyCard row) ──────────────── */
+  .card-action-btn {
+    @apply flex-1 py-1.5 rounded-lg
+           text-xs font-medium text-gray-600
+           bg-gray-100 hover:bg-gray-200
+           transition-colors text-center cursor-pointer;
   }
 }
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 type SamplingPath = "watch" | "micro" | "local";
 
@@ -32,23 +32,26 @@ export function SamplingCTA({
   return (
     <div className="space-y-3">
       {showCommit && onCommit && (
-        <button
+        <Button
           onClick={onCommit}
           disabled={committing}
-          className="w-full px-6 py-3 rounded-xl text-sm font-semibold text-[var(--background)] bg-[var(--primary)] transition-all hover:shadow-lg active:scale-95 disabled:opacity-50"
+          variant="primary"
+          fullWidth
+          className="hover:shadow-lg"
         >
           {committing ? "Adding to your hobbies..." : `Commit to ${hobbyName}`}
-        </button>
+        </Button>
       )}
       <div className="flex gap-3">
         {otherPaths.map((path) => (
-          <Link
+          <Button
             key={path}
             href={`/discover/sampling/${hobbySlug}/${pathConfig[path].segment}`}
-            className="flex-1 text-center px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:shadow-lg active:scale-95 text-[var(--foreground)] bg-[var(--secondary)]"
+            variant="secondary"
+            className="flex-1 hover:shadow-lg"
           >
             {pathConfig[path].label}
-          </Link>
+          </Button>
         ))}
       </div>
     </div>

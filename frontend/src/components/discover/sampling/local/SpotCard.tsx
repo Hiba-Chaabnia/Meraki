@@ -22,8 +22,7 @@ export function SpotCard({ spot, theme, index }: SpotCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
-      className="rounded-2xl border-2 border-green-400 p-6 flex flex-col"
-      style={{ backgroundColor: "white" }}
+      className="rounded-2xl border-2 border-green-400 p-6 flex flex-col bg-white"
     >
       <div className="flex flex-col gap-3 flex-1">
         {/* Row 1: Name + Type badge */}

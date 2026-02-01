@@ -2,6 +2,7 @@ import type { QuizQuestion } from "@/lib/quizData";
 import type { SectionTheme } from "@/lib/sectionTheme";
 import type { Answers } from "@/lib/hooks/useQuiz";
 import { QuestionCard } from "@/components/discover/quiz/QuestionCard";
+import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 
 const VW_PER_Q = 24;
@@ -74,13 +75,14 @@ export function QuizCard({
           {/* Mobile Submit Button */}
           {!isDesktop && showSubmit && onSubmit && (
             <div className="px-6 pb-2">
-              <button
+              <Button
                 onClick={onSubmit}
-                className="w-full py-3 rounded-xl font-bold text-white shadow-md active:scale-[0.98] transition-transform"
-                style={{ backgroundColor: theme.accent }}
+                variant="secondary"
+                fullWidth
+                className="shadow-md font-bold"
               >
                 Submit
-              </button>
+              </Button>
             </div>
           )}
 
@@ -115,12 +117,14 @@ export function QuizCard({
               transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 3 }}
               whileHover={{ rotate: 0, scale: 1.05 }}
             >
-              <button
+              <Button
                 onClick={onSubmit}
-                className="px-8 py-4 rounded-xl font-semibold text-[var(--foreground)] bg-[var(--secondary)] shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                variant="secondary"
+                size="lg"
+                className="shadow-lg hover:shadow-xl whitespace-nowrap"
               >
                 Submit
-              </button>
+              </Button>
             </motion.div>
           </div>
         )}

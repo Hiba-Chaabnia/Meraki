@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addHobbyDirect } from "@/app/actions/hobbies";
 import { SamplingCTA } from "@/components/discover/sampling/SamplingCTA";
+import { Button } from "@/components/ui/Button";
 
 interface MicroActivityCardProps {
   instruction: string;
@@ -56,12 +57,14 @@ export function MicroActivityCard({
 
       <div className="text-center">
         {!done ? (
-          <button
+          <Button
             onClick={() => setDone(true)}
-            className="px-8 py-3 rounded-xl bg-[var(--primary)] text-white font-semibold text-lg transition-all hover:shadow-lg hover:scale-105 active:scale-95"
+            variant="primary"
+            size="lg"
+            className="hover:shadow-lg"
           >
             Done
-          </button>
+          </Button>
         ) : (
           <div className="space-y-3">
             <SamplingCTA
