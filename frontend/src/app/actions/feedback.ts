@@ -83,8 +83,9 @@ export async function triggerPracticeFeedback(
     .eq("status", "completed")
     .limit(5);
 
-  const challengeStr = (completedCh ?? [])
-    .map((c: any) => c.challenges?.title ?? "")
+  type ChallengeJoin = { challenges: { title: string } | null };
+  const challengeStr = (completedCh as ChallengeJoin[] ?? [])
+    .map((c) => c.challenges?.title ?? "")
     .filter(Boolean)
     .join(", ");
 

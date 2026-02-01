@@ -3,6 +3,7 @@
 import { requireAuth } from "@/lib/supabase/requireAuth";
 import { formatSlug } from "@/lib/hobbyData";
 import { SERVER_API_URL } from "@/lib/config";
+import { getPracticeContext } from "@/lib/practiceContext";
 
 export async function getUserChallenges() {
   const auth = await requireAuth();
@@ -60,64 +61,7 @@ export async function triggerChallengeGeneration(
   const { supabase, user } = auth;
 
   const hobbyName = formatSlug(hobbySlug);
-
-  // Gather practice stats
-  const { data: userHobby } = await supabase
-    .from("user_hobbies")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .limit(1)
-    .maybeSingle();
-
-  void userHobby;
-
-  const { data: sessions } = await supabase
-    .from("practice_sessions")
-    .select("duration, mood, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const sessionList = sessions ?? [];
-  const sessionCount = sessionList.length;
-  const avgDuration =
-    sessionCount > 0
-      ? Math.round(sessionList.reduce((s, r) => s + (r.duration ?? 0), 0) / sessionCount)
-      : 0;
-
-  const moods: Record<string, number> = {};
-  for (const s of sessionList) {
-    if (s.mood) moods[s.mood] = (moods[s.mood] ?? 0) + 1;
-  }
-  const moodDistStr = Object.entries(moods)
-    .map(([k, v]) => `${k}: ${v}`)
-    .join(", ");
-
-  const uniqueDays = new Set(sessionList.map((s) => s.created_at?.split("T")[0]));
-  const daysActive = uniqueDays.size;
-
-  const { data: userChallenges } = await supabase
-    .from("user_challenges")
-    .select("status, challenges(title)")
-    .eq("user_id", user.id);
-
-  const completed = (userChallenges ?? [])
-    .filter((c: any) => c.status === "completed")
-    .map((c: any) => c.challenges?.title ?? "")
-    .filter(Boolean)
-    .join(", ");
-
-  const skipped = (userChallenges ?? [])
-    .filter((c: any) => c.status === "skipped")
-    .map((c: any) => c.challenges?.title ?? "")
-    .filter(Boolean)
-    .join(", ");
-
-  const recentMoods = sessionList
-    .slice(0, 5)
-    .map((s) => s.mood ?? "okay")
-    .join(", ");
+  const ctx = await getPracticeContext(supabase, user.id);
 
   try {
     const response = await fetch(`${SERVER_API_URL}/challenges/generate`, {
@@ -127,14 +71,14 @@ export async function triggerChallengeGeneration(
         user_id: user.id,
         hobby_name: hobbyName,
         hobby_slug: hobbySlug,
-        session_count: sessionCount,
-        avg_duration: avgDuration,
-        mood_distribution: moodDistStr || "No data",
-        days_active: daysActive,
-        completed_challenges: completed || "None",
-        skipped_challenges: skipped || "None",
+        session_count: ctx.sessionCount,
+        avg_duration: ctx.avgDuration,
+        mood_distribution: ctx.moodDistribution,
+        days_active: ctx.daysActive,
+        completed_challenges: ctx.completedChallenges,
+        skipped_challenges: ctx.skippedChallenges,
         recent_feedback: "None",
-        last_mood_trend: recentMoods || "No data",
+        last_mood_trend: ctx.recentMoods,
       }),
     });
 
@@ -148,7 +92,7 @@ export async function triggerChallengeGeneration(
 
 export async function pollChallengeGenStatus(
   jobId: string
-): Promise<{ status: string; result?: any; error?: string | null }> {
+): Promise<{ status: string; result?: unknown; error?: string | null }> {
   try {
     const response = await fetch(`${SERVER_API_URL}/challenges/generate/${jobId}`);
     if (!response.ok) return { status: "failed", error: `API error: ${response.status}` };

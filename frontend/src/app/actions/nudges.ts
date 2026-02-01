@@ -80,14 +80,19 @@ export async function triggerMotivationCheck(
     .map((s) => s.mood ?? "okay")
     .join(", ");
 
-  const { data: challenges } = await supabase
-    .from("user_challenges")
-    .select("status")
-    .eq("user_id", user.id);
+  const [{ data: challenges }, { data: statsRow }] = await Promise.all([
+    supabase.from("user_challenges").select("status").eq("user_id", user.id),
+    supabase.rpc("get_user_stats", { p_user_id: user.id }),
+  ]);
 
+  type ChallengeStatus = { status: string };
   const total = (challenges ?? []).length;
-  const skipped = (challenges ?? []).filter((c: any) => c.status === "skipped").length;
+  const skipped = (challenges ?? []).filter((c: ChallengeStatus) => c.status === "skipped").length;
   const skipRate = total > 0 ? skipped / total : 0;
+
+  const stats = Array.isArray(statsRow) ? statsRow[0] : statsRow;
+  const currentStreak = stats?.current_streak ?? 0;
+  const longestStreak = stats?.longest_streak ?? 0;
 
   try {
     const response = await fetch(`${SERVER_API_URL}/motivation/check`, {
@@ -100,8 +105,8 @@ export async function triggerMotivationCheck(
         days_since_last_session: daysSinceLastSession,
         recent_moods: recentMoods || "No data",
         challenge_skip_rate: skipRate,
-        current_streak: 0,
-        longest_streak: 0,
+        current_streak: currentStreak,
+        longest_streak: longestStreak,
         session_frequency_trend: "unknown",
       }),
     });

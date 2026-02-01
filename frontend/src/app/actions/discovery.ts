@@ -77,10 +77,7 @@ export async function pollDiscoveryStatus(
   jobId: string
 ): Promise<DiscoveryStatusResponse | { error: string }> {
   try {
-    const response = await fetch(`${SERVER_API_URL}/discovery/${jobId}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
+    const response = await fetch(`${SERVER_API_URL}/discovery/${jobId}`);
 
     if (!response.ok) {
       const errorText = await response.text();

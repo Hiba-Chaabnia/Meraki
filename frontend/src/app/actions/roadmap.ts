@@ -3,6 +3,7 @@
 import { requireAuth } from "@/lib/supabase/requireAuth";
 import { formatSlug } from "@/lib/hobbyData";
 import { SERVER_API_URL } from "@/lib/config";
+import { getPracticeContext } from "@/lib/practiceContext";
 
 export async function triggerRoadmapGeneration(
   hobbySlug: string
@@ -12,34 +13,7 @@ export async function triggerRoadmapGeneration(
   const { supabase, user } = auth;
 
   const hobbyName = formatSlug(hobbySlug);
-
-  const { data: sessions } = await supabase
-    .from("practice_sessions")
-    .select("duration, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const sessionList = sessions ?? [];
-  const sessionCount = sessionList.length;
-  const avgDuration =
-    sessionCount > 0
-      ? Math.round(sessionList.reduce((s, r) => s + (r.duration ?? 0), 0) / sessionCount)
-      : 0;
-
-  const uniqueDays = new Set(sessionList.map((s) => s.created_at?.split("T")[0]));
-  const daysActive = uniqueDays.size;
-
-  const { data: userChallenges } = await supabase
-    .from("user_challenges")
-    .select("status, challenges(title)")
-    .eq("user_id", user.id)
-    .eq("status", "completed");
-
-  const completed = (userChallenges ?? [])
-    .map((c: any) => c.challenges?.title ?? "")
-    .filter(Boolean)
-    .join(", ");
+  const ctx = await getPracticeContext(supabase, user.id);
 
   try {
     const response = await fetch(`${SERVER_API_URL}/roadmap/generate`, {
@@ -49,10 +23,10 @@ export async function triggerRoadmapGeneration(
         user_id: user.id,
         hobby_name: hobbyName,
         hobby_slug: hobbySlug,
-        session_count: sessionCount,
-        avg_duration: avgDuration,
-        days_active: daysActive,
-        completed_challenges: completed || "None",
+        session_count: ctx.sessionCount,
+        avg_duration: ctx.avgDuration,
+        days_active: ctx.daysActive,
+        completed_challenges: ctx.completedChallenges,
         user_goals: "None",
       }),
     });
@@ -67,7 +41,7 @@ export async function triggerRoadmapGeneration(
 
 export async function pollRoadmapStatus(
   jobId: string
-): Promise<{ status: string; result?: any; error?: string | null }> {
+): Promise<{ status: string; result?: unknown; error?: string | null }> {
   try {
     const response = await fetch(`${SERVER_API_URL}/roadmap/generate/${jobId}`);
     if (!response.ok) return { status: "failed", error: `API error: ${response.status}` };

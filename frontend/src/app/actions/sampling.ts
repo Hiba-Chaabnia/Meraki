@@ -166,12 +166,7 @@ export async function pollSamplingPreviewStatus(
   jobId: string
 ): Promise<SamplingPreviewStatusResponse | { error: string }> {
   try {
-    const response = await fetch(`${SERVER_API_URL}/sampling/preview/${jobId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(`${SERVER_API_URL}/sampling/preview/${jobId}`);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -245,12 +240,7 @@ export async function pollLocalExperiencesStatus(
   jobId: string
 ): Promise<LocalExperiencesStatusResponse | { error: string }> {
   try {
-    const response = await fetch(`${SERVER_API_URL}/sampling/local/${jobId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(`${SERVER_API_URL}/sampling/local/${jobId}`);
 
     if (!response.ok) {
       const errorText = await response.text();
