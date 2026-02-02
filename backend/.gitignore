@@ -4,5 +4,3 @@ lib/
 .DS_Store
 .venv/
 .pytest_cache/
-docs/
-drafts/

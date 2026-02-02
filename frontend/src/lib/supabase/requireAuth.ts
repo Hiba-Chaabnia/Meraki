@@ -1,8 +1,8 @@
 import { createClient } from "./server";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
-export type AuthSuccess = { supabase: SupabaseClient; user: User; error?: never };
-export type AuthFailure = { supabase?: never; user?: never; error: string };
+export type AuthSuccess = { supabase: SupabaseClient; user: User };
+export type AuthFailure = { error: string };
 export type AuthResult = AuthSuccess | AuthFailure;
 
 export async function requireAuth(): Promise<AuthResult> {

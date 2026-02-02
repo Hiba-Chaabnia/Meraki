@@ -18,7 +18,7 @@ export async function getActiveNudge(): Promise<{
   error?: string;
 }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase
@@ -37,7 +37,7 @@ export async function getActiveNudge(): Promise<{
 
 export async function dismissNudge(nudgeId: string): Promise<{ error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { error } = await supabase
@@ -54,7 +54,7 @@ export async function triggerMotivationCheck(
   hobbySlug: string
 ): Promise<{ job_id?: string; error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const hobbyName = formatSlug(hobbySlug);

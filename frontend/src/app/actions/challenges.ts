@@ -7,7 +7,7 @@ import { getPracticeContext } from "@/lib/practiceContext";
 
 export async function getUserChallenges() {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase
@@ -22,7 +22,7 @@ export async function getUserChallenges() {
 
 export async function getChallengeById(id: string) {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase
@@ -38,7 +38,7 @@ export async function getChallengeById(id: string) {
 
 export async function completeChallenge(userChallengeId: string) {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase
@@ -57,7 +57,7 @@ export async function triggerChallengeGeneration(
   hobbySlug: string
 ): Promise<{ job_id?: string; error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const hobbyName = formatSlug(hobbySlug);

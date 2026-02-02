@@ -26,7 +26,7 @@ export function useCommit(hobbySlug: string): UseCommitResult {
 
     if ("error" in result) {
       console.error("[useCommit] completeSampling failed:", result.error);
-      setCommitError(result.error);
+      setCommitError(result.error ?? "Failed to save your progress.");
     } else {
       setCommitted(true);
     }

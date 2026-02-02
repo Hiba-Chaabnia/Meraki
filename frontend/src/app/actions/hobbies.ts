@@ -95,7 +95,7 @@ export async function addCustomHobby(name: string) {
   if (!slug) return { error: "Invalid hobby name." };
 
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase

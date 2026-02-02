@@ -9,7 +9,7 @@ export async function triggerRoadmapGeneration(
   hobbySlug: string
 ): Promise<{ job_id?: string; error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const hobbyName = formatSlug(hobbySlug);
@@ -53,7 +53,7 @@ export async function pollRoadmapStatus(
 
 export async function getUserRoadmap(hobbySlug: string) {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase
@@ -71,7 +71,7 @@ export async function getUserRoadmap(hobbySlug: string) {
 
 export async function getUserRoadmaps() {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase
@@ -86,7 +86,7 @@ export async function getUserRoadmaps() {
 
 export async function advanceRoadmapPhase(userRoadmapId: string) {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data: current, error: getErr } = await supabase
@@ -98,8 +98,10 @@ export async function advanceRoadmapPhase(userRoadmapId: string) {
 
   if (getErr || !current) return { error: "Roadmap not found" };
 
-  const totalPhases = current.roadmaps?.total_phases ?? 0;
-  const nextPhase = (current.current_phase ?? 0) + 1;
+  type RoadmapPhaseJoin = { current_phase: number; roadmaps: { total_phases: number } | null };
+  const typedCurrent = current as unknown as RoadmapPhaseJoin;
+  const totalPhases = typedCurrent.roadmaps?.total_phases ?? 0;
+  const nextPhase = typedCurrent.current_phase + 1;
   if (nextPhase >= totalPhases) return { error: "Already at final phase" };
 
   const { data, error } = await supabase

@@ -162,7 +162,7 @@ export function toRoadmap(row: UserRoadmapWithRoadmap): Roadmap {
     hobbyName: formatSlug(row.hobby_slug),
     title: roadmap.title ?? "",
     description: roadmap.description ?? "",
-    phases: (roadmap.phases as Roadmap["phases"]) ?? [],
+    phases: (roadmap.phases as unknown as Roadmap["phases"]) ?? [],
     currentPhase: row.current_phase ?? 0,
     totalPhases: roadmap.total_phases ?? 0,
     userRoadmapId: row.id,
@@ -170,7 +170,7 @@ export function toRoadmap(row: UserRoadmapWithRoadmap): Roadmap {
 }
 
 /** Map the get_user_stats RPC result to UserStats */
-export function toUserStats(data: UserStatsRpc | string | null): UserStats {
+export function toUserStats(data: unknown): UserStats {
   if (!data) {
     return {
       currentStreak: 0,
@@ -182,7 +182,7 @@ export function toUserStats(data: UserStatsRpc | string | null): UserStats {
       daysSinceJoining: 0,
     };
   }
-  const d: UserStatsRpc = typeof data === "string" ? JSON.parse(data) : data;
+  const d = (typeof data === "string" ? JSON.parse(data) : data) as UserStatsRpc;
   return {
     currentStreak:       d.current_streak       ?? 0,
     longestStreak:       d.longest_streak       ?? 0,

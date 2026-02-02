@@ -263,7 +263,7 @@ export async function saveSamplingResult(
   result: SamplingPreviewResult
 ): Promise<{ error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { error } = await supabase
@@ -289,7 +289,7 @@ export async function getSamplingResult(
   hobbySlug: string
 ): Promise<{ data?: SamplingPreviewResult; error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase
@@ -316,7 +316,7 @@ export async function saveLocalExperienceResult(
   result: LocalExperiencesResult
 ): Promise<{ error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { error } = await supabase
@@ -344,7 +344,7 @@ export async function getLocalExperienceResult(
   location: string
 ): Promise<{ data?: LocalExperiencesResult; error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase
@@ -369,7 +369,7 @@ export async function completeSampling(hobbySlug: string) {
   if (!hobbySlug || hobbySlug.length > 50 || !SLUG_RE.test(hobbySlug))
     return { error: "Invalid hobby slug." };
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data, error } = await supabase

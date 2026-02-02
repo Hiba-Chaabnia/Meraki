@@ -21,7 +21,7 @@ export async function getSessionFeedback(
   sessionId: string
 ): Promise<{ data?: PracticeFeedback; error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   void user; // user verified via requireAuth; RLS enforces ownership
@@ -44,7 +44,7 @@ export async function triggerPracticeFeedback(
   sessionId: string
 ): Promise<{ job_id?: string; error?: string }> {
   const auth = await requireAuth();
-  if ("error" in auth) return auth;
+  if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
 
   const { data: session, error: sessError } = await supabase
@@ -84,7 +84,7 @@ export async function triggerPracticeFeedback(
     .limit(5);
 
   type ChallengeJoin = { challenges: { title: string } | null };
-  const challengeStr = (completedCh as ChallengeJoin[] ?? [])
+  const challengeStr = ((completedCh ?? []) as unknown as ChallengeJoin[])
     .map((c) => c.challenges?.title ?? "")
     .filter(Boolean)
     .join(", ");

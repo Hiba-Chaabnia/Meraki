@@ -40,10 +40,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-drafts/
 .claude/
 .vscode/
 trials/
-docs/
 preview/
 dev/
+
+# Claude instructions (local only)
+CLAUDE.md
+**/CLAUDE.md
