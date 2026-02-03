@@ -43,6 +43,23 @@
   /* Black Scale */
   --black: #292929;
   --gray: #494949;
+
+  /* ─── Section themes ──────────────────────────────────────────────────────
+     The alternating blue / lime card system. Consumed as `SectionTheme`
+     objects via THEME_PRIMARY / THEME_SECONDARY in src/lib/sectionTheme.ts —
+     import those rather than re-declaring these hexes in a component.
+     ────────────────────────────────────────────────────────────────────── */
+  --primary-theme-bg:        #EBF2FE;  /* card surface fill        */
+  --primary-theme-accent:    #5396F4;  /* border, title, icons     */
+  --primary-theme-border:    #BAD5FB;  /* soft inner borders       */
+  --primary-theme-light:     #D6E8FD;  /* tag & ghost-button fill  */
+  --primary-theme-on-accent: #FFFFFF;  /* text on top of accent    */
+
+  --secondary-theme-bg:        #F5F9E0;
+  --secondary-theme-accent:    #CFE251;
+  --secondary-theme-border:    #DDEB85;
+  --secondary-theme-light:     #EBF4B8;
+  --secondary-theme-on-accent: #292929;  /* lime needs dark text */
 }
 
 @layer base {
@@ -52,16 +69,22 @@
 }
 
 @layer components {
-  /* ── Landing hero display heading — Chopard, no size (set per-use) ── */
+  /* ─── Hero display heading (Chopard) ─────────────────────────────────────
+     Chopard is reserved for HERO HEADLINES ONLY — the landing hero and the
+     /discover hero. Nothing else in the app uses it: every other heading,
+     including app page <h1>s, is Mulish.
+
+     Chopard ships one weight (500) plus its italic, so never pair it with
+     font-semibold / font-bold — that only triggers synthetic faux-bold.
+     ──────────────────────────────────────────────────────────────────────── */
   .display-heading {
     font-family: var(--font-chopard), ui-serif, Georgia, serif;
     @apply font-medium leading-[1.1];
   }
 
-  /* ── Dashboard/app page h1 ── */
+  /* ── App page h1 — Mulish, the default for every non-hero page ── */
   .page-title {
-    font-family: var(--font-chopard), ui-serif, Georgia, serif;
-    @apply font-medium text-2xl md:text-3xl text-gray-900 leading-tight;
+    @apply font-semibold text-2xl md:text-3xl text-[var(--foreground)] leading-tight;
   }
 
   /* ── Card section h2 ── */
