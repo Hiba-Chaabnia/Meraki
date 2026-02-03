@@ -75,6 +75,24 @@ def update_job_status(job_id: str, status: str) -> None:
     }).eq("id", job_id).execute()
 
 
+def update_job_progress(job_id: str, completed_tasks: int) -> None:
+    """
+    UPDATE how many crew tasks have finished so far.
+
+    Called from a CrewAI task_callback, so it runs on the crew's thread between
+    tasks. Never raise from here — a bookkeeping failure must not kill a job
+    that is otherwise succeeding.
+    """
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        get_supabase().table("jobs").update({
+            "progress": completed_tasks,
+            "updated_at": now,
+        }).eq("id", job_id).execute()
+    except Exception as e:  # noqa: BLE001 - progress is best-effort
+        print(f"[Job {job_id}] progress update failed (non-fatal): {e}")
+
+
 def update_job_result(job_id: str, result: dict[str, Any]) -> None:
     """UPDATE a job with its result and mark completed."""
     now = datetime.now(timezone.utc).isoformat()

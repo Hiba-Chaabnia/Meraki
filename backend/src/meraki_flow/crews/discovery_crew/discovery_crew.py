@@ -17,6 +17,13 @@ class DiscoveryCrew:
     agents: List[BaseAgent]
     tasks: List[Task]
 
+    # Optional hook fired by CrewAI after each task finishes, receiving that
+    # task's TaskOutput. Assign before calling .crew() to report progress:
+    #     builder = DiscoveryCrew()
+    #     builder.task_callback = make_progress_callback(job_id)
+    #     builder.crew().kickoff(inputs=inputs)
+    task_callback = None
+
     @before_kickoff
     def log_inputs(self, inputs: dict):
         """Log input metadata to Opik before crew execution."""
@@ -82,4 +89,5 @@ class DiscoveryCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
+            task_callback=self.task_callback,
         )

@@ -41,6 +41,7 @@ from meraki_flow.db import (
     create_job,
     get_job,
     update_job_status,
+    update_job_progress,
     update_job_result,
     update_job_error,
     save_sampling_result,
@@ -237,6 +238,32 @@ def parse_task_output_json(raw_output: str) -> dict[str, Any] | None:
     return None
 
 
+# One progress tick per discovery crew task (3), plus a final tick once the
+# matches have been persisted. Must stay in sync with DISCOVERY_STEPS in
+# frontend/src/lib/discovery.ts.
+DISCOVERY_TOTAL_STEPS = 4
+
+
+def make_progress_callback(job_id: str):
+    """
+    Build a CrewAI task_callback that records how many tasks have finished.
+
+    CrewAI fires task_callback once per task in a sequential process, so a
+    simple counter maps directly onto "tasks completed". The client turns that
+    number into a checklist, which is why we report a count rather than a task
+    name — task names are a backend detail.
+    """
+    completed = 0
+
+    def on_task_complete(_output) -> None:
+        nonlocal completed
+        completed += 1
+        print(f"[Job {job_id}] task {completed} complete")
+        update_job_progress(job_id, completed)
+
+    return on_task_complete
+
+
 def run_discovery_job(job_id: str) -> None:
     """Run the discovery crew in a background thread."""
     import traceback
@@ -246,8 +273,9 @@ def run_discovery_job(job_id: str) -> None:
         return
 
     try:
-        # Update status to running
+        # Update status to running, and reset progress in case this is a retry
         update_job_status(job_id, "running")
+        update_job_progress(job_id, 0)
 
         # Build inputs matching all task placeholders
         request_data = job["request_data"]
@@ -278,24 +306,34 @@ def run_discovery_job(job_id: str) -> None:
 
         print(f"[Discovery Job {job_id}] Starting crew with inputs: {list(inputs.keys())}")
 
-        # Call DiscoveryCrew directly
-        result = DiscoveryCrew().crew().kickoff(inputs=inputs)
+        # Call DiscoveryCrew, reporting per-task progress as it goes
+        builder = DiscoveryCrew()
+        builder.task_callback = make_progress_callback(job_id)
+        result = builder.crew().kickoff(inputs=inputs)
 
         print(f"[Discovery Job {job_id}] Crew completed. Raw output length: {len(result.raw) if result.raw else 0}")
 
         # Parse JSON output
         parsed = parse_crew_output(result.raw)
 
-        update_job_result(job_id, parsed)
-
-        # Save hobby matches if user_id is available
+        # Persist BEFORE marking the job complete. The client navigates to the
+        # results page the moment it sees "completed", and that page can fall
+        # back to reading hobby_matches straight from the database — so the row
+        # has to be there first.
         user_id = job.get("user_id", "")
         if user_id and parsed.get("matches"):
             try:
                 save_hobby_matches(user_id, parsed["matches"])
                 print(f"[Discovery Job {job_id}] Saved {len(parsed['matches'])} hobby matches")
             except Exception as e:
+                # Non-fatal: the job result payload still carries the matches,
+                # so the user still gets their results this session.
                 print(f"[Discovery Job {job_id}] Failed to save hobby matches: {e}")
+
+        # Final tick, then flip to completed. Reporting progress first means a
+        # poll landing between the two still shows the save step as finished.
+        update_job_progress(job_id, DISCOVERY_TOTAL_STEPS)
+        update_job_result(job_id, parsed)
 
         print(f"[Discovery Job {job_id}] Job completed successfully")
 
@@ -483,6 +521,9 @@ async def get_discovery_status(job_id: str):
     return {
         "job_id": job["id"],
         "status": job["status"],
+        # .get() so the endpoint still works if migration 003 hasn't been
+        # applied yet — the client just sees 0 tasks done.
+        "progress": job.get("progress", 0),
         "result": job["result"],
         "error": job["error"],
         "created_at": job["created_at"],

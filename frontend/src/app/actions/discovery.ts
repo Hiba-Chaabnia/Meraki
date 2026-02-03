@@ -10,6 +10,13 @@ export interface DiscoveryJobResponse {
 export interface DiscoveryStatusResponse {
   job_id: string;
   status: "pending" | "running" | "completed" | "failed";
+  /**
+   * Number of crew tasks finished so far, counting up to the length of
+   * `DISCOVERY_STEPS` in `@/lib/discovery`. Reported by the backend after each
+   * task. Absent on older backends or before migration 003 — treat
+   * `undefined` as 0.
+   */
+  progress?: number;
   result: {
     matches: Array<{
       hobby_slug: string;
