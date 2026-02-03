@@ -6,6 +6,13 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export interface NotificationPrefs {
+  email_enabled: boolean;
+  streak_reminders: boolean;
+  challenge_alerts: boolean;
+  weekly_digest: boolean;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -17,6 +24,7 @@ export interface Database {
           bio: string;
           location: string;
           public_profile: boolean;
+          notification_prefs: NotificationPrefs;
           created_at: string;
           updated_at: string;
         };
@@ -27,6 +35,7 @@ export interface Database {
           bio?: string;
           location?: string;
           public_profile?: boolean;
+          notification_prefs?: NotificationPrefs;
           created_at?: string;
           updated_at?: string;
         };
@@ -37,6 +46,7 @@ export interface Database {
           bio?: string;
           location?: string;
           public_profile?: boolean;
+          notification_prefs?: NotificationPrefs;
           updated_at?: string;
         };
         Relationships: [];

@@ -6,17 +6,38 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useUser } from "@/lib/hooks/useUser";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { updatePublicProfile, changePassword, exportUserData, deleteAccount } from "@/app/actions/settings";
+import { ArrowLeftIcon } from "@/components/ui/Icons";
+import {
+  updatePublicProfile,
+  changePassword,
+  exportUserData,
+  deleteAllUserData,
+  deleteAccountPermanently,
+  getNotificationPrefs,
+  updateNotificationPrefs,
+} from "@/app/actions/settings";
 import { fadeUp, staggerContainer } from "@/components/ui/animations";
-
-/* ─── Icons ─── */
-const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
+import type { NotificationPrefs } from "@/types/database.types";
 
 const stagger = staggerContainer(0.08);
+
+const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  email_enabled: false,
+  streak_reminders: false,
+  challenge_alerts: false,
+  weekly_digest: false,
+};
+
+const NOTIFICATION_TOGGLES: {
+  key: keyof NotificationPrefs;
+  label: string;
+  description: string;
+}[] = [
+  { key: "email_enabled", label: "Email Notifications", description: "Master switch for all email notifications" },
+  { key: "streak_reminders", label: "Streak Reminders", description: "Get nudged before your streak breaks" },
+  { key: "challenge_alerts", label: "Challenge Alerts", description: "Updates on new and completed challenges" },
+  { key: "weekly_digest", label: "Weekly Digest", description: "A weekly summary of your progress" },
+];
 
 function ToggleSwitch({
   enabled,
@@ -48,6 +69,9 @@ export default function SettingsPage() {
   const { user, profile, refreshProfile } = useUser();
 
   const [publicProfile, setPublicProfile] = useState(false);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>(
+    DEFAULT_NOTIFICATION_PREFS
+  );
 
   // Dialogs
   const [passwordDialog, setPasswordDialog] = useState(false);
@@ -62,10 +86,30 @@ export default function SettingsPage() {
     }
   }, [profile]);
 
+  useEffect(() => {
+    if (!user) return;
+    getNotificationPrefs()
+      .then((res) => {
+        if (res.data) setNotificationPrefs(res.data);
+      })
+      .catch((e) => console.error("[SettingsPage] getNotificationPrefs failed:", e));
+  }, [user]);
+
   const handleTogglePublicProfile = async (value: boolean) => {
     setPublicProfile(value);
     await updatePublicProfile(value);
     await refreshProfile();
+  };
+
+  const handleToggleNotificationPref = async (key: keyof NotificationPrefs) => {
+    const next = { ...notificationPrefs, [key]: !notificationPrefs[key] };
+    setNotificationPrefs(next);
+    const res = await updateNotificationPrefs(next);
+    if (res.error) {
+      setStatusMessage(`Error: ${res.error}`);
+      setNotificationPrefs(notificationPrefs);
+      setTimeout(() => setStatusMessage(null), 4000);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -106,19 +150,23 @@ export default function SettingsPage() {
 
   const handleDeleteData = async () => {
     setDeleteDataDialog(false);
-    const res = await deleteAccount();
+    const res = await deleteAllUserData();
     if (res.error) {
       setStatusMessage(`Error: ${res.error}`);
+      setTimeout(() => setStatusMessage(null), 4000);
     } else {
-      router.push("/auth/login");
+      setStatusMessage("All your data has been deleted. Your account is still active.");
+      router.refresh();
+      setTimeout(() => setStatusMessage(null), 5000);
     }
   };
 
   const handleDeleteAccount = async () => {
     setDeleteAccountDialog(false);
-    const res = await deleteAccount();
+    const res = await deleteAccountPermanently();
     if (res.error) {
       setStatusMessage(`Error: ${res.error}`);
+      setTimeout(() => setStatusMessage(null), 4000);
     } else {
       router.push("/auth/login");
     }
@@ -193,7 +241,7 @@ export default function SettingsPage() {
           href="/dashboard"
           className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeftIcon className="w-4 h-4" />
           Dashboard
         </Link>
       </div>
@@ -240,6 +288,28 @@ export default function SettingsPage() {
                 onToggle={() => handleTogglePublicProfile(!publicProfile)}
               />
             </div>
+          </div>
+        </motion.div>
+
+        {/* Notifications */}
+        <motion.div
+          variants={fadeUp}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
+        >
+          <h2 className="card-heading mb-5">Notifications</h2>
+          <div className="space-y-5">
+            {NOTIFICATION_TOGGLES.map((toggle) => (
+              <div key={toggle.key} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{toggle.label}</p>
+                  <p className="text-xs text-gray-400">{toggle.description}</p>
+                </div>
+                <ToggleSwitch
+                  enabled={notificationPrefs[toggle.key]}
+                  onToggle={() => handleToggleNotificationPref(toggle.key)}
+                />
+              </div>
+            ))}
           </div>
         </motion.div>
 
