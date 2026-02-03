@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuiz } from "@/lib/hooks/useQuiz";
-import type { SectionTheme } from "@/lib/sectionTheme";
-import { FlowerShape } from "@/components/ui/FlowerShape";
+import { CARD_THEMES } from "@/lib/sectionTheme";
 import { saveQuizResponses } from "@/app/actions/quiz";
 import { QuizStepper } from "@/components/discover/quiz/QuizStepper";
 import { QuizCard } from "@/components/discover/quiz/QuizCard";
@@ -14,11 +13,6 @@ import { ChevronLeftIcon, ChevronRightIcon, RotateIcon } from "@/components/disc
 const VW_PER_Q = 24;
 const VW_PAD = 2;
 const MOBILE_CARD_W = 88;
-
-const CARD_THEMES: [SectionTheme, SectionTheme] = [
-  { bg: "#EBF2FE", accent: "#5396F4", border: "#BAD5FB", light: "#D6E8FD", textOnAccent: "#ffffff" },
-  { bg: "#f5f9e0", accent: "#CFE251", border: "#DDEB85", light: "#EBF4B8", textOnAccent: "#292929" },
-];
 
 export default function QuizPage() {
   const router = useRouter();
@@ -99,10 +93,10 @@ export default function QuizPage() {
     <div className="h-[100dvh] overflow-hidden bg-[var(--background)] flex flex-col">
       {/* ── Headline ── */}
       <div className="pt-4 pb-2 text-center z-10">
-        <p className="text-xl md:text-2xl font-semibold text-[var(--foreground)]">
+        <h1 className="text-xl md:text-2xl font-semibold text-[var(--foreground)]">
           Find a hobby you’ll actually enjoy — without overthinking it
-        </p>
-        <p className="text-md font-medium text-[var(--foreground)]">
+        </h1>
+        <p className="text-base font-medium text-[var(--foreground)]">
           Answer a few simple questions about your time, budget, and preferences. No right or wrong answers. Just honest preferences.
         </p>
       </div>

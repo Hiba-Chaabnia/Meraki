@@ -1,4 +1,3 @@
-import type { QuizSection } from "@/lib/quizData";
 import { FlowerShape } from "@/components/ui/FlowerShape";
 
 const PRIMARY = "var(--primary)";
@@ -7,8 +6,17 @@ const SECONDARY = "var(--secondary)";
 const SECONDARY_LIGHT = "var(--secondary-light)";
 const GRAY = "var(--gray)";
 
+/**
+ * The stepper only needs a stable key per step, so it accepts anything with an
+ * `id`. `QuizSection[]` satisfies this structurally; so does a list of matches
+ * mapped to `{ id: slug }`.
+ */
+export interface StepperItem {
+  id: string;
+}
+
 interface QuizStepperProps {
-  sections: QuizSection[];
+  sections: StepperItem[];
   activeIndex: number;
   maxReachedIndex: number;
   completedSections: boolean[];

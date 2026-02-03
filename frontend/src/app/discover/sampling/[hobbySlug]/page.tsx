@@ -9,25 +9,7 @@ import { PathwayCard } from "@/components/discover/sampling/PathwayCard";
 import { useSamplingPreview } from "@/hooks/useSamplingPreview";
 import { formatSlug } from "@/lib/hobbyData";
 import { fadeUp, staggerContainer } from "@/components/ui/animations";
-
-import type { SectionTheme } from "@/lib/sectionTheme";
-
-/* ─── Themes ─── */
-const THEME_PRIMARY: SectionTheme = {
-  bg: "#EBF2FE",
-  accent: "#5396F4",
-  border: "#BAD5FB",
-  light: "#D6E8FD",
-  textOnAccent: "#ffffff",
-};
-
-const THEME_SECONDARY: SectionTheme = {
-  bg: "#f5f9e0",
-  accent: "#CFE251",
-  border: "#DDEB85",
-  light: "#EBF4B8",
-  textOnAccent: "#292929",
-};
+import { THEME_PRIMARY, THEME_SECONDARY } from "@/lib/sectionTheme";
 
 export default function SamplingPage({
   params,
@@ -62,9 +44,9 @@ export default function SamplingPage({
           </Link>
 
           <div className="text-center">
-            <p className="text-2xl md:text-3xl font-semibold text-[var(--foreground)]">
+            <h1 className="page-title">
               Dip your toes into <em className="font-bold lowercase">{hobby.name}</em>
-            </p>
+            </h1>
             <p className="text-base md:text-lg font-medium text-[var(--foreground)] mt-2">
               Pick whatever sounds most fun to you. Zero commitment, just exploration.
             </p>

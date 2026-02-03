@@ -2,26 +2,18 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useQuizMatches } from "@/hooks/useQuizMatches";
 import { MatchCard } from "@/components/discover/quiz-results/MatchCard";
 import { NoMatchesState } from "@/components/discover/quiz-results/NoMatchesState";
 import { ResultsLoading } from "@/components/discover/sampling/ResultsLoading";
 
 import { QuizStepper } from "@/components/discover/quiz/QuizStepper";
-import type { SectionTheme } from "@/lib/sectionTheme";
-
-// Theme constants for alternating card styles
-const CARD_THEMES: [SectionTheme, SectionTheme] = [
-  { bg: "#EBF2FE", accent: "#5396F4", border: "#BAD5FB", light: "#D6E8FD", textOnAccent: "#ffffff" },
-  { bg: "#f5f9e0", accent: "#CFE251", border: "#DDEB85", light: "#EBF4B8", textOnAccent: "#292929" },
-];
+import { CARD_THEMES } from "@/lib/sectionTheme";
 
 const VW_CARD_DESKTOP = 28;
 const MOBILE_CARD_W = 75;
 
 export default function QuizResultsPage() {
-  const router = useRouter();
   const { matches, loading } = useQuizMatches();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -73,10 +65,10 @@ export default function QuizResultsPage() {
     <div className="relative h-screen w-screen flex flex-col overflow-hidden bg-[var(--background)] ">
       {/* Header */}
       <div className="pt-6 pb-2 text-center z-10">
-        <p className="text-2xl md:text-3xl font-semibold text-[var(--foreground)]">
+        <h1 className="page-title">
           Your creative spark is calling
-        </p>
-        <p className="text-md md:text-lg font-medium text-[var(--foreground)]">
+        </h1>
+        <p className="text-base md:text-lg font-medium text-[var(--foreground)]">
           Based on your answers, here are the hobbies we think you&apos;ll love.
         </p>
       </div>
@@ -84,7 +76,7 @@ export default function QuizResultsPage() {
       {/* Stepper underneath header */}
       <div className="flex justify-center items-center flex-shrink-0 pt-2 z-10">
         <QuizStepper
-          sections={matches.map((_, i) => ({ id: i } as any))}
+          sections={matches.map((m) => ({ id: m.slug }))}
           activeIndex={activeIndex}
           maxReachedIndex={matches.length - 1}
           completedSections={matches.map(() => true)}

@@ -40,7 +40,7 @@ export function MicroActivityCard({
         <div className="inline-flex items-center gap-2 text-sm text-[var(--secondary)] border border-[var(--secondary-theme-border)] bg-[var(--secondary-theme-bg)] mb-4 rounded-full px-2">
           {duration}
         </div>
-        <p className="text-gray-700 text-md leading-relaxed max-w-xl mx-auto">
+        <p className="text-gray-700 text-base leading-relaxed max-w-xl mx-auto">
           {instruction}
         </p>
       </div>

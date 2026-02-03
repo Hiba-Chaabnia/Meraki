@@ -43,10 +43,8 @@ export function PageLayout({
 
           {/* Center Content */}
           <div className="text-center">
-            <p className="text-2xl md:text-3xl font-semibold text-[var(--foreground)]">
-              {title}
-            </p>
-            <p className="text-md md:text-lg font-medium text-[var(--foreground)] mt-2">
+            <h1 className="page-title">{title}</h1>
+            <p className="text-base md:text-lg font-medium text-[var(--foreground)] mt-2">
               {subtitle}
             </p>
           </div>
