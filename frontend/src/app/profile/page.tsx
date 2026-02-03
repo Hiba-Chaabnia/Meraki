@@ -5,7 +5,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser } from "@/lib/hooks/useUser";
 import { ProfileSkeleton } from "@/components/ui/LoadingSkeleton";
-import { updateProfile } from "@/app/actions/profile";
+import { Spinner } from "@/components/ui/Spinner";
+import { updateProfile, uploadAvatar } from "@/app/actions/profile";
 import { getUserStats, getUserMilestones } from "@/app/actions/stats";
 import { getUserHobbies } from "@/app/actions/hobbies";
 import { toUserStats, toActiveHobbies, toMilestone } from "@/lib/transformData";
@@ -26,6 +27,8 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [hobbies, setHobbies] = useState<ActiveHobby[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -80,6 +83,28 @@ export default function ProfilePage() {
     setEditing(false);
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setAvatarUploading(true);
+    setAvatarError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await uploadAvatar(formData);
+
+    if (res.error) {
+      setAvatarError(res.error);
+    } else if (res.url) {
+      const updateRes = await updateProfile({ avatar_url: res.url });
+      if (updateRes.error) setAvatarError(updateRes.error);
+      await refreshProfile();
+    }
+    setAvatarUploading(false);
+  };
+
   return (
     <motion.div
       variants={stagger}
@@ -108,9 +133,45 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Avatar + name */}
         <motion.div variants={fadeUp} className="text-center mb-8">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--secondary)] to-[var(--coral)] mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">
-            {initial}
+          <div className="relative w-24 h-24 mx-auto mb-4">
+            <label
+              htmlFor="avatar-upload"
+              className="group relative block w-24 h-24 rounded-full overflow-hidden cursor-pointer"
+              title="Change profile photo"
+            >
+              {profile?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element -- user-uploaded external URL, not worth wiring next/image remotePatterns for a single 96px avatar
+                <img
+                  src={profile.avatar_url}
+                  alt={name || "Profile"}
+                  className="w-24 h-24 object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-gradient-to-br from-[var(--secondary)] to-[var(--coral)] flex items-center justify-center text-white text-3xl font-bold">
+                  {initial}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <PencilIcon className="w-5 h-5 text-white" />
+              </div>
+              {avatarUploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <Spinner size="sm" variant="white" />
+                </div>
+              )}
+            </label>
+            <input
+              id="avatar-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+              disabled={avatarUploading}
+            />
           </div>
+          {avatarError && (
+            <p className="text-xs text-red-500 mb-2">{avatarError}</p>
+          )}
 
           <AnimatePresence mode="wait">
             {editing ? (

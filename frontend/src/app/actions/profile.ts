@@ -2,6 +2,29 @@
 
 import { requireAuth } from "@/lib/supabase/requireAuth";
 
+export async function uploadAvatar(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const auth = await requireAuth();
+  if ("error" in auth) return { error: auth.error };
+  const { supabase, user } = auth;
+
+  const file = formData.get("file") as File | null;
+  if (!file) return { error: "No file provided" };
+  if (!file.type.startsWith("image/")) return { error: "File must be an image" };
+
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const path = `${user.id}/avatar.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { contentType: file.type, upsert: true });
+
+  if (error) return { error: error.message };
+
+  const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+
+  return { url: `${urlData.publicUrl}?t=${Date.now()}` };
+}
+
 function sanitize(value: string): string {
   return value.replace(/<[^>]*>/g, "").trim();
 }
