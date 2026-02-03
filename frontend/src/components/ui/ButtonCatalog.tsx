@@ -137,8 +137,8 @@ export function ButtonCatalog() {
           <Label>red-500 / hover red-600</Label>
         </div>
         <div>
-          <Button variant="outline" outlineColor="var(--primary)" outlineHoverColor="var(--primary)">Lavender → Primary</Button>
-          <Label>lavender / hover primary</Label>
+          <Button variant="outline" outlineColor="var(--primary)" outlineHoverColor="var(--primary)">Primary</Button>
+          <Label>primary (same hover)</Label>
         </div>
         <div>
           <Button variant="outline" outlineColor="#111827">Dark</Button>
