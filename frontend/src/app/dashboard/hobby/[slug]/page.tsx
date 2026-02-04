@@ -93,6 +93,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
       userHobbyId: h.userHobbyId,
       sessionType: data.type,
       duration: data.duration,
+      mood: data.mood,
       notes: data.notes,
       imageUrl: data.imageUrl,
     });

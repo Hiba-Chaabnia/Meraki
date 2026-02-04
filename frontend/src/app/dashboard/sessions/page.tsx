@@ -49,6 +49,7 @@ export default function SessionsPage() {
       userHobbyId: hobby.userHobbyId,
       sessionType: data.type,
       duration: data.duration,
+      mood: data.mood,
       notes: data.notes,
     });
     fetchData();

@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
+import type { ActiveHobby, Challenge, Mood } from "@/lib/dashboardData";
+import { moodEmojis } from "@/lib/dashboardData";
 import { uploadSessionImage } from "@/app/actions/sessions";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -24,15 +25,19 @@ export interface SessionFormData {
   type: "practice" | "thought";
   hobbySlug: string;
   duration: number;
+  mood?: Mood;
   notes: string;
   imageUrl?: string;
 }
+
+const MOOD_OPTIONS = Object.entries(moodEmojis) as [Mood, { emoji: string; label: string }][];
 
 export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeChallenges, initialHobbySlug }: SessionLoggerModalProps) {
   const [phase, setPhase] = useState<"form" | "saved">("form");
   const [sessionType, setSessionType] = useState<"practice" | "thought">("practice");
   const [hobbySlug, setHobbySlug] = useState(initialHobbySlug ?? hobbies[0]?.slug ?? "");
   const [duration, setDuration] = useState(30);
+  const [mood, setMood] = useState<Mood | null>(null);
   const [notes, setNotes] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -46,6 +51,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
     setSessionType("practice");
     setHobbySlug(initialHobbySlug ?? hobbies[0]?.slug ?? "");
     setDuration(30);
+    setMood(null);
     setNotes("");
     setImageFile(null);
     setImagePreview(null);
@@ -75,7 +81,14 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
       const res = await uploadSessionImage(fd);
       if (res.url) imageUrl = res.url;
     }
-    onSave({ type: sessionType, hobbySlug, duration: sessionType === "thought" ? 0 : duration, notes, imageUrl });
+    onSave({
+      type: sessionType,
+      hobbySlug,
+      duration: sessionType === "thought" ? 0 : duration,
+      mood: sessionType === "practice" ? mood ?? undefined : undefined,
+      notes,
+      imageUrl,
+    });
     setPhase("saved");
   };
 
@@ -245,6 +258,32 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                     <div className="flex justify-between text-xs text-gray-400 mt-1">
                       <span>5 min</span>
                       <span>3 hrs</span>
+                    </div>
+                  </div>
+
+                  {/* Mood picker */}
+                  <div>
+                    <label className="form-label">
+                      How did it feel?{" "}
+                      <span className="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <div className="flex justify-between gap-1">
+                      {MOOD_OPTIONS.map(([value, { emoji, label }]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setMood(mood === value ? null : value)}
+                          title={label}
+                          aria-label={label}
+                          className={`flex-1 py-2 rounded-xl text-2xl transition-all cursor-pointer ${
+                            mood === value
+                              ? "bg-[var(--secondary-lighter)] ring-2 ring-[var(--secondary)]"
+                              : "bg-gray-50 hover:bg-gray-100 grayscale hover:grayscale-0"
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </>

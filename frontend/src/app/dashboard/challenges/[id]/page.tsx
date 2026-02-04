@@ -77,6 +77,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
         userChallengeId: id,
         sessionType: data.type,
         duration: data.duration,
+        mood: data.mood,
         notes: data.notes,
       });
     }

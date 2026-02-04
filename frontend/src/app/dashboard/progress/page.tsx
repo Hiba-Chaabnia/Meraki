@@ -93,6 +93,7 @@ export default function ProgressPage() {
       userHobbyId: hobby.userHobbyId,
       sessionType: data.type,
       duration: data.duration,
+      mood: data.mood,
       notes: data.notes,
       imageUrl: data.imageUrl,
     });

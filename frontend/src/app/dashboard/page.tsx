@@ -71,6 +71,7 @@ export default function DashboardPage() {
       userHobbyId: hobby.userHobbyId,
       sessionType: data.type,
       duration: data.duration,
+      mood: data.mood,
       notes: data.notes,
       imageUrl: data.imageUrl,
     });
