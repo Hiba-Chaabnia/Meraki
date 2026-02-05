@@ -111,6 +111,63 @@
   /** Form field label — block, with bottom margin */
   .form-label { @apply text-sm font-medium text-gray-600 mb-1.5 block; }
 
+  /* ─── Legal prose ────────────────────────────────────────────────────────
+     Long-form body copy for the privacy / terms documents. Exists so the
+     content files in src/lib/legal/ can stay plain semantic HTML instead of
+     repeating the same class strings on every <p> and <li>.
+
+     Note this is NOT @tailwindcss/typography — that plugin isn't installed,
+     which is why the `prose prose-gray` wrapper on the old legal pages did
+     nothing at all. These rules follow the project's own grey ladder.
+     ──────────────────────────────────────────────────────────────────────── */
+  /* Typography only. The measure (line-length cap) is NOT set here — it's a
+     runtime-tunable value applied inline from components/legal/spacing.ts, so
+     the prose and the contact card can share one number. It caps the text
+     rather than a page wrapper; capping the container is what leaves wide
+     empty gutters (see §5.0 of src/CLAUDE.md). */
+  .legal-prose {
+    @apply text-[15px] md:text-base text-gray-600 leading-relaxed;
+    /* Justified, but never breaking a word across lines — hyphenation is off
+       by request. The trade-off is that word spacing has to absorb all the
+       slack instead, so gaps vary more from line to line. It stays acceptable
+       here because the measure is long (120ch); at a narrow measure, justified
+       text without hyphens is where "rivers" of white space appear.
+       Raw CSS rather than @apply — these specific utilities have a history of
+       not reaching the compiled stylesheet in this project. */
+    text-align: justify;
+    hyphens: none;
+    -webkit-hyphens: none;
+  }
+  /* Left-aligned inside the contact card, which is centred and short —
+     justifying a 2-line centred paragraph looks broken. */
+  .legal-prose-plain,
+  .legal-prose-plain p {
+    text-align: inherit;
+    hyphens: manual;
+    /* Centred text wrapped by character count alone produces ragged,
+       unbalanced lines — one long, one short, a stray word orphaned on its
+       own line. `balance` asks the browser to choose break points that even
+       the lines out instead. Not a Tailwind utility (no `text-balance` class
+       used here) — same reasoning as `.legal-prose` above: newer/uncommon
+       properties in this project go in as raw CSS, not `@apply`. */
+    text-wrap: balance;
+  }
+  .legal-prose p            { @apply mb-4; }
+  .legal-prose ul           { @apply flex flex-col gap-2 mb-4 pl-5 list-disc; }
+  .legal-prose > *:last-child { @apply mb-0; }
+  /* Subsection heads use the micro-label treatment — tiny, bold, wide-tracked */
+  .legal-prose h3 {
+    @apply text-[10px] font-bold tracking-widest uppercase text-gray-400 mt-7 mb-2.5;
+  }
+  .legal-prose strong       { @apply font-semibold text-[var(--foreground)]; }
+  .legal-prose em           { @apply italic; }
+  .legal-prose a {
+    @apply font-medium text-[var(--primary)] underline underline-offset-2
+           decoration-[var(--primary-light)] hover:decoration-[var(--primary)]
+           transition-colors;
+  }
+  .legal-prose li::marker   { color: var(--primary-light); }
+
   /* ─── Badge catalog ──────────────────────────────────────────────────────
      Apply colour classes alongside (e.g. .badge.bg-gray-100.text-gray-700).
      ──────────────────────────────────────────────────────────────────────── */
