@@ -6,6 +6,8 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import PasswordInput from "@/components/auth/PasswordInput";
 import PasswordRequirements from "@/components/auth/PasswordRequirements";
 import OAuthSection from "@/components/auth/OAuthSection";
+import { LegalModal } from "@/components/legal/LegalModal";
+import { PRIVACY, TERMS } from "@/lib/legal";
 import { passwordIsValid } from "@/lib/utils/password";
 import { signUp } from "../actions";
 
@@ -14,6 +16,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<"terms" | "privacy" | null>(null);
 
   const formValid = password.length > 0 && passwordIsValid(password) && agreed;
 
@@ -115,13 +118,21 @@ export default function SignUpPage() {
             />
             <span>
               I agree to the{" "}
-              <Link href="/terms" className="underline text-gray-900">
+              <button
+                type="button"
+                onClick={() => setLegalDoc("terms")}
+                className="underline text-gray-900"
+              >
                 Terms of Service
-              </Link>{" "}
+              </button>{" "}
               and{" "}
-              <Link href="/privacy" className="underline text-gray-900">
+              <button
+                type="button"
+                onClick={() => setLegalDoc("privacy")}
+                className="underline text-gray-900"
+              >
                 Privacy Policy
-              </Link>
+              </button>
             </span>
           </label>
 
@@ -148,6 +159,17 @@ export default function SignUpPage() {
           </Link>
         </p>
       </div>
+
+      <LegalModal
+        doc={TERMS}
+        isOpen={legalDoc === "terms"}
+        onClose={() => setLegalDoc(null)}
+      />
+      <LegalModal
+        doc={PRIVACY}
+        isOpen={legalDoc === "privacy"}
+        onClose={() => setLegalDoc(null)}
+      />
     </AuthLayout>
   );
 }
