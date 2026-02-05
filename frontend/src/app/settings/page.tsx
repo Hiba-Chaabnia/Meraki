@@ -8,7 +8,6 @@ import { useUser } from "@/lib/hooks/useUser";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ArrowLeftIcon } from "@/components/ui/Icons";
 import {
-  updatePublicProfile,
   changePassword,
   exportUserData,
   deleteAllUserData,
@@ -66,9 +65,8 @@ function ToggleSwitch({
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, profile, refreshProfile } = useUser();
+  const { user } = useUser();
 
-  const [publicProfile, setPublicProfile] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>(
     DEFAULT_NOTIFICATION_PREFS
   );
@@ -81,12 +79,6 @@ export default function SettingsPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile) {
-      setPublicProfile(profile.public_profile ?? false);
-    }
-  }, [profile]);
-
-  useEffect(() => {
     if (!user) return;
     getNotificationPrefs()
       .then((res) => {
@@ -94,12 +86,6 @@ export default function SettingsPage() {
       })
       .catch((e) => console.error("[SettingsPage] getNotificationPrefs failed:", e));
   }, [user]);
-
-  const handleTogglePublicProfile = async (value: boolean) => {
-    setPublicProfile(value);
-    await updatePublicProfile(value);
-    await refreshProfile();
-  };
 
   const handleToggleNotificationPref = async (key: keyof NotificationPrefs) => {
     const next = { ...notificationPrefs, [key]: !notificationPrefs[key] };
@@ -270,25 +256,12 @@ export default function SettingsPage() {
           variants={fadeUp}
           className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
         >
-          <h2 className="card-heading mb-5">
-            Privacy
-          </h2>
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  Public Profile
-                </p>
-                <p className="text-xs text-gray-400">
-                  Allow others to see your profile
-                </p>
-              </div>
-              <ToggleSwitch
-                enabled={publicProfile}
-                onToggle={() => handleTogglePublicProfile(!publicProfile)}
-              />
-            </div>
-          </div>
+          <h2 className="card-heading mb-5">Privacy</h2>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Meraki has no public profiles, feeds, or followers — your sessions,
+            notes and photos are visible only to you. You can export or delete
+            everything below.
+          </p>
         </motion.div>
 
         {/* Notifications */}
