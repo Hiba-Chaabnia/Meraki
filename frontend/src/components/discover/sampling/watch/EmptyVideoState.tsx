@@ -7,7 +7,7 @@ interface EmptyVideoStateProps {
 
 export function EmptyVideoState({ hobbyName }: EmptyVideoStateProps) {
   return (
-    <SamplingErrorState message="We couldn't load curated videos right now, but you can search YouTube directly:">
+    <SamplingErrorState message="Curated videos couldn't be loaded. Search YouTube directly instead.">
       <a
         href={`https://www.youtube.com/results?search_query=${encodeURIComponent(hobbyName + " beginner tutorial")}`}
         target="_blank"
