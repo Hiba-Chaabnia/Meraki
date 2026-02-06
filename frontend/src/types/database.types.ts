@@ -58,6 +58,8 @@ export interface Database {
           hobby_slug: string;
           status: "sampling" | "active" | "paused" | "completed";
           started_at: string;
+          /** Set by trigger when status becomes 'paused', cleared on resume. */
+          paused_at: string | null;
         };
         Insert: {
           id?: string;
@@ -438,6 +440,8 @@ export interface Database {
           current_phase: number;
           started_at: string;
           updated_at: string;
+          /** Ticked checklist items as "phase_number:goal_index" keys. */
+          completed_goals: string[];
         };
         Insert: {
           id?: string;
@@ -447,10 +451,12 @@ export interface Database {
           current_phase?: number;
           started_at?: string;
           updated_at?: string;
+          completed_goals?: string[];
         };
         Update: {
           current_phase?: number;
           updated_at?: string;
+          completed_goals?: string[];
         };
         Relationships: [
           {

@@ -68,6 +68,7 @@ export function toActiveHobby(row: UserHobbyRow): ActiveHobby {
       Math.floor((Date.now() - new Date(row.started_at).getTime()) / 86_400_000),
     ),
     lastSessionDaysAgo: 0,
+    pausedAt: row.paused_at ?? null,
   };
 }
 
@@ -166,6 +167,8 @@ export function toRoadmap(row: UserRoadmapWithRoadmap): Roadmap {
     currentPhase: row.current_phase ?? 0,
     totalPhases: roadmap.total_phases ?? 0,
     userRoadmapId: row.id,
+    // jsonb comes back as unknown until migration 004 has been applied.
+    completedGoals: Array.isArray(row.completed_goals) ? row.completed_goals : [],
   };
 }
 

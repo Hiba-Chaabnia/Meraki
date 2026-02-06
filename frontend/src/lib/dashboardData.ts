@@ -24,6 +24,8 @@ export interface ActiveHobby {
   totalSessions: number;
   daysSinceStart: number;
   lastSessionDaysAgo: number;
+  /** ISO date the hobby was paused. null when running, or paused before 004. */
+  pausedAt: string | null;
 }
 
 /* ─── Mood ─── */
@@ -113,6 +115,17 @@ export interface Roadmap {
   currentPhase: number;
   totalPhases: number;
   userRoadmapId: string;
+  /** Ticked checklist items, as `roadmapGoalKey()` strings. */
+  completedGoals: string[];
+}
+
+/**
+ * Stable key for one goal inside a roadmap: 1-based phase, 0-based goal.
+ * Positional, so it only holds while the roadmap itself is unchanged —
+ * regenerating one clears the list.
+ */
+export function roadmapGoalKey(phaseNumber: number, goalIndex: number): string {
+  return `${phaseNumber}:${goalIndex}`;
 }
 
 /* ─── Activity Timeline ─── */
