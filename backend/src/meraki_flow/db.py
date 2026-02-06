@@ -216,7 +216,64 @@ def save_generated_challenge(
     uc_resp = sb.table("user_challenges").insert(uc_row).execute()
     if not uc_resp.data or len(uc_resp.data) == 0:
         return None
-    return uc_resp.data[0]["id"]
+    new_uc_id = uc_resp.data[0]["id"]
+
+    # Retire whatever this one replaces. Only after the insert succeeded — if
+    # generation fails the user keeps the challenge they had, which is what the
+    # dashboard's failure card promises them.
+    #
+    # Guarded separately: the new challenge is already saved by this point, so a
+    # failure here must not surface to the caller as "failed to save".
+    try:
+        _skip_previous_active_challenges(user_id, hobby_slug, new_uc_id)
+    except Exception as e:
+        print(f"[save_generated_challenge] Could not skip previous challenges: {e}")
+
+    return new_uc_id
+
+
+def _skip_previous_active_challenges(
+    user_id: str,
+    hobby_slug: str,
+    keep_uc_id: str,
+) -> None:
+    """
+    Mark the user's other active challenges for this hobby as skipped.
+
+    Without this, "Swap" on the dashboard only ever *added* a challenge: the old
+    one stayed active, and since the dashboard shows the longest-running active
+    challenge first, the card never changed.
+
+    Skipped titles are also fed back to the generation crew as
+    `skipped_challenges`, so this is what lets a swap teach the model what the
+    user turned down.
+    """
+    sb = get_supabase()
+
+    # hobby_slug lives on `challenges`, not `user_challenges`, so the rows have
+    # to be read and filtered before they can be updated by id.
+    resp = (
+        sb.table("user_challenges")
+        .select("id, challenges(hobby_slug)")
+        .eq("user_id", user_id)
+        .eq("status", "active")
+        .execute()
+    )
+
+    stale_ids = [
+        row["id"]
+        for row in (resp.data or [])
+        if row["id"] != keep_uc_id
+        and (row.get("challenges") or {}).get("hobby_slug") == hobby_slug
+    ]
+    if not stale_ids:
+        return
+
+    # `completed_at` stays null — it means "when completed", and a skipped
+    # challenge was not.
+    sb.table("user_challenges").update({"status": "skipped"}).in_(
+        "id", stale_ids
+    ).execute()
 
 
 def save_nudge(
