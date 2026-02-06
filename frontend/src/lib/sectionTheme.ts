@@ -40,3 +40,8 @@ export const CARD_THEMES: [SectionTheme, SectionTheme] = [
   THEME_PRIMARY,
   THEME_SECONDARY,
 ];
+
+/** Resolve a stored theme key (e.g. `DashboardHobby.theme`) to its quad. */
+export function themeFor(key: "primary" | "secondary"): SectionTheme {
+  return key === "primary" ? THEME_PRIMARY : THEME_SECONDARY;
+}
