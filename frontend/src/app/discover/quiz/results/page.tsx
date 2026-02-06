@@ -117,11 +117,11 @@ export default function QuizResultsPage() {
       <div className="flex justify-center items-center flex-shrink-0 z-10 pb-6 text-[var(--foreground)]/60">
         <p className="text-sm">
           None of these hobbies speaks to you,{" "}
-          <Link href="/discover/quiz" className="hover:text-primary font-medium">
+          <Link href="/discover/quiz" className="hover:text-[var(--primary)] font-medium">
             <em>retake quiz</em>
           </Link>
           {" "}or{" "}
-          <Link href="/dashboard" className="hover:text-primary font-medium">
+          <Link href="/dashboard" className="hover:text-[var(--primary)] font-medium">
             <em>ship to dashboard</em>
           </Link>
         </p>

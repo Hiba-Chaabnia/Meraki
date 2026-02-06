@@ -1,18 +1,11 @@
 @import "tailwindcss";
 
-/* ─── Tailwind v4 design tokens ─────────────────────────────────────────────
-   Creates bg-primary, text-primary, bg-secondary, etc. as utility classes.
-   The :root variables below remain for var(--primary) usage in inline styles.
+/* ─── Design tokens ─────────────────────────────────────────────────────────
+   The single source for the brand palette. There is no `@theme` block and no
+   tailwind.config.ts, so these do NOT generate Tailwind color utilities —
+   there is no `bg-primary` / `text-primary`. Consume them as `var(--primary)`
+   in inline styles, or as `bg-[var(--primary)]` in an arbitrary value.
    ────────────────────────────────────────────────────────────────────────── */
-@theme {
-  --color-primary:       #5396F4;
-  --color-secondary:     #CFE251;
-  --color-accent:        #FFD64D;
-  --color-coral:         #FF9149;
-  --color-surface:       #FFF9F5;
-  --color-surface-muted: #F5EFE9;
-}
-
 :root {
   /* Background & Foreground */
   --background: #FFF9F5;
