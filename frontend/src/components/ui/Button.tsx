@@ -177,26 +177,20 @@ export const Button = forwardRef<
   const mergedStyle = { ...cssVars, ...style };
 
   if ("href" in props && props.href) {
-    const {
-      href,
-      variant: _v,
-      size: _s,
-      shape: _sh,
-      fullWidth: _fw,
-      iconOnly: _io,
-      outlineColor: _oc,
-      outlineHoverColor: _ohc,
-      noScaleOnHover: _nsh,
-      ...anchorProps
-    } = props as { href: string } & Record<string, unknown>;
+    // Spread from `rest`, never from `props`: `props` still carries className,
+    // style and children, and spreading those would overwrite the computed
+    // variant classes with the caller's className instead of appending to it.
+    const { href: _href, ...anchorProps } = rest as {
+      href?: string;
+    } & React.AnchorHTMLAttributes<HTMLAnchorElement>;
 
     return (
       <Link
         ref={ref as React.Ref<HTMLAnchorElement>}
-        href={href}
+        href={props.href}
         className={classes}
         style={mergedStyle}
-        {...(anchorProps as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+        {...anchorProps}
       >
         {children}
       </Link>
