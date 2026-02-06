@@ -12,7 +12,7 @@ import { UserChip } from "./UserChip";
 import { springModal } from "@/components/ui/animations";
 
 const navItems: NavItemConfig[] = [
-  { href: "/dashboard", label: "My Hobbies", mobileLabel: "Hobbies", Icon: Home },
+  { href: "/dashboard", label: "Hobbies", mobileLabel: "Hobbies", Icon: Home },
   { href: "/discover", label: "Discover", Icon: Compass },
   { href: "/dashboard/challenges", label: "Challenges", Icon: Trophy },
   { href: "/dashboard/roadmap", label: "Roadmap", Icon: Map },

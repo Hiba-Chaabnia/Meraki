@@ -270,7 +270,7 @@ export default function ProfilePage() {
           className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6"
         >
           <h2 className="card-heading mb-4">
-            My Hobbies
+            Hobbies
           </h2>
           {hobbies.length > 0 ? (
             <div className="space-y-3">

@@ -53,7 +53,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ id: st
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
         <p className="text-gray-400">Roadmap not found.</p>
         <Link href="/dashboard" className="text-sm text-[var(--secondary)] mt-2 inline-block">
-          Back to My Hobbies
+          Back to Hobbies
         </Link>
       </div>
     );

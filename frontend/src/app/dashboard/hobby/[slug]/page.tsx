@@ -150,10 +150,10 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
       />
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12">
-        {/* Back link → My Hobbies */}
+        {/* Back link → Hobbies */}
         <motion.div variants={fadeUp} className="mb-6">
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> My Hobbies
+            <ArrowLeft className="w-4 h-4" /> Hobbies
           </Link>
         </motion.div>
 
