@@ -466,19 +466,22 @@ Meraki/
 - Python 3.10+
 - Node.js 18+
 - A Supabase project
-- Anthropic API key (Claude)
-- Google API key (for local experiences)
+- OpenAI API key
+- Google Cloud API keys — Places API and Maps JavaScript API
+- YouTube Data API v3 key
 - Opik API key (optional, for observability)
 
 ### Environment Variables
 
-**Backend** — create `backend/.env`:
+**Backend** — create `backend/.env` (see `backend/.env.exemple`):
 ```env
-ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
-GOOGLE_API_KEY=AIza...
+GOOGLE_PLACES_API_KEY=AIza...
+YOUTUBE_API_KEY=AIza...
 OPIK_API_KEY=...
+OPIK_WORKSPACE=...
 CORS_ORIGINS=http://localhost:3000
 ```
 
@@ -486,7 +489,13 @@ CORS_ORIGINS=http://localhost:3000
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIza...
+NEXT_PUBLIC_CREWAI_API_URL=http://localhost:8000
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+
+> The YouTube key must be configured **without HTTP referrer restrictions**, or
+> with the server's IP allow-listed — it is called server-side.
 
 ### Run the Backend
 
@@ -513,3 +522,34 @@ cd backend
 python -m meraki_flow.evaluation.run_evaluation
 # Results saved to evaluation/results/
 ```
+
+---
+
+## Licence
+
+Meraki is licensed under the **GNU Affero General Public License v3.0** — see
+[`LICENSE`](LICENSE).
+
+In short: you are free to use, study, modify and share this software, including
+commercially. In return, if you distribute it **or run a modified version as a
+network service**, you must make your source available under the same licence.
+That network clause (AGPL §13) is the point of choosing AGPL over GPL — it means
+a hosted fork can't stay closed.
+
+**Not covered by the licence:** the *Meraki* name, the flower mark, and the
+logo files. A code licence covers code, never a brand — please rename your fork.
+The bundled typeface and icon set carry their own third-party terms.
+See [`NOTICE`](NOTICE) for the full list before reusing any assets.
+
+### Contributing
+
+Contributions are welcome. By opening a pull request you confirm the work is
+yours to give and licence it under AGPL-3.0, so everyone downstream receives it
+on the same footing.
+
+### The hosted service
+
+The Meraki service hosted by the author is governed by its own
+[Terms of Service](https://meraki.app/terms) and
+[Privacy Policy](https://meraki.app/privacy). Those cover the running service
+and the data in it; this licence covers the code. Neither overrides the other.
