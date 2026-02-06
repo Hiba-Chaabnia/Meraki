@@ -23,7 +23,7 @@
  */
 export const DISCOVERY_STEPS = [
   "Reading your answers",
-  "Narrowing down what fits you",
-  "Putting your matches together",
-  "Saving them for next time",
+  "Analyzing your preferences",
+  "Preparing your matches",
+  "Saving your results",
 ] as const;
