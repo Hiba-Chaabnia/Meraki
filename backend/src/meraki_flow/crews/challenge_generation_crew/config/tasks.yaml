@@ -27,11 +27,20 @@ generate_challenge_task:
     - If recent moods are loved/good: can push harder
     - NEVER create a challenge similar to a skipped one
     - estimated_time should be realistic (15-60 min range)
+
+    Length rules — the dashboard card clips the title to one line and the
+    description to two, so anything longer is written and then thrown away:
+    - title: at most 40 characters. Name the action, not how it feels. No
+      adjectives like "amazing", "exciting", "fun"; no exclamation marks.
+    - description: ONE sentence, at most 110 characters. Say what to do and the
+      one constraint that makes it a challenge.
+    - The description must NOT repeat words from the title, and must not open
+      with "In this challenge", "You will" or "Your task is".
   expected_output: >
     Return a JSON object with the following structure:
     {
-      "title": "Catchy, exciting challenge title (3-6 words)",
-      "description": "2-3 sentences describing what to do",
+      "title": "The action, 3-6 words, <=40 characters",
+      "description": "One sentence, <=110 characters, no words reused from the title",
       "skills": ["skill1", "skill2"],
       "difficulty": "easy" | "medium" | "hard" | "stretch",
       "estimated_time": "30 minutes",
