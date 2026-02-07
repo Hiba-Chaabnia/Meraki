@@ -1,56 +1,118 @@
 analyze_profile_task:
   description: >
-    Analyze the user's profile to understand their interests, constraints, and preferences.
+    Analyze the user's complete quiz profile across all dimensions.
 
-    User Profile:
-    - Hobby Interests: {hobby_interests}
-    - Available Time: {available_time} hours per week
-    - Budget: ${budget}
-    - Location: {location}
+    === TIME & LIFESTYLE ===
+    - Weekly creative time: {q1_time_available}
+    - Practice timing: {q2_practice_timing}
+    - Session preference: {q3_session_preference}
 
-    Consider what types of activities might appeal to someone with these interests,
-    and what practical limitations their time and budget might impose.
+    === CREATIVE PREFERENCES ===
+    - Type of creating: {q4_creative_type}
+    - Structure preference: {q5_structure_preference}
+    - Mess tolerance: {q6_mess_tolerance}
+
+    === LEARNING STYLE ===
+    - How they learn: {q7_learning_method}
+    - Attitude toward mistakes: {q8_mistake_attitude}
+
+    === SOCIAL & SPACE ===
+    - Practice location: {q9_practice_location}
+    - Social preference: {q10_social_preference}
+
+    === BUDGET & COMMITMENT ===
+    - Initial budget: {q11_initial_budget}
+    - Ongoing costs attitude: {q12_ongoing_costs}
+    - Try-before-commit style: {q13_try_before_commit}
+
+    === MOTIVATION & MINDSET ===
+    - What they want from hobby: {q14_motivations}
+    - What resonates most: {q15_resonates}
+    - Learning curve handling: {q16_learning_curve}
+
+    === SENSORY PREFERENCES ===
+    - Best sensory experience: {q17_sensory_experience}
+    - Senses to engage: {q18_senses_to_engage}
+
+    === PRACTICAL CONSTRAINTS ===
+    - Physical constraints: {q19_physical_constraints}
+    - Seasonal preference: {q20_seasonal_preference}
+
+    === PERSONAL REFLECTION ===
+    - Dream hobby: {q21_dream_hobby}
+    - What's held them back: {q22_barriers}
+
   expected_output: >
-    A structured analysis of the user's profile including:
-    - Primary interest themes identified
-    - Time availability assessment (can they do daily practice? weekly sessions?)
-    - Budget tier (minimal investment, moderate, or premium hobbies possible)
-    - Location considerations (indoor/outdoor, urban/rural options)
+    A comprehensive profile analysis covering:
+    - Time profile (available hours, best times, session style)
+    - Creative identity (what kind of creator they are)
+    - Learning profile (how to structure their journey)
+    - Environment needs (space, social, location)
+    - Investment capacity (budget tier, commitment style)
+    - Motivation drivers (intrinsic goals)
+    - Sensory/physical needs and constraints
+    - Past barriers to address
   agent: discovery_agent
 
 rank_hobbies_task:
   description: >
-    Based on the profile analysis, generate and rank potential hobbies for the user.
-    Consider hobbies that:
-    - Align with their stated interests: {hobby_interests}
-    - Fit within {available_time} hours/week
-    - Can be started with ${budget} or less
-    - Are accessible in/around {location}
+    Based on the profile analysis, generate and rank hobbies considering ALL factors:
 
-    Rank hobbies by overall fit score considering all factors.
+    Must-haves (hard constraints):
+    - Fits within their time: {q1_time_available}
+    - Matches budget: {q11_initial_budget}
+    - Respects physical constraints: {q19_physical_constraints}
+    - Suits their space: {q9_practice_location}
+
+    Strong preferences:
+    - Aligns with creative type: {q4_creative_type}
+    - Matches sensory preferences: {q17_sensory_experience}
+    - Supports their motivations: {q14_motivations}
+
+    Consider their dream hobby if mentioned: {q21_dream_hobby}
+    Address their past barriers: {q22_barriers}
+
+    Focus on hobbies from these categories: creative arts, crafts, gardening.
   expected_output: >
-    A ranked list of 5-8 hobby recommendations, each including:
-    - Hobby name
-    - Why it matches their interests
-    - Time requirement (hours/week)
-    - Startup cost estimate
-    - Fit score (1-10)
+    A ranked list of 5 hobby recommendations in JSON format:
+    [
+      {
+        "hobby_slug": "pottery",
+        "match_percentage": 94,
+        "match_tags": ["Tactile", "Meditative", "Solo-friendly"],
+        "reasoning": "Why this hobby matches their profile"
+      }
+    ]
+
+    Use these exact hobby slugs: pottery, watercolor, drawing, knitting, crochet,
+    photography, creative-writing, digital-art, woodworking, container-gardening,
+    herb-garden, houseplants
   agent: discovery_agent
 
 generate_recommendations_task:
   description: >
-    Create final personalized hobby recommendations with actionable next steps.
-    For each top hobby, provide concrete ways to get started immediately.
-    Focus on low-barrier entry points that don't require major commitments.
+    Create final personalized recommendations with actionable next steps.
+
+    For each top hobby:
+    - Address their specific barriers: {q22_barriers}
+    - Match their learning style: {q7_learning_method}
+    - Respect their budget: {q11_initial_budget}
+    - Consider their try-before-commit preference: {q13_try_before_commit}
+
+    Make starting feel achievable and exciting.
   expected_output: >
-    Top 3 hobby recommendations formatted as:
+    Final output as JSON with this exact structure:
+    {
+      "matches": [
+        {
+          "hobby_slug": "string",
+          "match_percentage": number,
+          "match_tags": ["string"],
+          "reasoning": "2-3 sentence personalized explanation"
+        }
+      ],
+      "encouragement": "A brief personalized message addressing their barriers"
+    }
 
-    For each hobby:
-    - Name and brief description
-    - Why it's perfect for this user
-    - First step to try today (free or very low cost)
-    - What they'll need to get started
-    - Expected progression path
-
-    Formatted as a clear, encouraging guide that makes starting feel achievable.
+    Include top 3-5 matches. Use valid hobby slugs only.
   agent: discovery_agent

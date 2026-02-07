@@ -1,7 +1,18 @@
+"""
+Local Experiences Crew - Finds local classes, workshops, and meetups for hobby exploration.
+
+This crew runs when a user clicks "Find Locally" and provides their location.
+It uses Google Places and web search to find beginner-friendly local opportunities.
+"""
+
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_kickoff
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
+
+from meraki_flow.tools.google_places import GooglePlacesTool
+from meraki_flow.tools.web_search import WebSearchTool
+from meraki_flow.models import LocalExperiencesOutput
 
 try:
     from opik import opik_context
@@ -11,8 +22,8 @@ except ImportError:
 
 
 @CrewBase
-class DiscoveryCrew:
-    """Discovery Crew - Matches users to hobbies based on profile and constraints"""
+class LocalExperiencesCrew:
+    """Local Experiences Crew - Finds local opportunities for hobby exploration."""
 
     agents: List[BaseAgent]
     tasks: List[Task]
@@ -24,10 +35,12 @@ class DiscoveryCrew:
             try:
                 opik_context.update_current_trace(
                     metadata={
-                        "crew": "discovery",
+                        "crew": "local_experiences",
                         "input_keys": list(inputs.keys()) if inputs else [],
+                        "hobby_name": inputs.get("hobby_name", "") if inputs else "",
+                        "location": inputs.get("location", "") if inputs else "",
                     },
-                    tags=["discovery-crew"]
+                    tags=["local-experiences-crew"]
                 )
             except Exception:
                 pass  # Opik tracing not active, skip
@@ -41,7 +54,7 @@ class DiscoveryCrew:
                 opik_context.update_current_trace(
                     metadata={
                         "result_type": type(output).__name__,
-                        "crew_completed": "discovery",
+                        "crew_completed": "local_experiences",
                     }
                 )
             except Exception:
@@ -49,33 +62,23 @@ class DiscoveryCrew:
         return output
 
     @agent
-    def discovery_agent(self) -> Agent:
+    def local_experiences_agent(self) -> Agent:
         return Agent(
-            config=self.agents_config['discovery_agent'],
+            config=self.agents_config['local_experiences_agent'],
+            tools=[GooglePlacesTool(), WebSearchTool()],
             verbose=True
         )
 
     @task
-    def analyze_profile_task(self) -> Task:
+    def find_local_experiences_task(self) -> Task:
         return Task(
-            config=self.tasks_config['analyze_profile_task'],
-        )
-
-    @task
-    def rank_hobbies_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['rank_hobbies_task'],
-        )
-
-    @task
-    def generate_recommendations_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['generate_recommendations_task'],
+            config=self.tasks_config['find_local_experiences_task'],
+            output_pydantic=LocalExperiencesOutput,
         )
 
     @crew
     def crew(self) -> Crew:
-        """Creates the Discovery Crew"""
+        """Creates the Local Experiences Crew."""
         return Crew(
             agents=self.agents,
             tasks=self.tasks,

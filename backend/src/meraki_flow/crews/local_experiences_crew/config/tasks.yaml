@@ -1,0 +1,53 @@
+find_local_experiences_task:
+  description: >
+    Find local experiences where the user can sample {hobby_name} in or around
+    {location}. Use both the google_places_search tool and web_search tool to
+    find a variety of options.
+
+    Search for:
+    1. Use google_places_search for: "{hobby_name} class", "{hobby_name} studio",
+       "{hobby_name} workshop" near {location}
+    2. Use web_search for: "{hobby_name} meetup {location}", "{hobby_name} workshop {location}",
+       "{hobby_name} beginner class {location}"
+
+    Focus on:
+    - Single-session experiences only (no multi-week commitments)
+    - Beginner-friendly environments where first-timers are welcome
+    - Free community events, meetups, or trial classes
+    - Studios or spaces that offer drop-in sessions
+
+    For each result, assess:
+    - Is it truly beginner-friendly?
+    - Is it a single session or ongoing commitment?
+    - What's the approximate cost?
+
+    Also prepare beginner tips for each type of venue: what to expect, what to
+    wear, what to bring, and how to not feel awkward as a first-timer.
+  expected_output: >
+    Return a JSON object with the following structure:
+    {
+      "local_spots": [
+        {
+          "name": "Venue or event name",
+          "type": "Workshop" | "Drop-in Class" | "Meetup" | "Open Studio" | "Studio" | "Community Event",
+          "address": "Full address or 'Online event'",
+          "rating": 4.5 (if available, null otherwise),
+          "reviews_count": 123 (if available, null otherwise),
+          "price": "$45 for 2-hour session" | "Free" | "Varies",
+          "url": "Website or event URL",
+          "beginner_friendly": true,
+          "single_session": true,
+          "beginner_tips": "What to wear, bring, expect as a first-timer",
+          "source": "google_places" | "web_search"
+        }
+      ],
+      "general_tips": {
+        "what_to_wear": "General advice for this hobby",
+        "what_to_bring": "Items to consider bringing",
+        "what_to_expect": "What a typical first session looks like",
+        "how_to_not_feel_awkward": "Tips for feeling comfortable as a beginner"
+      },
+      "search_location": "{location}",
+      "hobby": "{hobby_name}"
+    }
+  agent: local_experiences_agent

@@ -1,7 +1,19 @@
+"""
+Sampling Preview Crew - Creates immediate preview content for hobby sampling.
+
+This crew runs when a user lands on the sampling page and generates:
+1. A personalized recommendation for which sampling path to try
+2. A micro activity they can do immediately
+3. Curated YouTube videos for passive discovery
+"""
+
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_kickoff
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
+
+from meraki_flow.tools.youtube_search import YouTubeSearchTool
+from meraki_flow.models import SamplingRecommendation, MicroActivity, CuratedVideos
 
 try:
     from opik import opik_context
@@ -11,8 +23,8 @@ except ImportError:
 
 
 @CrewBase
-class DiscoveryCrew:
-    """Discovery Crew - Matches users to hobbies based on profile and constraints"""
+class SamplingPreviewCrew:
+    """Sampling Preview Crew - Creates immediate preview content for hobby sampling."""
 
     agents: List[BaseAgent]
     tasks: List[Task]
@@ -24,10 +36,12 @@ class DiscoveryCrew:
             try:
                 opik_context.update_current_trace(
                     metadata={
-                        "crew": "discovery",
+                        "crew": "sampling_preview",
                         "input_keys": list(inputs.keys()) if inputs else [],
+                        "hobby_name": inputs.get("hobby_name", "") if inputs else "",
+                        "has_quiz_answers": bool(inputs.get("quiz_answers")) if inputs else False,
                     },
-                    tags=["discovery-crew"]
+                    tags=["sampling-preview-crew"]
                 )
             except Exception:
                 pass  # Opik tracing not active, skip
@@ -41,7 +55,7 @@ class DiscoveryCrew:
                 opik_context.update_current_trace(
                     metadata={
                         "result_type": type(output).__name__,
-                        "crew_completed": "discovery",
+                        "crew_completed": "sampling_preview",
                     }
                 )
             except Exception:
@@ -49,33 +63,37 @@ class DiscoveryCrew:
         return output
 
     @agent
-    def discovery_agent(self) -> Agent:
+    def sampling_preview_agent(self) -> Agent:
         return Agent(
-            config=self.agents_config['discovery_agent'],
+            config=self.agents_config['sampling_preview_agent'],
+            tools=[YouTubeSearchTool()],
             verbose=True
         )
 
     @task
-    def analyze_profile_task(self) -> Task:
+    def recommend_sampling_path_task(self) -> Task:
         return Task(
-            config=self.tasks_config['analyze_profile_task'],
+            config=self.tasks_config['recommend_sampling_path_task'],
+            output_pydantic=SamplingRecommendation,
         )
 
     @task
-    def rank_hobbies_task(self) -> Task:
+    def generate_micro_activity_task(self) -> Task:
         return Task(
-            config=self.tasks_config['rank_hobbies_task'],
+            config=self.tasks_config['generate_micro_activity_task'],
+            output_pydantic=MicroActivity,
         )
 
     @task
-    def generate_recommendations_task(self) -> Task:
+    def curate_watch_videos_task(self) -> Task:
         return Task(
-            config=self.tasks_config['generate_recommendations_task'],
+            config=self.tasks_config['curate_watch_videos_task'],
+            output_pydantic=CuratedVideos,
         )
 
     @crew
     def crew(self) -> Crew:
-        """Creates the Discovery Crew"""
+        """Creates the Sampling Preview Crew."""
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
