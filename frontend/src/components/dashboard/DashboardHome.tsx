@@ -264,7 +264,7 @@ function HobbyColumn({
                 aria-pressed={activeFilter === chip.key}
                 className={`cursor-pointer rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors duration-200 active:scale-95 ${
                   activeFilter === chip.key
-                    ? "bg-[var(--foreground)] text-white"
+                    ? "bg-[var(--secondary)] text-[var(--foreground)]"
                     : "bg-[var(--white-muted)] text-[#6b7280] hover:text-[var(--foreground)]"
                 }`}
               >
