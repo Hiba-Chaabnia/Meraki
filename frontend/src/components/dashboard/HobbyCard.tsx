@@ -9,7 +9,12 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ClockIcon, CircleCheckIcon } from "@/components/ui/Icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { THEME_NEUTRAL, themeFor, type SectionTheme } from "@/lib/sectionTheme";
-import { lastSessionLabel, type DashboardHobby, type StageGoal } from "@/lib/dashboardHome";
+import {
+  isNewHobby,
+  lastSessionLabel,
+  type DashboardHobby,
+  type StageGoal,
+} from "@/lib/dashboardHome";
 import { fadeUp } from "@/components/ui/animations";
 
 /* Cards, not rows. The single-line row could only ever say *where* a hobby was
@@ -25,6 +30,7 @@ const CARD_BASE =
 
 /** The hobby's name — the thing you scan a column for, so it leads its row. */
 const CARD_TITLE = "min-w-0 flex-1 truncate text-base font-bold";
+
 
 /**
  * Trims the action down from Button's `sm` (px-4 py-2 text-sm).
@@ -71,7 +77,19 @@ const CHECKLIST_PAD_BOTTOM = "12px";
 /** Goal text. `leading-[1.45]` is unitless, so it tracks this on its own. */
 const CHECKLIST_TEXT_SIZE = "12px";
 /** The "Focus: …" line, on both the active and paused cards. */
-const FOCUS_TEXT_SIZE = "13.5px";
+const FOCUS_TEXT_SIZE = "12.5px";
+/**
+ * How far short of the card edge a truncated line stops.
+ *
+ * Without it every clipped line ran to the same x and the card read as a slab
+ * of text with a column of ellipses down its right edge. The gutter gives the
+ * block a margin to breathe into and makes the "…" look chosen rather than
+ * jammed against the wall.
+ */
+const TRUNCATE_GUTTER = "28px";
+
+/** The name clips against its own gutter, not against the button beside it. */
+const TITLE_STYLE = { paddingRight: `var(--truncate-gutter, ${TRUNCATE_GUTTER})` } as const;
 
 interface ChecklistProps {
   goals: StageGoal[];
@@ -130,12 +148,16 @@ function Checklist({ goals, theme, muted = false, onToggle }: ChecklistProps) {
                   style={{ borderColor: theme.accent }}
                 />
               )}
+              {/* One line, clipped. `min-w-0` is what lets it: without it a
+                  flex child refuses to shrink below its content, so the text
+                  pushes the row wider instead of ellipsing. */}
               <span
-                className={`leading-[1.45] ${goal.done ? "line-through opacity-70" : ""} ${
-                  muted ? "" : "font-medium"
-                }`}
+                className={`min-w-0 truncate leading-[1.45] ${
+                  goal.done ? "line-through opacity-70" : ""
+                } ${muted ? "" : "font-medium"}`}
                 style={{
                   fontSize: `var(--checklist-text-size, ${CHECKLIST_TEXT_SIZE})`,
+                  paddingRight: `var(--truncate-gutter, ${TRUNCATE_GUTTER})`,
                   color: muted ? theme.accent : "#4b5563",
                 }}
               >
@@ -281,7 +303,11 @@ function RoadmapCallout({
           disabled={generating}
           onClick={() => onGenerate(slug)}
           className="relative z-10 transition-all hover:shadow-lg"
-          style={{ backgroundColor: theme.light, color: theme.accent }}
+          style={{
+            fontSize: COMPACT_ACTION.fontSize,
+            backgroundColor: theme.light,
+            color: theme.accent,
+          }}
         >
           {generating ? (
             <span className="flex items-center justify-center gap-2">
@@ -355,7 +381,7 @@ export function HobbyCard({
       className="relative z-10 flex-shrink-0"
       style={COMPACT_ACTION}
     >
-      Log Session
+      {isNewHobby(hobby) ? "Log First Session" : "Log Session"}
     </Button>
   );
 
@@ -381,7 +407,9 @@ export function HobbyCard({
           run to a second line — aligning to the top only parks it above the
           button's centre on every card. */}
       <div className="flex items-center justify-between gap-2.5">
-        <p className={`${CARD_TITLE} text-[var(--foreground)]`}>{hobby.name}</p>
+        <p className={`${CARD_TITLE} text-[var(--foreground)]`} style={TITLE_STYLE}>
+          {hobby.name}
+        </p>
         {logButton}
       </div>
 
@@ -393,7 +421,10 @@ export function HobbyCard({
         {hobby.stageLabel && (
           <p
             className="truncate font-semibold text-[var(--foreground)]"
-            style={{ fontSize: `var(--focus-text-size, ${FOCUS_TEXT_SIZE})` }}
+            style={{
+              fontSize: `var(--focus-text-size, ${FOCUS_TEXT_SIZE})`,
+              paddingRight: `var(--truncate-gutter, ${TRUNCATE_GUTTER})`,
+            }}
           >
             Focus: {hobby.stageLabel}
           </p>
@@ -455,7 +486,7 @@ export function NoRoadmapHobbyCard({
       className="relative z-10 flex-shrink-0"
       style={COMPACT_ACTION}
     >
-      {hobby.totalSessions === 0 ? "Log First Session" : "Log Session"}
+      {isNewHobby(hobby) ? "Log First Session" : "Log Session"}
     </Button>
   );
 
@@ -478,7 +509,9 @@ export function NoRoadmapHobbyCard({
       />
 
       <div className="flex items-center justify-between gap-2.5">
-        <p className={`${CARD_TITLE} text-[var(--foreground)]`}>{hobby.name}</p>
+        <p className={`${CARD_TITLE} text-[var(--foreground)]`} style={TITLE_STYLE}>
+          {hobby.name}
+        </p>
         {/* A "New" badge used to sit here. The callout below says what is
             missing in a whole sentence, and the "New" filter chip is what
             groups these cards — the badge was restating both. */}
@@ -568,7 +601,7 @@ export function PausedHobbyCard({
       />
 
       <div className="flex items-center justify-between gap-2.5">
-        <p className={CARD_TITLE} style={{ color: theme.accent }}>
+        <p className={CARD_TITLE} style={{ ...TITLE_STYLE, color: theme.accent }}>
           {hobby.name}
         </p>
         {/* A PAUSED chip used to sit here. The greys and the word "Resume" say
@@ -587,6 +620,7 @@ export function PausedHobbyCard({
               className="truncate font-semibold"
               style={{
                 fontSize: `var(--focus-text-size, ${FOCUS_TEXT_SIZE})`,
+                paddingRight: `var(--truncate-gutter, ${TRUNCATE_GUTTER})`,
                 color: theme.accent,
               }}
             >
