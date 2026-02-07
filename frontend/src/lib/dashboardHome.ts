@@ -129,20 +129,6 @@ export function pausedOnLabel(pausedAt: string | null): string | null {
   return `Paused ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
-const WEEKDAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
-export function todayName(now: Date = new Date()): string {
-  return WEEKDAY_NAMES[now.getDay()];
-}
-
 /* ─── Hobbies ────────────────────────────────────────────────────────────── */
 
 /** Longest run of consecutive calendar days present in `dateKeys`. */
@@ -406,8 +392,6 @@ export interface DashboardChallenge {
   theme: HobbyTheme;
   title: string;
   description: string;
-  /** "day 2 of 3" — how far into the challenge the user is. */
-  dayLabel: string;
   /** Free text from the challenge row, e.g. "20-30 min". May be empty. */
   estimatedTime: string;
 }
@@ -420,7 +404,6 @@ export interface DashboardChallenge {
 export function buildLiveChallenges(
   challenges: Challenge[],
   hobbies: DashboardHobby[],
-  now: Date = new Date(),
 ): DashboardChallenge[] {
   const themeBySlug = new Map(hobbies.map((h) => [h.slug, h.theme]));
   const activeSlugs = new Set(hobbies.filter((h) => h.status === "active").map((h) => h.slug));
@@ -428,17 +411,13 @@ export function buildLiveChallenges(
   return challenges
     .filter((c) => c.status === "active" && activeSlugs.has(c.hobbySlug))
     .sort((a, b) => (a.startedDate ?? "").localeCompare(b.startedDate ?? ""))
-    .map((c) => {
-      const dayIndex = c.startedDate ? daysBetween(new Date(c.startedDate), now) + 1 : 1;
-      return {
-        id: c.id,
-        hobbySlug: c.hobbySlug,
-        hobbyName: c.hobbyName,
-        theme: themeBySlug.get(c.hobbySlug) ?? "primary",
-        title: c.title,
-        description: c.description,
-        dayLabel: `day ${Math.max(1, dayIndex)}`,
-        estimatedTime: c.estimatedTime,
-      };
-    });
+    .map((c) => ({
+      id: c.id,
+      hobbySlug: c.hobbySlug,
+      hobbyName: c.hobbyName,
+      theme: themeBySlug.get(c.hobbySlug) ?? "primary",
+      title: c.title,
+      description: c.description,
+      estimatedTime: c.estimatedTime,
+    }));
 }

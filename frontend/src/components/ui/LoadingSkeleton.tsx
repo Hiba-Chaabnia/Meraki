@@ -32,17 +32,6 @@ export function SessionCardSkeleton() {
   );
 }
 
-export function ChallengeCardSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <SkeletonBox className="h-4 w-20 mb-3" />
-      <SkeletonBox className="h-5 w-3/4 mb-2" />
-      <SkeletonBox className="h-3 w-full mb-1" />
-      <SkeletonBox className="h-3 w-2/3" />
-    </div>
-  );
-}
-
 export function PageSkeleton() {
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12 space-y-6">

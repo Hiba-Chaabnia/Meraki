@@ -17,59 +17,6 @@ export async function getUserStats() {
   return { data };
 }
 
-export async function getStreakDays() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
-  // Get sessions from the last 7 days
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-
-  const { data, error } = await supabase
-    .from("practice_sessions")
-    .select("created_at, session_type")
-    .eq("user_id", user.id)
-    .gte("created_at", sevenDaysAgo.toISOString())
-    .order("created_at", { ascending: true });
-
-  if (error) return { error: error.message };
-
-  // Index sessions by date string for O(1) lookups
-  const sessionsByDate = new Map<string, typeof data>();
-  for (const s of data ?? []) {
-    const dateStr = s.created_at.split("T")[0];
-    const existing = sessionsByDate.get(dateStr);
-    if (existing) {
-      existing.push(s);
-    } else {
-      sessionsByDate.set(dateStr, [s]);
-    }
-  }
-
-  // Build a 7-day array
-  const days: ("practiced" | "thought" | "none")[] = [];
-  for (let i = 0; i < 7; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    const dateStr = date.toISOString().split("T")[0];
-
-    const daySessions = sessionsByDate.get(dateStr) ?? [];
-
-    if (daySessions.some((s) => s.session_type === "practice")) {
-      days.push("practiced");
-    } else if (daySessions.some((s) => s.session_type === "thought")) {
-      days.push("thought");
-    } else {
-      days.push("none");
-    }
-  }
-
-  return { data: days };
-}
-
 export async function getHeatmapData() {
   const supabase = await createClient();
   const {

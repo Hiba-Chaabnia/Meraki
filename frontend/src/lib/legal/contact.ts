@@ -26,17 +26,3 @@ export const OPERATOR_COUNTRY = "Tunisia";
  * documents that can contradict each other.
  */
 export const REPO_URL = "https://github.com/Hiba-Chaabnia/Meraki";
-
-/**
- * Decided: email only, no postal address.
- *
- * GDPR Art. 13(1)(a) expects the controller's identity and contact details;
- * for a sole operator running a free service, a monitored email address is
- * accepted in practice. Publishing a home address is a real and permanent
- * privacy cost for one person, and it isn't warranted here.
- *
- * Revisit if EU users become a meaningful share of the audience or if Meraki
- * ever becomes a registered company — at that point use the registered office,
- * not a home address. Set this to a string and it renders in "Who we are".
- */
-export const OPERATOR_ADDRESS: string | null = null;

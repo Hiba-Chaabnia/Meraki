@@ -47,24 +47,6 @@ async function deleteUserStorageFiles(
   }
 }
 
-export async function updatePublicProfile(value: boolean) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ public_profile: value, updated_at: new Date().toISOString() })
-    .eq("id", user.id)
-    .select()
-    .single();
-
-  if (error) return { error: error.message };
-  return { data };
-}
-
 export async function changePassword(newPassword: string) {
   const supabase = await createClient();
   const {

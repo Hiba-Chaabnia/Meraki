@@ -345,24 +345,3 @@ export const questions: QuizQuestion[] = [
   },
 ];
 
-
-export function getSectionForQuestion(questionId: number): QuizSection {
-  const q = questions.find((q) => q.id === questionId);
-  if (!q) throw new Error(`Question ${questionId} not found`);
-  const section = sections.find((s) => s.id === q.sectionId);
-  if (!section) throw new Error(`Section "${q.sectionId}" not found`);
-  return section;
-}
-
-export function getQuestionNumberInSection(questionId: number): {
-  current: number;
-  total: number;
-} {
-  const q = questions.find((q) => q.id === questionId);
-  if (!q) throw new Error(`Question ${questionId} not found`);
-  const sectionQuestions = questions.filter((sq) => sq.sectionId === q.sectionId);
-  return {
-    current: sectionQuestions.findIndex((sq) => sq.id === questionId) + 1,
-    total: sectionQuestions.length,
-  };
-}

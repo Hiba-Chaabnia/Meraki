@@ -138,11 +138,3 @@ export interface ActivityItem {
   icon: string;
   href: string;
 }
-
-/* ─── Greeting based on time of day ─── */
-export function getGreeting(name: string): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return `Good morning, ${name}!`;
-  if (hour < 17) return `Hey there, ${name}!`;
-  return `Evening, ${name}!`;
-}
