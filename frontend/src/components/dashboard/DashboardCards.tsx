@@ -7,7 +7,6 @@ import { FlowerShape } from "@/components/ui/FlowerShape";
 import HeroIconPattern from "@/components/ui/HeroIconPattern";
 import { ClockIcon } from "@/components/ui/Icons";
 import { fadeUp } from "@/components/ui/animations";
-import { themeFor } from "@/lib/sectionTheme";
 import type { DashboardChallenge } from "@/lib/dashboardHome";
 
 /**
@@ -25,6 +24,48 @@ export interface Wallpaper {
 }
 
 export const CHALLENGE_WALLPAPER: Wallpaper = { opacity: 0.65, spacing: 56, size: 42 };
+
+/**
+ * Line caps for the two AI-written strings.
+ *
+ * The title had none, so a long one grew the panel downward and pushed
+ * `Continue` off the fold — it comes from the challenge crew, so its length is
+ * not ours to assume. Both are CSS vars rather than Tailwind's `line-clamp-N`,
+ * because the class needs the number at build time and `/preview/challenge-card`
+ * has to vary it.
+ */
+const TITLE_LINES = 1;
+const DESC_LINES = 2;
+const DESC_LEADING = 1.5;
+
+/**
+ * Type scale inside the panel. Tune on `/preview/challenge-card`.
+ *
+ * Title and description are fluid: `cqi` is 1% of the *card's* inline size, not
+ * the viewport's, which is what this needs — the card is 7/12 of the content on
+ * desktop and full width on a phone, so a `vw` ramp would misread both. The var
+ * supplies the ceiling, the ramp supplies everything below it, and the floor
+ * stops a narrow column shrinking the copy past reading size.
+ *
+ * The chip and the time stay fixed. At 11px they are already at the floor, and
+ * scaling them would buy a pixel at the cost of legibility.
+ */
+const TITLE_SIZE = "18px";
+const DESC_SIZE = "14px";
+const CHIP_SIZE = "11px";
+const TIME_SIZE = "11px";
+
+const TITLE_FS = `clamp(14px, calc(9px + 1.3cqi), var(--challenge-title-size, ${TITLE_SIZE}))`;
+const DESC_FS = `clamp(11.5px, calc(8px + 0.9cqi), var(--challenge-desc-size, ${DESC_SIZE}))`;
+
+function clampLines(lines: number, cssVar: string) {
+  return {
+    display: "-webkit-box",
+    WebkitBoxOrient: "vertical" as const,
+    WebkitLineClamp: `var(${cssVar}, ${lines})`,
+    overflow: "hidden",
+  };
+}
 
 interface ActiveChallengeCardProps {
   /** Every live challenge. One shows at a time; the stepper moves between them. */
@@ -51,7 +92,7 @@ interface ChallengeStepperProps {
 }
 
 /**
- * One flower per live challenge, sitting under the card on the cream.
+ * One flower per live challenge, along the bottom of the panel.
  *
  * **Manual only — deliberately no timer.** An auto-advancing card would move
  * `Continue` out from under a pointer already travelling towards it, so the user
@@ -62,7 +103,7 @@ interface ChallengeStepperProps {
  */
 function ChallengeStepper({ challenges, activeIndex, onSelect }: ChallengeStepperProps) {
   return (
-    <div className="mt-2.5 flex items-center justify-center gap-1.5">
+    <div className="flex items-center justify-center gap-1.5">
       {challenges.map((c, idx) => {
         const isActive = idx === activeIndex;
         return (
@@ -74,12 +115,12 @@ function ChallengeStepper({ challenges, activeIndex, onSelect }: ChallengeSteppe
             aria-current={isActive ? "true" : undefined}
             className="cursor-pointer outline-none transition-transform duration-300 hover:scale-110 active:scale-95"
           >
-            {/* Each flower wears its own hobby's colour, so the row reads as
-                "which hobby" and not just "which slide". Inactive drops to the
-                warm neutral rather than a grey, which would go cold on cream. */}
+            {/* Cream, not the hobby's accent. The stepper sits on the blue
+                panel now, where a primary-theme flower would vanish into the
+                background — the same reason the hobby chip is not themed. */}
             <FlowerShape
-              size={isActive ? 18 : 13}
-              color={isActive ? themeFor(c.theme).accent : "var(--white-dim)"}
+              size={isActive ? 16 : 12}
+              color={isActive ? "var(--background)" : "rgba(255,255,255,0.4)"}
               gradientId={`challenge-flower-${c.id}`}
             />
           </button>
@@ -123,7 +164,10 @@ export function ActiveChallengeCard({
 
   return (
     <div>
-      <div className="relative overflow-hidden rounded-2xl bg-[var(--primary)] p-[18px] text-white">
+      <div
+        className="relative overflow-hidden rounded-2xl bg-[var(--primary)] p-[18px] text-white"
+        style={{ containerType: "inline-size" }}
+      >
         <HeroIconPattern
           useMask={false}
           iconSet="primary"
@@ -148,45 +192,77 @@ export function ActiveChallengeCard({
                 leave two hobbies looking like two different components. The
                 hobby's colour is carried by its flower in the stepper below,
                 which sits on cream and can hold it. */}
-            <span className="min-w-0 truncate rounded-lg border border-[var(--background)] px-2 py-1 text-[11px] font-medium text-[var(--background)]">
+            <span
+              className="min-w-0 truncate rounded-lg border border-[var(--background)] px-2 py-1 font-medium text-[var(--background)]"
+              style={{ fontSize: `var(--challenge-chip-size, ${CHIP_SIZE})` }}
+            >
               {titleCase(challenge.hobbyName)}
             </span>
             {/* Naming the ask up front is the §8 "shrink the ask" move — the time
                 was already fetched and thrown away before now. */}
             {challenge.estimatedTime && (
-              <span className="flex flex-shrink-0 items-center gap-1 text-[10.5px] font-medium text-white/80">
+              <span
+                className="flex flex-shrink-0 items-center gap-1 font-medium text-white/80"
+                style={{ fontSize: `var(--challenge-time-size, ${TIME_SIZE})` }}
+              >
                 <ClockIcon className="h-3 w-3" />
                 {challenge.estimatedTime}
               </span>
             )}
           </div>
 
-          <p className="text-[15px] font-bold leading-[1.35]">{challenge.title}</p>
-          {/* Held at three lines (11.5px × 1.5 × 3) while there is more than one
-              challenge, so stepping through does not bounce the flowers up and
-              down under the cursor that is clicking them. */}
           <p
-            className="mt-[7px] line-clamp-3 text-[11.5px] leading-[1.5] text-white/80"
-            style={multiple ? { minHeight: 52 } : undefined}
+            className="break-words font-bold leading-[1.35]"
+            style={{
+              ...clampLines(TITLE_LINES, "--challenge-title-lines"),
+              fontSize: TITLE_FS,
+            }}
+          >
+            {challenge.title}
+          </p>
+          {/* Held at its full clamp height while there is more than one
+              challenge, so stepping through does not bounce the flowers up and
+              down under the cursor that is clicking them. Skipped when there is
+              no description — a floor under nothing is just a void. */}
+          <p
+            className="mt-[7px] break-words leading-[1.5] text-white/80"
+            style={{
+              ...clampLines(DESC_LINES, "--challenge-desc-lines"),
+              fontSize: DESC_FS,
+              ...(multiple && challenge.description
+                ? {
+                    minHeight: `calc(var(--challenge-desc-lines, ${DESC_LINES}) * ${DESC_LEADING} * ${DESC_FS})`,
+                  }
+                : {}),
+            }}
           >
             {challenge.description}
           </p>
 
-          <div className="mt-[13px] flex justify-end">
+        </motion.div>
+
+        {/* One bottom row: stepper centred in the card, Continue right, both
+            sitting on the same baseline. It lives outside the keyed body
+            because the stepper must not fade out and back in under the cursor
+            that is clicking it — and Continue has nothing to animate. */}
+        <div className="relative z-10 mt-[13px] grid grid-cols-[1fr_auto_1fr] items-end">
+          <span aria-hidden />
+          {multiple ? (
+            <ChallengeStepper
+              challenges={challenges}
+              activeIndex={activeIndex}
+              onSelect={setIndex}
+            />
+          ) : (
+            <span aria-hidden />
+          )}
+          <div className="flex justify-end">
             <Button href={`/dashboard/challenges/${challenge.id}`} size="sm" variant="secondary">
               Continue
             </Button>
           </div>
-        </motion.div>
+        </div>
       </div>
-
-      {multiple && (
-        <ChallengeStepper
-          challenges={challenges}
-          activeIndex={activeIndex}
-          onSelect={setIndex}
-        />
-      )}
     </div>
   );
 }
