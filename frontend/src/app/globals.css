@@ -1,0 +1,362 @@
+@import "tailwindcss";
+
+:root {
+  /* Background & Foreground */
+  --background: #FFF9F5;
+  --foreground: #292929;
+  --foreground-light: #494949;
+
+  /* Primary Color (Blue) & Variations */
+  --primary: #5396F4;
+  --primary-medium: #65A1F5;
+  --primary-light: #aaccfc;
+  --primary-lighter: #BAD5FB;
+
+  /* Secondary Color (Lime/Yellow-Green) & Variations */
+  --secondary: #CFE251;
+  --secondary-light: #DDEB85;
+  --secondary-lighter: #f0f7d1;
+
+  /* Accent Color */
+  --accent: #FFD64D;
+  --coral: #FF9149;
+
+  /* Utility Colors */
+  --white: #FFF9F5;
+  --black: #292929;
+  --gray: #494949;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-mulish), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1 {
+    font-family: var(--font-chopard), ui-serif, Georgia, serif;
+    @apply font-medium text-4xl md:text-6xl text-gray-900 leading-[1.1];
+  }
+
+  h2 {
+    font-family: var(--font-chopard), ui-serif, Georgia, serif;
+    @apply font-medium text-4xl md:text-6xl text-gray-900 leading-tight;
+  }
+
+  h3 {
+    font-family: var(--font-alegreya), ui-serif, Georgia, serif;
+    @apply text-lg font-bold tracking-widest text-gray-500;
+  }
+
+  p {
+    font-family: var(--font-mulish), ui-sans-serif, system-ui, sans-serif;
+    @apply text-gray-700 leading-relaxed;
+  }
+}
+
+/* Auth form column scallop color */
+.auth-form-column {
+  --scallop-color: var(--background);
+}
+
+/* Hero headline shimmer */
+.hero-shine {
+  background: linear-gradient(135deg,
+      var(--background) 0%,
+      var(--background) 49%,
+      var(--secondary-lighter) 50%,
+      var(--background) 51%,
+      var(--background) 100%);
+  background-size: 100% 400%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 12s linear 2s forwards;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 50% 150%;
+  }
+
+  100% {
+    background-position: 50% -150%;
+  }
+}
+
+/* Base Scallop Logic */
+.scallop-bottom,
+.scallop-top,
+.scallop-left,
+.scallop-right,
+.scallop-all {
+  --scallop-size: 12px;
+  --scallop-radius: var(--scallop-size);
+  --scallop-color: inherit;
+  position: relative;
+}
+
+/* Scallop Mask Utility for the main container top */
+.scallop-mask-top {
+  -webkit-mask: radial-gradient(var(--scallop-radius) at 50% var(--scallop-radius), #000 99%, #0000 101%) top / calc(var(--scallop-radius)*2) 100% round,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--scallop-radius)) no-repeat;
+  mask: radial-gradient(var(--scallop-radius) at 50% var(--scallop-radius), #000 99%, #0000 101%) top / calc(var(--scallop-radius)*2) 100% round,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--scallop-radius)) no-repeat;
+}
+
+/* Scallop Mask for both top and bottom edges */
+.scallop-mask-y {
+  -webkit-mask:
+    radial-gradient(var(--scallop-radius) at 50% var(--scallop-radius), #000 99%, #0000 101%) top / calc(var(--scallop-radius)*2) 100% round,
+    radial-gradient(var(--scallop-radius) at 50% calc(100% - var(--scallop-radius)), #000 99%, #0000 101%) bottom / calc(var(--scallop-radius)*2) 100% round,
+    linear-gradient(#000 0 0) center / 100% calc(100% - var(--scallop-radius)*2) no-repeat;
+  mask:
+    radial-gradient(var(--scallop-radius) at 50% var(--scallop-radius), #000 99%, #0000 101%) top / calc(var(--scallop-radius)*2) 100% round,
+    radial-gradient(var(--scallop-radius) at 50% calc(100% - var(--scallop-radius)), #000 99%, #0000 101%) bottom / calc(var(--scallop-radius)*2) 100% round,
+    linear-gradient(#000 0 0) center / 100% calc(100% - var(--scallop-radius)*2) no-repeat;
+}
+
+/* Hide Scrollbar */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Scallop Mask Utility for the main container bottom */
+.scallop-mask-bottom {
+  -webkit-mask: radial-gradient(var(--scallop-radius) at 50% calc(100% - var(--scallop-radius)), #000 99%, #0000 101%) bottom / calc(var(--scallop-radius)*2) 100% round,
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--scallop-radius)) no-repeat;
+  mask: radial-gradient(var(--scallop-radius) at 50% calc(100% - var(--scallop-radius)), #000 99%, #0000 101%) bottom / calc(var(--scallop-radius)*2) 100% round,
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--scallop-radius)) no-repeat;
+}
+
+/* Bottom edge */
+.scallop-bottom::after,
+.scallop-all::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * var(--scallop-size));
+  height: var(--scallop-size);
+  background: radial-gradient(circle at 50% 0,
+      var(--scallop-color, currentColor) var(--scallop-size),
+      transparent var(--scallop-size));
+  background-size: calc(var(--scallop-size) * 2) var(--scallop-size);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+/* Top edge */
+.scallop-top::before,
+.scallop-all::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(-1 * var(--scallop-size));
+  height: var(--scallop-size);
+  background: radial-gradient(circle at 50% 100%,
+      var(--scallop-color, currentColor) var(--scallop-size),
+      transparent var(--scallop-size));
+  background-size: calc(var(--scallop-size) * 2) var(--scallop-size);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+/* Left edge */
+.scallop-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--scallop-size));
+  width: var(--scallop-size);
+  background: radial-gradient(circle at 100% 50%,
+      var(--scallop-color, currentColor) var(--scallop-size),
+      transparent var(--scallop-size));
+  background-size: var(--scallop-size) calc(var(--scallop-size) * 2);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+/* Right edge */
+.scallop-right::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(-1 * var(--scallop-size));
+  width: var(--scallop-size);
+  background: radial-gradient(circle at 0% 50%,
+      var(--scallop-color, currentColor) var(--scallop-size),
+      transparent var(--scallop-size));
+  background-size: var(--scallop-size) calc(var(--scallop-size) * 2);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+/* Size variants */
+.scallop-sm {
+  --scallop-size: 8px;
+  --scallop-radius: 8px;
+}
+
+.scallop-md {
+  --scallop-size: 12px;
+  --scallop-radius: 12px;
+}
+
+.scallop-lg {
+  --scallop-size: 16px;
+  --scallop-radius: 16px;
+}
+
+.scallop-xl {
+  --scallop-size: 24px;
+  --scallop-radius: 24px;
+}
+
+/* ==========================================================================
+   SCALLOP BOX CONVEX (All sides - outward bumps like a stamp)
+   Used by ScallopedCard component
+   ========================================================================== */
+
+.scallop-box-convex {
+  --r: 8px;
+  /* scallop radius */
+  --scallop-color: currentColor;
+  position: relative;
+  margin: var(--r);
+  background: var(--scallop-color);
+}
+
+/* Top scallops */
+.scallop-box-convex::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(-1 * var(--r));
+  height: var(--r);
+  background: radial-gradient(circle at 50% 100%, var(--scallop-color) var(--r), transparent var(--r));
+  background-size: calc(var(--r) * 2) var(--r);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+/* Bottom scallops */
+.scallop-box-convex::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * var(--r));
+  height: var(--r);
+  background: radial-gradient(circle at 50% 0, var(--scallop-color) var(--r), transparent var(--r));
+  background-size: calc(var(--r) * 2) var(--r);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+/* Left scallops - needs extra element */
+.scallop-box-convex-left {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--r));
+  width: var(--r);
+  background: radial-gradient(circle at 100% 50%, var(--scallop-color) var(--r), transparent var(--r));
+  background-size: var(--r) calc(var(--r) * 2);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+/* Right scallops - needs extra element */
+.scallop-box-convex-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(-1 * var(--r));
+  width: var(--r);
+  background: radial-gradient(circle at 0 50%, var(--scallop-color) var(--r), transparent var(--r));
+  background-size: var(--r) calc(var(--r) * 2);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   NEW SCALLOP UTILITIES (Protruding/Convex)
+   ========================================================================== */
+
+
+
+/* 
+   VARIANT 1: OUTSET (Convex/Protruding) 
+   Creates bumps sticking OUT from the container.
+   Requires: relative positioning on container.
+   Uses: ::before/::after on nested elements or separate decorative divs.
+*/
+/* 
+     Legacy classes define --scallop-size as the RADIUS (e.g. 8px). 
+     So we map it directly to radius, and double it for diameter/size.
+  */
+.scallop-outset {
+  --s-radius: var(--scallop-size, 10px);
+  --s-size: calc(var(--s-radius) * 2);
+  --s-bg: var(--scallop-bg, #000);
+  padding: var(--s-radius);
+  /* Push content in to make room for scallops */
+  margin: calc(-1 * var(--s-radius));
+  /* Negative margin compensates for padding to prevent layout shifts */
+}
+
+.scallop-outset-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--s-radius);
+  background: radial-gradient(circle at 50% 100%, var(--s-bg) var(--s-radius), transparent var(--s-radius));
+  background-size: var(--s-size) var(--s-radius);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+.scallop-outset-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--s-radius);
+  background: radial-gradient(circle at 50% 0, var(--s-bg) var(--s-radius), transparent var(--s-radius));
+  background-size: var(--s-size) var(--s-radius);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+.scallop-outset-left {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--s-radius);
+  background: radial-gradient(circle at 100% 50%, var(--s-bg) var(--s-radius), transparent var(--s-radius));
+  background-size: var(--s-radius) var(--s-size);
+  background-repeat: round;
+  pointer-events: none;
+}
+
+.scallop-outset-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: var(--s-radius);
+  background: radial-gradient(circle at 0 50%, var(--s-bg) var(--s-radius), transparent var(--s-radius));
+  background-size: var(--s-radius) var(--s-size);
+  background-repeat: round;
+  pointer-events: none;
+}
