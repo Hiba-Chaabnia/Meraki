@@ -349,12 +349,18 @@ export function deriveVariant(hobbies: DashboardHobby[]): DashboardVariant {
   return "active";
 }
 
+/** Running, but with no roadmap — what picks the dashed NoRoadmapHobbyCard. */
+export function needsRoadmap(hobby: DashboardHobby): boolean {
+  return hobby.status === "active" && hobby.stageCount === 0;
+}
+
 /**
- * Added but not yet mapped out. Drives both the "New" filter chip and the
- * dashed NoRoadmapHobbyCard, so the two can never disagree about what counts.
+ * Never practised. Not the same as having no roadmap: a hobby can be mapped
+ * out in full and still never touched, and it can be practised for months
+ * without one.
  */
 export function isNewHobby(hobby: DashboardHobby): boolean {
-  return hobby.status === "active" && hobby.stageCount === 0;
+  return hobby.totalSessions === 0;
 }
 
 /**

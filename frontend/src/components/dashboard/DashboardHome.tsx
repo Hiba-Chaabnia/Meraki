@@ -9,7 +9,7 @@ import { PracticeWeek } from "./PracticeWeek";
 import { FocusTimerCard } from "./FocusTimerCard";
 import { ActiveChallengeCard, ReEntryCard, RetakeQuizCard } from "./DashboardCards";
 import {
-  isNewHobby,
+  needsRoadmap,
   lastSessionLabel,
   pausedOnLabel,
   type DashboardChallenge,
@@ -19,7 +19,6 @@ import {
   type WeekDay,
 } from "@/lib/dashboardHome";
 import { fadeUp } from "@/components/ui/animations";
-import { MAX_ACTIVE_HOBBIES } from "@/lib/hobbyLimits";
 
 export interface DashboardHomeProps {
   variant: DashboardVariant;
@@ -191,17 +190,21 @@ function Greeting({
 
 /* ─── Hobby column ───────────────────────────────────────────────────────── */
 
-type HobbyFilter = "all" | "active" | "new" | "paused";
-
 /**
- * Past this many hobbies the "All" chip is dropped.
+ * Two groups, split on status and nothing else.
  *
- * All is the useful default for a short list — three cards is not a scroll, and
- * splitting them costs more than it saves. Past that it is the one view that
- * cannot be short, so the column always opens on a filtered one and every card
- * is still reachable: active, new and paused are disjoint and cover the list.
+ * A third "New" chip used to sit between them for hobbies without a roadmap.
+ * It was not a status — the predicate behind it was `active && stageCount === 0`,
+ * which tests for a missing roadmap, so a hobby added eight months ago and
+ * never set up still filed under New. It also made "Active" mean *running with a roadmap*, which put a
+ * different number on the chip than the cap message's "3 on the go" was
+ * counting. Both problems go away by splitting on the only axis that is
+ * actually a status.
+ *
+ * Roadmap-less hobbies still render as their own card inside Active — the
+ * distinction is real, it just was not a filter.
  */
-const ALL_CHIP_MAX = 3;
+type HobbyFilter = "active" | "paused";
 
 /**
  * One list, active and paused together. Paused hobbies used to sit behind a
@@ -222,45 +225,27 @@ function HobbyColumn({
   onGenerateRoadmap,
   onToggleGoal,
 }: DashboardHomeProps & { active: DashboardHobby[]; paused: DashboardHobby[] }) {
-  const [filter, setFilter] = useState<HobbyFilter>("all");
+  const [filter, setFilter] = useState<HobbyFilter>("active");
   const allPaused = variant === "all-paused";
 
-  // buildDashboardHobbies already orders active-then-paused, so one concat
-  // keeps the blue/lime rhythm and the reading order it assigned.
-  const all = [...active, ...paused];
-
-  /* The three groups are disjoint and add up to the whole list — one per card
-     component, so a chip's count is exactly the cards you will see. "Active"
-     therefore means running *with a roadmap*; a hobby still waiting for one
-     lives under "New" rather than being counted twice. */
-  const running = active.filter((h) => !isNewHobby(h));
-  const fresh = active.filter(isNewHobby);
-
-  // Only chips that would actually filter something: "Paused (0)" invites a
-  // dead click, and a category that holds everything is not a filter.
-  const groups: { key: HobbyFilter; label: string }[] = [
-    ...(running.length > 0 ? [{ key: "active" as const, label: `Active (${running.length})` }] : []),
-    ...(fresh.length > 0 ? [{ key: "new" as const, label: `New (${fresh.length})` }] : []),
+  // Only chips that would filter something: "Paused (0)" invites a dead click,
+  // and with one group the row is chrome pretending to be a control.
+  const chips: { key: HobbyFilter; label: string }[] = [
+    ...(active.length > 0 ? [{ key: "active" as const, label: `Active (${active.length})` }] : []),
     ...(paused.length > 0 ? [{ key: "paused" as const, label: `Paused (${paused.length})` }] : []),
   ];
 
-  const chips: { key: HobbyFilter; label: string }[] =
-    all.length > ALL_CHIP_MAX ? groups : [{ key: "all", label: "All" }, ...groups];
+  /* The fallback is written back, not just derived: leaving `filter` on a chip
+     that no longer exists meant the column silently jumped back to it the
+     moment that chip returned — resume your last paused hobby, pause something
+     else later, and you were looking at Paused without having asked.
+     Adjusting state during render is React's documented way to reset on a
+     prop change. */
+  const available = chips.some((c) => c.key === filter);
+  const activeFilter = available ? filter : (chips[0]?.key ?? "active");
+  if (!available && activeFilter !== filter) setFilter(activeFilter);
 
-  /* Falls back to the first chip, not to "all" — past ALL_CHIP_MAX there is no
-     "all" to fall back to. This also covers resuming the last paused hobby
-     while looking at "Paused", which would otherwise leave the user staring at
-     an empty column. */
-  const activeFilter = chips.some((c) => c.key === filter)
-    ? filter
-    : (chips[0]?.key ?? "all");
-
-  const visible = all.filter((hobby) => {
-    if (activeFilter === "active") return hobby.status === "active" && !isNewHobby(hobby);
-    if (activeFilter === "new") return isNewHobby(hobby);
-    if (activeFilter === "paused") return hobby.status === "paused";
-    return true;
-  });
+  const visible = activeFilter === "paused" ? paused : active;
 
   return (
     <div>
@@ -269,11 +254,8 @@ function HobbyColumn({
           needing a header of its own. */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          {/* Gated on the groups, not the rendered chips: with one category
-              "All" and "Active (2)" are two chips selecting the same two
-              cards, which is chrome pretending to be a control. */}
-          {!allPaused &&
-            groups.length > 1 &&
+          {/* All-paused needs no separate guard — it has exactly one chip. */}
+          {chips.length > 1 &&
             chips.map((chip) => (
               <button
                 key={chip.key}
@@ -290,22 +272,17 @@ function HobbyColumn({
               </button>
             ))}
         </div>
-        {/* At the cap the control states the limit rather than disappearing —
-            a control that vanishes reads as a bug, and the sentence explains
-            the way out. The server refuses regardless; this is so the refusal
-            is never a surprise. */}
-        {active.length >= MAX_ACTIVE_HOBBIES ? (
-          <span className="ml-auto text-[11.5px] text-[#6b7280]">
-            {MAX_ACTIVE_HOBBIES} on the go — pause one to add another
-          </span>
-        ) : (
-          <button
-            onClick={onAddHobby}
-            className="ml-auto cursor-pointer text-[11.5px] font-bold text-[var(--primary)] transition-opacity hover:opacity-70"
-          >
-            + Add hobby
-          </button>
-        )}
+        {/* Always present, whatever the count. At the cap the modal reports
+            the refusal — the row itself no longer explains it. */}
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={onAddHobby}
+          className="ml-auto flex-shrink-0"
+          style={{ paddingInline: 12, paddingBlock: 6, fontSize: "12.5px" }}
+        >
+          + Add hobby
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -330,7 +307,7 @@ function HobbyColumn({
 
           // No roadmap is its own card, not a greyed-out line of the normal
           // one: there is no stage to show and a different thing to do.
-          return isNewHobby(hobby) ? (
+          return needsRoadmap(hobby) ? (
             <NoRoadmapHobbyCard
               key={hobby.userHobbyId}
               hobby={hobby}
