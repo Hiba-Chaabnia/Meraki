@@ -310,6 +310,18 @@ def save_generated_roadmap(
     now = datetime.now(timezone.utc).isoformat()
     phases = roadmap_data.get("phases", [])
 
+    # `phases` is jsonb straight from the crew, so nothing downstream can trust
+    # its shape. A phase without goals produces a dashboard card that shows a
+    # stage with no checklist and can only offer to rebuild — better to refuse
+    # the roadmap here and let the caller surface a retry than to persist one
+    # the UI has to apologise for.
+    if not phases or any(not p.get("goals") for p in phases):
+        print(
+            "[db] Rejecting roadmap for "
+            f"{hobby_slug}: {len(phases)} phase(s), one or more without goals"
+        )
+        return None
+
     # Insert roadmap
     roadmap_row = {
         "hobby_slug": hobby_slug,
@@ -324,7 +336,17 @@ def save_generated_roadmap(
         return None
     roadmap_id = r_resp.data[0]["id"]
 
-    # Assign to user
+    # Assign to user.
+    #
+    # Upsert, not insert: user_roadmaps carries `unique (user_id, hobby_slug)`,
+    # so a plain insert made a roadmap impossible to replace — the second
+    # attempt failed on the constraint and left the freshly-inserted `roadmaps`
+    # row above orphaned. That is what blocked rebuilding a roadmap whose
+    # phases came back without goals.
+    #
+    # current_phase resets to 0 because the new phases are a different list;
+    # carrying the old index would land the user mid-way through a roadmap they
+    # have not started.
     ur_row = {
         "user_id": user_id,
         "roadmap_id": roadmap_id,
@@ -333,7 +355,11 @@ def save_generated_roadmap(
         "started_at": now,
         "updated_at": now,
     }
-    ur_resp = sb.table("user_roadmaps").insert(ur_row).execute()
+    ur_resp = (
+        sb.table("user_roadmaps")
+        .upsert(ur_row, on_conflict="user_id,hobby_slug")
+        .execute()
+    )
     if not ur_resp.data or len(ur_resp.data) == 0:
         return None
     return ur_resp.data[0]["id"]
