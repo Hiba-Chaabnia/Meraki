@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from crewai.tools import BaseTool
 
 try:
-    from duckduckgo_search import DDGS
+    from ddgs import DDGS
     DDGS_AVAILABLE = True
 except ImportError:
     DDGS_AVAILABLE = False
@@ -49,7 +49,7 @@ class WebSearchTool(BaseTool):
         """
         if not DDGS_AVAILABLE:
             return json.dumps({
-                "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search",
+                "error": "ddgs not installed. Run: pip install ddgs",
                 "results": []
             })
 

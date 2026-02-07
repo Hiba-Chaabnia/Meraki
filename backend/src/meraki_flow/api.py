@@ -14,10 +14,13 @@ Endpoints:
 import json
 import re
 import uuid
+import warnings
 from datetime import datetime
 from enum import Enum
 from threading import Thread
 from typing import Any
+
+warnings.filterwarnings("ignore", category=ResourceWarning)
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException

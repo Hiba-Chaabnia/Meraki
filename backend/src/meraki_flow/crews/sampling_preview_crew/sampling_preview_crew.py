@@ -66,7 +66,6 @@ class SamplingPreviewCrew:
     def sampling_preview_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['sampling_preview_agent'],
-            tools=[YouTubeSearchTool()],
             verbose=True
         )
 
@@ -89,6 +88,7 @@ class SamplingPreviewCrew:
         return Task(
             config=self.tasks_config['curate_watch_videos_task'],
             output_pydantic=CuratedVideos,
+            tools=[YouTubeSearchTool()],
         )
 
     @crew
