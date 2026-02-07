@@ -19,6 +19,8 @@ interface SessionLoggerModalProps {
   hobbies: ActiveHobby[];
   activeChallenges?: Challenge[];
   initialHobbySlug?: string;
+  /** Minutes to open on — the focus timer passes what it just counted down. */
+  initialDuration?: number;
 }
 
 export interface SessionFormData {
@@ -32,11 +34,14 @@ export interface SessionFormData {
 
 const MOOD_OPTIONS = Object.entries(moodEmojis) as [Mood, { emoji: string; label: string }][];
 
-export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeChallenges, initialHobbySlug }: SessionLoggerModalProps) {
+/** The slider's default when no caller seeds one. */
+const DEFAULT_DURATION = 30;
+
+export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeChallenges, initialHobbySlug, initialDuration }: SessionLoggerModalProps) {
   const [phase, setPhase] = useState<"form" | "saved">("form");
   const [sessionType, setSessionType] = useState<"practice" | "thought">("practice");
   const [hobbySlug, setHobbySlug] = useState(initialHobbySlug ?? hobbies[0]?.slug ?? "");
-  const [duration, setDuration] = useState(30);
+  const [duration, setDuration] = useState(initialDuration ?? DEFAULT_DURATION);
   const [mood, setMood] = useState<Mood | null>(null);
   const [notes, setNotes] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -50,18 +55,20 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
     setPhase("form");
     setSessionType("practice");
     setHobbySlug(initialHobbySlug ?? hobbies[0]?.slug ?? "");
-    setDuration(30);
+    setDuration(initialDuration ?? DEFAULT_DURATION);
     setMood(null);
     setNotes("");
     setImageFile(null);
     setImagePreview(null);
     setSaving(false);
-  }, [hobbies, initialHobbySlug]);
+  }, [hobbies, initialHobbySlug, initialDuration]);
 
-  // Sync pre-selected hobby when modal opens
+  // Sync pre-selected hobby and duration when modal opens
   useEffect(() => {
-    if (isOpen) setHobbySlug(initialHobbySlug ?? hobbies[0]?.slug ?? "");
-  }, [isOpen, initialHobbySlug, hobbies]);
+    if (!isOpen) return;
+    setHobbySlug(initialHobbySlug ?? hobbies[0]?.slug ?? "");
+    setDuration(initialDuration ?? DEFAULT_DURATION);
+  }, [isOpen, initialHobbySlug, initialDuration, hobbies]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -1,72 +1,67 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
-import {
-  SessionLoggerModal,
-  AddHobbyModal,
-  TodaysFocus,
-  LogPracticeFAB,
-} from "@/components/dashboard";
-import { HobbiesSection } from "@/components/dashboard/HobbiesSection";
+import { useState, useEffect } from "react";
+import { SessionLoggerModal, AddHobbyModal, DashboardHome } from "@/components/dashboard";
 import type { SessionFormData } from "@/components/dashboard";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { useUser } from "@/lib/hooks/useUser";
-import { getUserHobbies } from "@/app/actions/hobbies";
+import { useDashboardHome } from "@/lib/hooks/useDashboardHome";
+import { useRoadmapGeneration } from "@/lib/hooks/useRoadmapGeneration";
+import { updateHobbyStatus } from "@/app/actions/hobbies";
 import { createSession } from "@/app/actions/sessions";
-import { getUserChallenges } from "@/app/actions/challenges";
 import { triggerPracticeFeedback } from "@/app/actions/feedback";
-import { getActiveNudge, type NudgeData } from "@/app/actions/nudges";
 import { checkAndAwardMilestones } from "@/app/actions/milestones";
-import { toActiveHobbies, toChallenge } from "@/lib/transformData";
-import { getGreeting } from "@/lib/dashboardData";
-import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
 
 export default function DashboardPage() {
-  const { profile } = useUser();
+  const { profile, user } = useUser();
+  const {
+    isLoading,
+    variant,
+    hobbies,
+    week,
+    streak,
+    challenges,
+    suggestedHobbyId,
+    rawHobbies,
+    rawChallenges,
+    fetchData,
+    addLoggedSession,
+    toggleGoal,
+  } = useDashboardHome();
+
+  const {
+    generate: generateRoadmap,
+    generatingSlugs,
+    errors: roadmapErrors,
+  } = useRoadmapGeneration(fetchData);
+
   const [loggerOpen, setLoggerOpen] = useState(false);
   const [loggerInitialSlug, setLoggerInitialSlug] = useState<string | undefined>();
+  const [loggerInitialDuration, setLoggerInitialDuration] = useState<number | undefined>();
   const [addHobbyOpen, setAddHobbyOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hobbies, setHobbies] = useState<ActiveHobby[]>([]);
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [nudge, setNudge] = useState<NudgeData | null>(null);
+  const [resumingHobbyId, setResumingHobbyId] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [hobbiesRes, challengesRes, nudgeRes] = await Promise.all([
-        getUserHobbies(),
-        getUserChallenges(),
-        getActiveNudge(),
-      ]);
-
-      const activeHobbies = toActiveHobbies(hobbiesRes.data ?? null);
-      setHobbies(activeHobbies);
-
-      if (challengesRes.data) setChallenges(challengesRes.data.map(toChallenge));
-      if (nudgeRes.data) setNudge(nudgeRes.data);
-    } catch (e) {
-      console.error("Failed to load dashboard:", e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading) return <PageSkeleton />;
 
-  const displayName = profile?.full_name || "Creative";
-  const activeChallenges = challenges.filter((c) => c.status === "active" || c.status === "upcoming");
+  const firstName =
+    (profile?.full_name || user?.email?.split("@")[0] || "there").split(" ")[0];
 
-  const openLogger = (slug?: string) => {
+  /* One opener. The focus timer passes both, so a finished session arrives at
+     the modal with nothing left to fill in. */
+  const openLogger = (slug?: string, duration?: number) => {
     setLoggerInitialSlug(slug);
+    setLoggerInitialDuration(duration);
     setLoggerOpen(true);
   };
 
   const handleSaveSession = async (data: SessionFormData) => {
-    const hobby = hobbies.find((h) => h.slug === data.hobbySlug);
+    const hobby = rawHobbies.find((h) => h.slug === data.hobbySlug);
     if (!hobby) return;
+
     const result = await createSession({
       userHobbyId: hobby.userHobbyId,
       sessionType: data.type,
@@ -75,16 +70,42 @@ export default function DashboardPage() {
       notes: data.notes,
       imageUrl: data.imageUrl,
     });
+
+    if (result.error) {
+      console.error("[Dashboard] Failed to save session:", result.error);
+      return;
+    }
+
+    // Flip the streak chip, fill today's block and drop the row to `outline`
+    // straight away; the refetch below just reconciles.
+    addLoggedSession(data.hobbySlug, data.imageUrl ?? null);
+
     if (result.data?.id) {
       triggerPracticeFeedback(result.data.id).catch((e) =>
-        console.error("[Dashboard] Failed to trigger feedback:", e)
+        console.error("[Dashboard] Failed to trigger feedback:", e),
       );
     }
     checkAndAwardMilestones().catch((e) =>
-      console.error("[Dashboard] Milestone check failed:", e)
+      console.error("[Dashboard] Milestone check failed:", e),
     );
-    fetchData();
+
+    fetchData().catch((e) => console.error("[Dashboard] Refetch failed:", e));
   };
+
+  const handleResume = async (userHobbyId: string) => {
+    if (resumingHobbyId) return;
+    setResumingHobbyId(userHobbyId);
+    const res = await updateHobbyStatus(userHobbyId, "active");
+    if (res.error) console.error("[Dashboard] Failed to resume hobby:", res.error);
+    await fetchData();
+    setResumingHobbyId(null);
+  };
+
+  /* No FAB here. Every visible card carries a "Log session" that arrives at the
+     modal with the hobby already chosen, and the header button covers the case
+     where none of them is the one you mean — so the floating button would be a
+     third entry point offering the slowest path. It stays on the hobby and
+     progress pages, where no such card is in reach. */
 
   return (
     <>
@@ -92,9 +113,10 @@ export default function DashboardPage() {
         isOpen={loggerOpen}
         onClose={() => setLoggerOpen(false)}
         onSave={handleSaveSession}
-        hobbies={hobbies}
-        activeChallenges={challenges}
+        hobbies={rawHobbies}
+        activeChallenges={rawChallenges}
         initialHobbySlug={loggerInitialSlug}
+        initialDuration={loggerInitialDuration}
       />
       <AddHobbyModal
         isOpen={addHobbyOpen}
@@ -102,42 +124,24 @@ export default function DashboardPage() {
         onAdded={fetchData}
       />
 
-      <div className="min-h-screen bg-[var(--background)]">
-        <div className="max-w-2xl mx-auto px-4 md:px-8 pb-12 space-y-6">
-
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="pt-6"
-          >
-            <h1 className="text-2xl md:text-3xl font-serif font-medium text-gray-900 leading-tight">
-              {getGreeting(displayName)}
-            </h1>
-          </motion.div>
-
-          {/* Today's Focus — only renders when there's something actionable */}
-          <TodaysFocus
-            hobbies={hobbies}
-            activeChallenges={activeChallenges}
-            nudge={nudge}
-            onDismissNudge={() => setNudge(null)}
-          />
-
-          {/* My Hobbies */}
-          <HobbiesSection
-            hobbies={hobbies}
-            challenges={challenges}
-            onAddHobby={() => setAddHobbyOpen(true)}
-            onStatusChange={fetchData}
-            onLogHobby={(slug) => openLogger(slug)}
-          />
-
-        </div>
-      </div>
-
-      {/* Floating log button */}
-      <LogPracticeFAB onClick={() => openLogger()} />
+      <DashboardHome
+        variant={variant}
+        firstName={firstName}
+        streak={streak}
+        hobbies={hobbies}
+        week={week}
+        challenges={challenges}
+        suggestedHobbyId={suggestedHobbyId}
+        resumingHobbyId={resumingHobbyId}
+        generatingSlugs={generatingSlugs}
+        roadmapErrors={roadmapErrors}
+        onLog={openLogger}
+        onAddHobby={() => setAddHobbyOpen(true)}
+        onResume={handleResume}
+        onGenerateRoadmap={generateRoadmap}
+        onToggleGoal={toggleGoal}
+        onTimerComplete={(slug, minutes) => openLogger(slug, minutes)}
+      />
     </>
   );
 }

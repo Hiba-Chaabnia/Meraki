@@ -24,9 +24,22 @@ export const ArrowLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+/**
+ * A bare tick, no circle — despite the name, which predates this comment.
+ * Kept as-is because the discover flow's reference surfaces draw it that way.
+ * For a ticked checkbox use `CircleCheckIcon` below.
+ */
 export const CheckCircleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M5 12l5 5L20 7" />
+  </svg>
+);
+
+/** Tick inside a circle — the "done" half of a checkbox pair. */
+export const CircleCheckIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M8.5 12.5l2.5 2.5 4.5-5" />
   </svg>
 );
 

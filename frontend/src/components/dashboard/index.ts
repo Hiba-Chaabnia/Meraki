@@ -1,8 +1,13 @@
 export { DashboardNav } from "./DashboardNav";
-export { HobbiesSection } from "./HobbiesSection";
+export { DashboardHome } from "./DashboardHome";
+export type { DashboardHomeProps } from "./DashboardHome";
+export { StreakChip } from "./StreakChip";
+export { HobbyCard, NoRoadmapHobbyCard, PausedHobbyCard } from "./HobbyCard";
+export { PracticeWeek } from "./PracticeWeek";
+export { FocusTimerCard } from "./FocusTimerCard";
+export { ActiveChallengeCard, ReEntryCard, RetakeQuizCard } from "./DashboardCards";
 export { LogPracticeFAB } from "./LogPracticeFAB";
 export { ChallengeCard } from "./ChallengeCard";
 export { SessionLoggerModal } from "./SessionLoggerModal";
 export type { SessionFormData } from "./SessionLoggerModal";
 export { AddHobbyModal } from "./AddHobbyModal";
-export { TodaysFocus } from "./TodaysFocus";
