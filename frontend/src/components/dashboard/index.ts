@@ -5,7 +5,13 @@ export { StreakChip } from "./StreakChip";
 export { HobbyCard, NoRoadmapHobbyCard, PausedHobbyCard } from "./HobbyCard";
 export { PracticeWeek } from "./PracticeWeek";
 export { FocusTimerCard } from "./FocusTimerCard";
-export { ActiveChallengeCard, ReEntryCard, RetakeQuizCard } from "./DashboardCards";
+export {
+  ActiveChallengeCard,
+  ReEntryCard,
+  RetakeQuizCard,
+  CHALLENGE_WALLPAPER,
+} from "./DashboardCards";
+export type { Wallpaper } from "./DashboardCards";
 export { LogPracticeFAB } from "./LogPracticeFAB";
 export { ChallengeCard } from "./ChallengeCard";
 export { SessionLoggerModal } from "./SessionLoggerModal";

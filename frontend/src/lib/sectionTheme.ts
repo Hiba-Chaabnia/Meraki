@@ -35,6 +35,15 @@ export const THEME_SECONDARY: SectionTheme = {
   textOnAccent: "var(--secondary-theme-on-accent)",
 };
 
+/** Paused / archived. Outside the alternation — nothing alternates into it. */
+export const THEME_NEUTRAL: SectionTheme = {
+  bg: "var(--neutral-theme-bg)",
+  accent: "var(--neutral-theme-accent)",
+  border: "var(--neutral-theme-border)",
+  light: "var(--neutral-theme-light)",
+  textOnAccent: "var(--neutral-theme-on-accent)",
+};
+
 /** Convenience for index-alternated collections. */
 export const CARD_THEMES: [SectionTheme, SectionTheme] = [
   THEME_PRIMARY,

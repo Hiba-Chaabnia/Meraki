@@ -31,8 +31,6 @@ export interface DashboardHobby {
   stage: number;
   stageCount: number;
   stageLabel: string;
-  /** 0-100, how far through the roadmap the current stage sits. */
-  stageProgress: number;
   /** Checklist for the current roadmap phase. Empty for older roadmaps. */
   stageGoals: StageGoal[];
   /** For the toggle action; "" when the hobby has no roadmap. */
@@ -208,7 +206,6 @@ export function buildDashboardHobbies(
       stage,
       stageCount,
       stageLabel: phase?.title ?? "",
-      stageProgress: stageCount > 0 ? Math.round((stage / stageCount) * 100) : 0,
       stageGoals: buildStageGoals(phase, roadmap?.completedGoals ?? []),
       userRoadmapId: roadmap?.userRoadmapId ?? "",
       totalSessions: hobbySessions.length,
@@ -377,12 +374,6 @@ export function pickSuggestedHobbyId(
   return candidates[0]?.userHobbyId ?? null;
 }
 
-/** All-paused: the strongest candidate to resume is the one with most history. */
-export function pickResumeCandidateId(hobbies: DashboardHobby[]): string | null {
-  const best = [...hobbies].sort((a, b) => b.totalSessions - a.totalSessions)[0];
-  return best?.userHobbyId ?? null;
-}
-
 /* ─── Challenges ─────────────────────────────────────────────────────────── */
 
 export interface DashboardChallenge {
@@ -405,7 +396,7 @@ export function buildLiveChallenges(
   challenges: Challenge[],
   hobbies: DashboardHobby[],
 ): DashboardChallenge[] {
-  const themeBySlug = new Map(hobbies.map((h) => [h.slug, h.theme]));
+  const hobbyBySlug = new Map(hobbies.map((h) => [h.slug, h]));
   const activeSlugs = new Set(hobbies.filter((h) => h.status === "active").map((h) => h.slug));
 
   return challenges
@@ -414,8 +405,11 @@ export function buildLiveChallenges(
     .map((c) => ({
       id: c.id,
       hobbySlug: c.hobbySlug,
-      hobbyName: c.hobbyName,
-      theme: themeBySlug.get(c.hobbySlug) ?? "primary",
+      // The hobby's own name, not the challenge's copy of it. A challenge
+      // derives its name from the slug, so it would keep saying "Watercolor
+      // Painting" after the hobby had been renamed (005).
+      hobbyName: hobbyBySlug.get(c.hobbySlug)?.name ?? c.hobbyName,
+      theme: hobbyBySlug.get(c.hobbySlug)?.theme ?? "primary",
       title: c.title,
       description: c.description,
       estimatedTime: c.estimatedTime,

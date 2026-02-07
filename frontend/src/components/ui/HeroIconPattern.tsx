@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -58,6 +58,16 @@ interface HeroIconPatternProps {
   iconSet?: "primary" | "secondary";
   /** Opacity of the icons. Default: 1 */
   iconOpacity?: number;
+  /**
+   * Target gap in px between icon centres. Given, the grid is measured from
+   * this element's own box instead of the window, so the pattern keeps one
+   * density at any container size — which is what a card inside a responsive
+   * column needs, and what a viewport-sized grid cannot give it. Left off, the
+   * grid comes from the window, which is what the full-bleed hero panels want.
+   */
+  iconSpacing?: number;
+  /** Icon edge in px. The 58 default is tuned for full-viewport panels. */
+  iconSize?: number;
 }
 
 /* Responsive breakpoints: fewer columns on narrow screens */
@@ -92,21 +102,45 @@ function computePlacements(cols: number, rows: number): Placement[] {
 export default function HeroIconPattern({
   useMask = true,
   iconSet = "primary",
-  iconOpacity = 1
+  iconOpacity = 1,
+  iconSpacing,
+  iconSize = 58,
 }: HeroIconPatternProps) {
-  const [gridSize, setGridSize] = useState({ cols: 14, rows: 12 });
+  const measured = iconSpacing !== undefined;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [viewportGrid, setViewportGrid] = useState({ cols: 14, rows: 12 });
+  const [boxGrid, setBoxGrid] = useState<{ cols: number; rows: number } | null>(null);
 
   useEffect(() => {
+    // A measured grid follows its own box, so the window has nothing to say.
+    if (measured) return;
     function handleResize() {
-      setGridSize(getGridSize(window.innerWidth));
+      setViewportGrid(getGridSize(window.innerWidth));
     }
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [measured]);
 
-  const placements = computePlacements(gridSize.cols, gridSize.rows);
-  const iconSize = 58;
+  useEffect(() => {
+    const el = rootRef.current;
+    if (iconSpacing === undefined || !el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setBoxGrid({
+        cols: Math.max(1, Math.round(width / iconSpacing)),
+        rows: Math.max(1, Math.round(height / iconSpacing)),
+      });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [iconSpacing]);
+
+  const cols = boxGrid?.cols ?? viewportGrid.cols;
+  const rows = boxGrid?.rows ?? viewportGrid.rows;
+  /* Nothing until the box has been measured — one empty frame beats a flash of
+     the viewport-sized grid at the wrong density. */
+  const placements = measured && !boxGrid ? [] : computePlacements(cols, rows);
 
   // Build icon paths based on iconSet prop
   const iconBasePath = `/icons/hobbies-${iconSet}`;
@@ -119,6 +153,7 @@ export default function HeroIconPattern({
 
   return (
     <div
+      ref={rootRef}
       className="absolute inset-0 overflow-hidden pointer-events-none"
       style={{
         opacity: 1,
@@ -127,7 +162,7 @@ export default function HeroIconPattern({
     >
       {placements.map((p, i) => (
         <img
-          key={`${gridSize.cols}-${gridSize.rows}-${i}`}
+          key={`${cols}-${rows}-${i}`}
           src={`${iconBasePath}/${HOBBY_ICON_NAMES[p.idx]}`}
           alt=""
           width={iconSize}

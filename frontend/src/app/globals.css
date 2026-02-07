@@ -53,6 +53,13 @@
   --secondary-theme-border:    #DDEB85;
   --secondary-theme-light:     #EBF4B8;
   --secondary-theme-on-accent: #292929;  /* lime needs dark text */
+
+  /* Neutral / Dimmed theme — disabled, archived, inactive states */
+  --neutral-theme-bg:        #F2EDE8;  /* card surface fill (between white-muted & white-soft) */
+  --neutral-theme-accent:    #948C82;  /* border, title, icons — warm mid-gray, deliberately muted */
+  --neutral-theme-border:    #DED5CB;  /* soft inner borders */
+  --neutral-theme-light:     #E7E0D8;  /* tag & ghost-button fill */
+  --neutral-theme-on-accent: #FFFFFF;  /* text on top of accent */  
 }
 
 @layer base {

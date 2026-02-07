@@ -12,7 +12,6 @@ import {
   isNewHobby,
   lastSessionLabel,
   pausedOnLabel,
-  pickResumeCandidateId,
   type DashboardChallenge,
   type DashboardHobby,
   type DashboardVariant,
@@ -20,6 +19,7 @@ import {
   type WeekDay,
 } from "@/lib/dashboardHome";
 import { fadeUp } from "@/components/ui/animations";
+import { MAX_ACTIVE_HOBBIES } from "@/lib/hobbyLimits";
 
 export interface DashboardHomeProps {
   variant: DashboardVariant;
@@ -70,17 +70,15 @@ const SECTION_LABEL =
  * DashboardNav already owns navigation and is left untouched.
  */
 export function DashboardHome(props: DashboardHomeProps) {
-  const { variant, firstName, streak, hobbies, suggestedHobbyId, onLog } = props;
+  const { variant, firstName, streak, hobbies, onLog } = props;
 
   const active = hobbies.filter((h) => h.status === "active");
   const paused = hobbies.filter((h) => h.status === "paused");
 
-  // Dormant shows a re-entry card for one hobby. If that same hobby also owned
-  // the suggested row, it got two filled buttons with two different verbs and
-  // two destinations — so the card wins and the row drops back to outline.
+  // Dormant shows a re-entry card for one hobby. No card in the list competes
+  // with it any more — every hobby card carries the same weight, so there is
+  // no "suggested" row to demote.
   const reEntryHobby = variant === "dormant" ? (active[0] ?? null) : null;
-  const rowSuggestedId =
-    reEntryHobby && reEntryHobby.userHobbyId === suggestedHobbyId ? null : suggestedHobbyId;
 
   if (variant === "new") return <NewUserEmptyState />;
 
@@ -91,19 +89,23 @@ export function DashboardHome(props: DashboardHomeProps) {
        own <main> padding is left alone rather than cancelled and re-added. */
     <div>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <Greeting
-          variant={variant}
-          firstName={firstName}
-          hobbies={active}
-          streak={streak}
-          suggestedHobbyId={suggestedHobbyId}
-        />
+        <Greeting variant={variant} firstName={firstName} hobbies={active} streak={streak} />
 
-        {/* Deliberately guesses nothing: it opens the modal with no hobby
-            chosen, so it never competes with a card's own pre-filled button.
-            Still no FAB — this is the one global entry point. */}
-        <Button size="sm" variant="outline" outlineColor="#d1d5db" outlineHoverColor="#6b7280" onClick={() => onLog()}>
-          Log session
+        {/* Mobile only. It guesses nothing — the modal opens with no hobby
+            chosen — which makes it strictly more work than any card's own
+            pre-filled button, and on desktop every card is a glance away. On a
+            phone the hobby list sits below the whole focus column, so this is
+            the one path to logging that does not start with a scroll.
+            Still no FAB. */}
+        <Button
+          size="sm"
+          variant="outline"
+          outlineColor="#d1d5db"
+          outlineHoverColor="#6b7280"
+          onClick={() => onLog()}
+          className="lg:hidden"
+        >
+          Log Session
         </Button>
       </div>
 
@@ -116,12 +118,7 @@ export function DashboardHome(props: DashboardHomeProps) {
           <FocusColumn {...props} active={active} reEntryHobby={reEntryHobby} />
         </div>
         <div className="lg:col-span-5">
-          <HobbyColumn
-            {...props}
-            active={active}
-            paused={paused}
-            suggestedHobbyId={rowSuggestedId}
-          />
+          <HobbyColumn {...props} active={active} paused={paused} />
         </div>
       </div>
     </div>
@@ -142,20 +139,16 @@ function Greeting({
   firstName,
   hobbies,
   streak,
-  suggestedHobbyId,
 }: {
   variant: DashboardVariant;
   firstName: string;
   hobbies: DashboardHobby[];
   streak: StreakState;
-  suggestedHobbyId: string | null;
 }) {
   const gapDays = hobbies
     .map((h) => h.lastSessionDaysAgo)
     .filter((d): d is number => d !== null)
     .sort((a, b) => a - b)[0];
-
-  const suggested = hobbies.find((h) => h.userHobbyId === suggestedHobbyId) ?? null;
 
   let title: string;
   let line: ReactNode;
@@ -175,30 +168,40 @@ function Greeting({
     // Today is already covered — acknowledge it and ask for nothing further.
     title = `That's today done, ${firstName}`;
     line = "Anything else you do today is a bonus.";
-  } else if (suggested) {
-    title = `Good to see you, ${firstName}`;
-    line = (
-      <>
-        {suggested.name} was {lastSessionLabel(suggested.lastSessionDaysAgo)}.{" "}
-        <em>Ten minutes</em> today would be plenty.
-      </>
-    );
   } else {
+    /* Running normally — the title says hello and nothing more.
+       The second line used to read "<hobby> was yesterday. Ten minutes today
+       would be plenty", which the focus timer directly below already says as
+       "Ten minutes is plenty", and which the tinted suggested card already
+       says by being tinted. Three statements of one recommendation reads as
+       insistence, against the §8 low-pressure voice.
+       The other branches keep their line: they are the re-entry-without-guilt
+       copy, and nothing else on the page carries it. */
     title = `Good to see you, ${firstName}`;
-    line = "Pick whichever one you feel like — ten minutes is plenty.";
+    line = null;
   }
 
   return (
     <motion.div variants={fadeUp} initial="hidden" animate="show" className="min-w-0">
       <p className="text-[19px] font-semibold text-[var(--foreground)]">{title}</p>
-      <p className="mt-1 text-[13px] text-[#6b7280]">{line}</p>
+      {line && <p className="mt-1 text-[13px] text-[#6b7280]">{line}</p>}
     </motion.div>
   );
 }
 
 /* ─── Hobby column ───────────────────────────────────────────────────────── */
 
-type HobbyFilter = "all" | "new" | "paused";
+type HobbyFilter = "all" | "active" | "new" | "paused";
+
+/**
+ * Past this many hobbies the "All" chip is dropped.
+ *
+ * All is the useful default for a short list — three cards is not a scroll, and
+ * splitting them costs more than it saves. Past that it is the one view that
+ * cannot be short, so the column always opens on a filtered one and every card
+ * is still reachable: active, new and paused are disjoint and cover the list.
+ */
+const ALL_CHIP_MAX = 3;
 
 /**
  * One list, active and paused together. Paused hobbies used to sit behind a
@@ -210,7 +213,6 @@ function HobbyColumn({
   variant,
   active,
   paused,
-  suggestedHobbyId,
   resumingHobbyId,
   generatingSlugs,
   roadmapErrors,
@@ -222,26 +224,39 @@ function HobbyColumn({
 }: DashboardHomeProps & { active: DashboardHobby[]; paused: DashboardHobby[] }) {
   const [filter, setFilter] = useState<HobbyFilter>("all");
   const allPaused = variant === "all-paused";
-  const resumeCandidateId = allPaused ? pickResumeCandidateId(paused) : null;
 
   // buildDashboardHobbies already orders active-then-paused, so one concat
   // keeps the blue/lime rhythm and the reading order it assigned.
   const all = [...active, ...paused];
-  const newCount = active.filter(isNewHobby).length;
 
-  // Only chips that would actually filter something. A lone "All" chip is
-  // chrome that does nothing, and "Paused (0)" invites a dead click.
-  const chips: { key: HobbyFilter; label: string }[] = [
-    { key: "all", label: "All" },
-    ...(newCount > 0 ? [{ key: "new" as const, label: `New (${newCount})` }] : []),
+  /* The three groups are disjoint and add up to the whole list — one per card
+     component, so a chip's count is exactly the cards you will see. "Active"
+     therefore means running *with a roadmap*; a hobby still waiting for one
+     lives under "New" rather than being counted twice. */
+  const running = active.filter((h) => !isNewHobby(h));
+  const fresh = active.filter(isNewHobby);
+
+  // Only chips that would actually filter something: "Paused (0)" invites a
+  // dead click, and a category that holds everything is not a filter.
+  const groups: { key: HobbyFilter; label: string }[] = [
+    ...(running.length > 0 ? [{ key: "active" as const, label: `Active (${running.length})` }] : []),
+    ...(fresh.length > 0 ? [{ key: "new" as const, label: `New (${fresh.length})` }] : []),
     ...(paused.length > 0 ? [{ key: "paused" as const, label: `Paused (${paused.length})` }] : []),
   ];
 
-  // Resuming the last paused hobby empties the "Paused" view — fall back
-  // rather than leaving the user staring at nothing they can act on.
-  const activeFilter = chips.some((c) => c.key === filter) ? filter : "all";
+  const chips: { key: HobbyFilter; label: string }[] =
+    all.length > ALL_CHIP_MAX ? groups : [{ key: "all", label: "All" }, ...groups];
+
+  /* Falls back to the first chip, not to "all" — past ALL_CHIP_MAX there is no
+     "all" to fall back to. This also covers resuming the last paused hobby
+     while looking at "Paused", which would otherwise leave the user staring at
+     an empty column. */
+  const activeFilter = chips.some((c) => c.key === filter)
+    ? filter
+    : (chips[0]?.key ?? "all");
 
   const visible = all.filter((hobby) => {
+    if (activeFilter === "active") return hobby.status === "active" && !isNewHobby(hobby);
     if (activeFilter === "new") return isNewHobby(hobby);
     if (activeFilter === "paused") return hobby.status === "paused";
     return true;
@@ -254,8 +269,11 @@ function HobbyColumn({
           needing a header of its own. */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-center gap-1.5">
+          {/* Gated on the groups, not the rendered chips: with one category
+              "All" and "Active (2)" are two chips selecting the same two
+              cards, which is chrome pretending to be a control. */}
           {!allPaused &&
-            chips.length > 1 &&
+            groups.length > 1 &&
             chips.map((chip) => (
               <button
                 key={chip.key}
@@ -272,12 +290,22 @@ function HobbyColumn({
               </button>
             ))}
         </div>
-        <button
-          onClick={onAddHobby}
-          className="ml-auto cursor-pointer text-[11.5px] font-bold text-[var(--primary)] transition-opacity hover:opacity-70"
-        >
-          + Add hobby
-        </button>
+        {/* At the cap the control states the limit rather than disappearing —
+            a control that vanishes reads as a bug, and the sentence explains
+            the way out. The server refuses regardless; this is so the refusal
+            is never a surprise. */}
+        {active.length >= MAX_ACTIVE_HOBBIES ? (
+          <span className="ml-auto text-[11.5px] text-[#6b7280]">
+            {MAX_ACTIVE_HOBBIES} on the go — pause one to add another
+          </span>
+        ) : (
+          <button
+            onClick={onAddHobby}
+            className="ml-auto cursor-pointer text-[11.5px] font-bold text-[var(--primary)] transition-opacity hover:opacity-70"
+          >
+            + Add hobby
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -288,11 +316,12 @@ function HobbyColumn({
                 key={hobby.userHobbyId}
                 hobby={hobby}
                 index={i}
-                // All-paused has no next step to name, so it shows history
-                // instead; in a mixed list the last session is the useful bit.
-                meta={allPaused ? pausedHistoryMeta(hobby) : pausedMeta(hobby)}
-                metaIsTime={!allPaused}
-                emphasised={hobby.userHobbyId === resumeCandidateId}
+                /* One meta for both columns. All-paused used to swap in a
+                   history line ("34 sessions · longest streak 6 days"), which
+                   the footer's own session tally now says on the right — so the
+                   swap had the row stating sessions twice, or suppressing the
+                   tally to avoid it. The date is the fact that column is about. */
+                meta={pausedMeta(hobby)}
                 resuming={resumingHobbyId === hobby.userHobbyId}
                 onResume={onResume}
               />
@@ -316,7 +345,6 @@ function HobbyColumn({
               key={hobby.userHobbyId}
               hobby={hobby}
               index={i}
-              suggested={hobby.userHobbyId === suggestedHobbyId}
               onLog={onLog}
               onToggleGoal={onToggleGoal}
             />
@@ -338,15 +366,6 @@ function pausedMeta(hobby: DashboardHobby): string {
   );
 }
 
-/** All-paused rows carry history instead of a next step — there isn't one yet. */
-function pausedHistoryMeta(hobby: DashboardHobby): string {
-  if (hobby.totalSessions === 0) return "Never really started";
-  if (hobby.totalSessions === 1) return "1 session · never really started";
-  return `${hobby.totalSessions} sessions · longest streak ${hobby.longestStreak} day${
-    hobby.longestStreak === 1 ? "" : "s"
-  }`;
-}
-
 /* ─── Focus column ───────────────────────────────────────────────────────── */
 
 function FocusColumn({
@@ -362,7 +381,6 @@ function FocusColumn({
   active: DashboardHobby[];
   reEntryHobby: DashboardHobby | null;
 }) {
-  const challenge = challenges[0] ?? null;
   const allPaused = variant === "all-paused";
 
   // Every active hobby, practised this week or not. Two theme colours cannot
@@ -383,10 +401,12 @@ function FocusColumn({
         <ReEntryCard hobbyName={reEntryHobby.name} hobbySlug={reEntryHobby.slug} />
       </>
     )
-  ) : challenge ? (
-    /* No label. The dark card already announces itself as the challenge —
-       its own eyebrow names the hobby and the day. */
-    <ActiveChallengeCard challenge={challenge} moreCount={challenges.length - 1} />
+  ) : challenges.length > 0 ? (
+    /* No label. The dark card already announces itself as the challenge — its
+       own chip names the hobby. Which one of the list is showing is the card's
+       business; the guard stays here so `topSlot` still reports "empty" to the
+       spacing below. */
+    <ActiveChallengeCard challenges={challenges} />
   ) : null;
 
   return (
@@ -397,12 +417,12 @@ function FocusColumn({
           and there is nothing to time either, so both sit behind one guard. */}
       {!allPaused && (
         <>
-          <div className={topSlot ? "mt-4" : ""}>
-            <PracticeWeek days={week} legend={legend} streak={streak} />
-          </div>
-
+          {/* Directly under the challenge: that card says what to do, this
+              starts the clock on it. The week strip used to sit between them,
+              which on a phone is a screenful of history wedged between a prompt
+              and the tool that answers it. */}
           {onTimerComplete && (
-            <div className="mt-4">
+            <div className={topSlot ? "mt-4" : ""}>
               <FocusTimerCard
                 hobbies={active}
                 defaultHobbyId={suggestedHobbyId}
@@ -410,6 +430,12 @@ function FocusColumn({
               />
             </div>
           )}
+
+          {/* Last of the three, but not buried: it carries the streak chip, and
+              hiding that entirely costs a real signal. */}
+          <div className={topSlot || onTimerComplete ? "mt-4" : ""}>
+            <PracticeWeek days={week} legend={legend} streak={streak} />
+          </div>
         </>
       )}
     </div>
