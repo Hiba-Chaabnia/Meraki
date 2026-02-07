@@ -193,7 +193,7 @@ export function ActiveChallengeCard({
                 hobby's colour is carried by its flower in the stepper below,
                 which sits on cream and can hold it. */}
             <span
-              className="min-w-0 truncate rounded-lg border border-[var(--background)] px-2 py-1 font-medium text-[var(--background)]"
+              className="min-w-0 truncate rounded-full border border-[var(--background)] px-2 py-1 font-medium text-[var(--background)]"
               style={{ fontSize: `var(--challenge-chip-size, ${CHIP_SIZE})` }}
             >
               {titleCase(challenge.hobbyName)}
