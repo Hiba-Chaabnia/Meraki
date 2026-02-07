@@ -62,7 +62,6 @@ function dayLabel(day: WeekDay, index: number): string {
  * pillars already say how much; the chip says how the run is going.
  */
 export function PracticeWeek({ days, legend, streak }: PracticeWeekProps) {
-  const totalMinutes = days.reduce((sum, d) => sum + d.totalMinutes, 0);
   const nothingLogged = days.every((d) => d.entries.length === 0);
   const scale = weekScaleMinutes(days);
 
@@ -73,24 +72,10 @@ export function PracticeWeek({ days, legend, streak }: PracticeWeekProps) {
   return (
     <div className="rounded-2xl border border-[var(--white-muted)] bg-white p-[15px]">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        {/* Total time, never "N of 7 days" — a day count next to a streak count
-            is the contradiction this card was rebuilt to remove. */}
-        <p className="text-[11.5px] text-[#6b7280]">
-          {nothingLogged ? (
-            <>
-              Nothing logged yet —{" "}
-              <strong className="font-bold text-[var(--foreground)]">
-                today&rsquo;s still open.
-              </strong>
-            </>
-          ) : (
-            <>
-              <strong className="font-bold text-[var(--foreground)]">
-                {formatMinutes(totalMinutes)}
-              </strong>{" "}
-              this week
-            </>
-          )}
+        {/* A name, not a number. The pillars already carry the week's totals,
+            and each one names its own hobbies and minutes on hover. */}
+        <p className="text-[11.5px] font-bold uppercase tracking-widest text-[var(--foreground)]">
+          Practice calendar
         </p>
         {showStreak && <StreakChip days={streak.days} loggedToday={streak.loggedToday} />}
       </div>

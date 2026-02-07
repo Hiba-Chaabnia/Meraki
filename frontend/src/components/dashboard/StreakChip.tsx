@@ -27,11 +27,7 @@ export function StreakChip({ days, loggedToday }: StreakState) {
         className={`${BASE} border border-[#FBD9A5] font-bold`}
         style={{ backgroundColor: OPEN_TODAY.bg, color: OPEN_TODAY.text }}
       >
-        <span
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: OPEN_TODAY.border }}
-        />
-        {days}-day streak · today&rsquo;s still open
+        {days}-day streak
       </span>
     );
   }
