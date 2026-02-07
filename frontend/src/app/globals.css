@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* `src/app/preview/**` is gitignored, and v4's automatic source detection skips
+   anything git ignores — so a utility used only by a preview page was never
+   generated, and previews silently rendered without it. An explicit @source is
+   scanned regardless, and a missing directory (CI, where preview is absent) is
+   not an error. */
+@source "./preview";
+
 /* ─── Design tokens ─────────────────────────────────────────────────────────
    The single source for the brand palette. There is no `@theme` block and no
    tailwind.config.ts, so these do NOT generate Tailwind color utilities —
