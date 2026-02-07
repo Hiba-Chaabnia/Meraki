@@ -11,3 +11,5 @@ export { ChallengeCard } from "./ChallengeCard";
 export { SessionLoggerModal } from "./SessionLoggerModal";
 export type { SessionFormData } from "./SessionLoggerModal";
 export { AddHobbyModal } from "./AddHobbyModal";
+export { RenameHobbyModal } from "./RenameHobbyModal";
+export { HobbyDangerZone } from "./HobbyDangerZone";

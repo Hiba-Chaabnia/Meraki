@@ -59,7 +59,8 @@ export function toActiveHobby(row: UserHobbyRow): ActiveHobby {
   return {
     userHobbyId: row.id,
     slug: row.hobby_slug,
-    name: formatSlug(row.hobby_slug),
+    // 005 lets a hobby be renamed without touching the slug it is joined by.
+    name: row.custom_name?.trim() || formatSlug(row.hobby_slug),
     status: row.status === "paused" ? "paused" : "active",
     currentStreak: 0,
     totalSessions: 0,

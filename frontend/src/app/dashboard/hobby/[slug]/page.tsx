@@ -2,9 +2,15 @@
 
 import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, Flame, Map, Tv, MapPin, Zap } from "lucide-react";
-import { ChallengeCard, SessionLoggerModal, LogPracticeFAB } from "@/components/dashboard";
+import {
+  ChallengeCard,
+  SessionLoggerModal,
+  LogPracticeFAB,
+  HobbyDangerZone,
+} from "@/components/dashboard";
 import type { SessionFormData } from "@/components/dashboard";
 import { Button } from "@/components/ui/Button";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
@@ -26,7 +32,7 @@ const stagger = staggerContainer(0.08);
 
 export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const meta = { name: formatSlug(slug), color: "#374151", lightColor: "#F3F4F6" };
+  const router = useRouter();
 
   const [hobby, setHobby] = useState<ActiveHobby | null>(null);
   const [allHobbies, setAllHobbies] = useState<ActiveHobby[]>([]);
@@ -38,6 +44,11 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
   const [generatingChallenge, setGeneratingChallenge] = useState(false);
   const [generatingRoadmap, setGeneratingRoadmap] = useState(false);
   const [loggerOpen, setLoggerOpen] = useState(false);
+
+  /* The slug-derived name is the fallback, not the source: 005 lets a hobby be
+     renamed, and the override lives on the row rather than in the slug. */
+  const defaultName = formatSlug(slug);
+  const meta = { name: hobby?.name ?? defaultName, color: "#374151", lightColor: "#F3F4F6" };
 
   const fetchData = useCallback(async () => {
     try {
@@ -365,6 +376,23 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
             </Link>
           </div>
         </motion.div>
+
+        {/* Rename / pause / delete. Last on the page on purpose — you scroll
+            past everything the hobby is before you get to unmaking it. */}
+        {hobby && (
+          <motion.div variants={fadeUp} className="mt-8">
+            <HobbyDangerZone
+              userHobbyId={hobby.userHobbyId}
+              name={meta.name}
+              defaultName={defaultName}
+              status={hobby.status}
+              sessionCount={sessions.length}
+              onRenamed={(name) => setHobby((h) => (h ? { ...h, name } : h))}
+              onStatusChanged={(status) => setHobby((h) => (h ? { ...h, status } : h))}
+              onDeleted={() => router.push("/dashboard")}
+            />
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Floating log button */}

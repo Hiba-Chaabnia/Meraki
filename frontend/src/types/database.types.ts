@@ -56,20 +56,24 @@ export interface Database {
           id: string;
           user_id: string;
           hobby_slug: string;
-          status: "sampling" | "active" | "paused" | "completed";
+          status: "sampling" | "active" | "paused";
           started_at: string;
           /** Set by trigger when status becomes 'paused', cleared on resume. */
           paused_at: string | null;
+          /** Display-name override. Null = derive from hobby_slug (005). */
+          custom_name: string | null;
         };
         Insert: {
           id?: string;
           user_id: string;
           hobby_slug: string;
-          status?: "sampling" | "active" | "paused" | "completed";
+          status?: "sampling" | "active" | "paused";
           started_at?: string;
+          custom_name?: string | null;
         };
         Update: {
-          status?: "sampling" | "active" | "paused" | "completed";
+          status?: "sampling" | "active" | "paused";
+          custom_name?: string | null;
         };
         Relationships: [];
       };
