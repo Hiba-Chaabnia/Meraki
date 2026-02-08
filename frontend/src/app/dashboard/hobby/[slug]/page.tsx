@@ -134,6 +134,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         onGenerateRoadmap={() => roadmapGen.generate(slug)}
         onLogPractice={() => setLoggerOpen(true)}
         onOpenChallenge={challengeUi.openChallenge}
+        onLogAndComplete={logAndComplete}
         dangerZone={
           page.hobby ? (
             <HobbyDangerZone

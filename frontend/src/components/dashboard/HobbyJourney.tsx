@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, Flame, Map, Tv, MapPin, Zap, Check, ChevronDown } from "lucide-react";
 import { ChallengeCard } from "./ChallengeCard";
+import { ActiveChallengePanel } from "./ActiveChallengePanel";
 import { Button } from "@/components/ui/Button";
 import { moodEmojis } from "@/lib/dashboardData";
 import type { ActiveHobby, PracticeSession, Challenge, Roadmap } from "@/lib/dashboardData";
@@ -56,6 +57,10 @@ export interface HobbyJourneyProps {
   /** Opens a challenge in the modal the page owns. */
   onOpenChallenge?: (challenge: Challenge) => void;
 
+  /* ── The active challenge's own actions, now that it is open on the page ── */
+  /** Hands over to the session logger; the page completes it once a session saves. */
+  onLogAndComplete?: (challenge: Challenge) => void;
+
   /** The danger zone, which only the real page can wire to its mutations. */
   dangerZone?: ReactNode;
 }
@@ -95,6 +100,7 @@ export function HobbyJourney({
   onGenerateRoadmap,
   onLogPractice,
   onOpenChallenge,
+  onLogAndComplete,
   dangerZone,
 }: HobbyJourneyProps) {
   const [pastOpen, setPastOpen] = useState(false);
@@ -149,13 +155,21 @@ export function HobbyJourney({
       <div className="grid gap-6 lg:grid-cols-12">
 
         {/* ─── Do now ─── */}
-        <div className="space-y-6 lg:col-span-5">
+        {/* The wide column: with the challenge open in place, this side carries
+            the reading. */}
+        <div className="space-y-6 lg:col-span-7">
 
           <motion.div variants={fadeUp}>
             <h2 className="card-heading mb-4">Current Challenge</h2>
             {activeChallenges.length > 0 ? (
               <div className="space-y-4">
-                {activeChallenges.map((c) => <ChallengeCard key={c.id} challenge={c} onOpen={onOpenChallenge} />)}
+                {activeChallenges.map((c) =>
+                  onLogAndComplete ? (
+                    <ActiveChallengePanel key={c.id} challenge={c} onLogAndComplete={onLogAndComplete} />
+                  ) : (
+                    <ChallengeCard key={c.id} challenge={c} onOpen={onOpenChallenge} />
+                  ),
+                )}
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
@@ -264,7 +278,7 @@ export function HobbyJourney({
         </div>
 
         {/* ─── Look back ─── */}
-        <div className="space-y-6 lg:col-span-7">
+        <div className="space-y-6 lg:col-span-5">
 
           {/* Two tiles, not four. "Sessions" repeated the count in the header
               directly below it, and "Challenges" the archive further down —
