@@ -62,6 +62,20 @@ export async function createSession(input: {
   return { data };
 }
 
+/**
+ * Practice sessions, newest first.
+ *
+ * Bounded. It was unbounded, and three surfaces call it on every load — the
+ * dashboard, the hobby page and session detail — so a heavy user shipped every
+ * row they had ever logged, three times over, to render at most a few dozen.
+ * The cap sits well past what any of them shows: the dashboard derives a 7-day
+ * strip and a streak, the hobby page one hobby's slice behind a scroll.
+ *
+ * The streak is the only consumer that could notice, and only past a 500-session
+ * unbroken run.
+ */
+const SESSION_LIMIT = 500;
+
 export async function getSessions() {
   const supabase = await createClient();
   const {
@@ -76,7 +90,39 @@ export async function getSessions() {
        user_hobbies!inner(*)`,
     )
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(SESSION_LIMIT);
+
+  if (error) return { error: error.message };
+  return { data };
+}
+
+/**
+ * One hobby's sessions, newest first.
+ *
+ * The hobby page used to call `getSessions()` — up to 500 rows across every
+ * hobby — and filter client-side with `toSessionsForHobby`. Filtering in the
+ * query means a user with three hobbies stops paying for the other two, and
+ * the cap now bounds what that page actually renders rather than what it
+ * discards.
+ */
+export async function getSessionsForHobby(hobbySlug: string, limit = SESSION_LIMIT) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data, error } = await supabase
+    .from("practice_sessions")
+    .select(
+      `*,
+       user_hobbies!inner(*)`,
+    )
+    .eq("user_id", user.id)
+    .eq("user_hobbies.hobby_slug", hobbySlug)
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
   if (error) return { error: error.message };
   return { data };
