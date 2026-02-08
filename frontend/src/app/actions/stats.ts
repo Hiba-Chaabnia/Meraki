@@ -17,6 +17,18 @@ export async function getUserStats() {
   return { data };
 }
 
+/**
+ * Raw practice days for the heatmap — the last 14 weeks of sessions.
+ *
+ * Returns rows, not intensities: bucketing a timestamp into a day is a local
+ * calendar question and this runs on the server, whose timezone is not the
+ * viewer's. `buildHeatmap` does it client-side with the same `localDateKey`
+ * that `deriveStreak` uses, so the two agree about what day a session was on.
+ *
+ * 14 weeks rather than the 12 rendered: the grid is aligned to whole Monday
+ * weeks, so its first cell can sit up to six days before "12 weeks ago", and
+ * the window has to cover them.
+ */
 export async function getHeatmapData() {
   const supabase = await createClient();
   const {
@@ -24,9 +36,8 @@ export async function getHeatmapData() {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  // Get sessions from the last 12 weeks (84 days)
   const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 83);
+  startDate.setDate(startDate.getDate() - 14 * 7);
 
   const { data, error } = await supabase
     .from("practice_sessions")
@@ -37,30 +48,11 @@ export async function getHeatmapData() {
 
   if (error) return { error: error.message };
 
-  // Index sessions by date string for O(1) lookups
-  const minutesByDate = new Map<string, number>();
-  for (const s of data ?? []) {
-    const dateStr = s.created_at.split("T")[0];
-    minutesByDate.set(dateStr, (minutesByDate.get(dateStr) ?? 0) + s.duration);
-  }
-
-  // Build an 84-day heatmap array (0-3 intensity)
-  const heatmap: (0 | 1 | 2 | 3)[] = [];
-  for (let i = 0; i < 84; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (83 - i));
-    const dateStr = date.toISOString().split("T")[0];
-
-    const totalMinutes = minutesByDate.get(dateStr) ?? 0;
-
-    if (totalMinutes === 0) heatmap.push(0);
-    else if (totalMinutes < 30) heatmap.push(1);
-    else if (totalMinutes < 60) heatmap.push(2);
-    else heatmap.push(3);
-  }
-
-  return { data: heatmap };
+  return {
+    data: (data ?? []).map((s) => ({ date: s.created_at, duration: s.duration })),
+  };
 }
+
 
 export async function getUserMilestones() {
   const supabase = await createClient();
