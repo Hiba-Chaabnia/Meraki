@@ -32,6 +32,8 @@ export interface ChallengeActions {
   /** Call from the page's save handler once a session has been created. */
   completeAfterSession: () => Promise<void>;
   beginCompletion: (challenge: Challenge) => void;
+  /** Dismisses `error` — the swap popover closes on click-away. */
+  clearError: () => void;
   /** A refused write — the modal shows it in place. */
   error: string | null;
 }
@@ -143,5 +145,6 @@ export function useChallengeActions(onChanged: () => void): ChallengeActions {
     completeAfterSession,
     beginCompletion,
     error,
+    clearError: () => setError(null),
   };
 }

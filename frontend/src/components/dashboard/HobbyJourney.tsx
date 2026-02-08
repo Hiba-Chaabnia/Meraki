@@ -60,6 +60,13 @@ export interface HobbyJourneyProps {
   /* ── The active challenge's own actions, now that it is open on the page ── */
   /** Hands over to the session logger; the page completes it once a session saves. */
   onLogAndComplete?: (challenge: Challenge) => void;
+  /** Reject the active challenge and generate a replacement. */
+  onSwapChallenge?: (challenge: Challenge) => void;
+  /** A swap already in flight. */
+  swappingChallenge?: boolean;
+  /** A refused swap — shown on the card. */
+  swapError?: string | null;
+  onDismissSwapError?: () => void;
 
   /* ── The roadmap's own actions, now that it is open on the page ── */
   advancingPhase?: boolean;
@@ -106,6 +113,10 @@ export function HobbyJourney({
   onLogPractice,
   onOpenChallenge,
   onLogAndComplete,
+  onSwapChallenge,
+  swappingChallenge = false,
+  swapError,
+  onDismissSwapError,
   advancingPhase = false,
   advanceError,
   onAdvancePhase,
@@ -169,12 +180,19 @@ export function HobbyJourney({
         <div className="space-y-6 lg:col-span-7">
 
           <motion.div variants={fadeUp}>
-            <h2 className="card-heading mb-4">Current Challenge</h2>
             {activeChallenges.length > 0 ? (
               <div className="space-y-4">
                 {activeChallenges.map((c) =>
                   onLogAndComplete ? (
-                    <ActiveChallengePanel key={c.id} challenge={c} onLogAndComplete={onLogAndComplete} />
+                    <ActiveChallengePanel
+                      key={c.id}
+                      challenge={c}
+                      onLogAndComplete={onLogAndComplete}
+                      busy={swappingChallenge}
+                      onSwap={onSwapChallenge}
+                      swapError={swapError}
+                      onDismissSwapError={onDismissSwapError}
+                    />
                   ) : (
                     <ChallengeCard key={c.id} challenge={c} onOpen={onOpenChallenge} />
                   ),
@@ -182,6 +200,7 @@ export function HobbyJourney({
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+                <p className="card-heading mb-2">Current Challenge</p>
                 <p className="text-sm text-gray-400 mb-3">No active challenge</p>
                 {challengeError && (
                   <p className="mb-3 text-sm text-red-600">{challengeError}</p>

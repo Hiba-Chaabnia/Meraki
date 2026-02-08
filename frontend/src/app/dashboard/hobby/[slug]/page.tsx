@@ -126,6 +126,10 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         advancingPhase={page.advancing}
         advanceError={page.advanceError}
         onOpenChallenge={challengeUi.openChallenge}
+        onSwapChallenge={challengeUi.swap}
+        swappingChallenge={challengeUi.generatingNext}
+        swapError={challengeUi.error}
+        onDismissSwapError={challengeUi.clearError}
         onLogAndComplete={logAndComplete}
         dangerZone={
           page.hobby ? (

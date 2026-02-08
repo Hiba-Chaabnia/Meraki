@@ -1,6 +1,7 @@
 "use client";
 
 import { ChallengeDetails } from "./ChallengeDetails";
+import { SwapChallengeButton } from "./SwapChallengeButton";
 import { difficultyConfig } from "@/lib/dashboardData";
 import type { Challenge } from "@/lib/dashboardData";
 
@@ -10,6 +11,11 @@ export interface ActiveChallengePanelProps {
   onLogAndComplete: (challenge: Challenge) => void;
   /** A swap is in flight — completing waits for it. */
   busy?: boolean;
+  /** Reject this one and generate a replacement. Omitted hides the action. */
+  onSwap?: (challenge: Challenge) => void;
+  /** A refused swap, including the daily-limit refusal. */
+  swapError?: string | null;
+  onDismissSwapError?: () => void;
 }
 
 /**
@@ -27,12 +33,29 @@ export function ActiveChallengePanel({
   challenge: c,
   onLogAndComplete,
   busy = false,
+  onSwap,
+  swapError,
+  onDismissSwapError,
 }: ActiveChallengePanelProps) {
   const diff = difficultyConfig[c.difficulty];
 
   return (
     <div className="relative flex h-full w-full max-w-2xl flex-col rounded-2xl bg-white shadow-xl">
       <div className="flex flex-1 flex-col p-6 md:p-8">
+        {/* The section label and the swap live on the card, not above it — the
+            card is the section. */}
+        <div className="mb-4 flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
+          <p className="card-heading">Current Challenge</p>
+          {onSwap && (
+            <SwapChallengeButton
+              onSwap={() => onSwap(c)}
+              busy={busy}
+              error={swapError}
+              onDismissError={onDismissSwapError}
+            />
+          )}
+        </div>
+
         <div className="mb-5">
           <div className="flex items-start justify-between gap-4">
             <h2 className="page-title min-w-0 flex-1">{c.title}</h2>
