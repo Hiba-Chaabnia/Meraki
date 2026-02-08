@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { SessionLoggerModal, AddHobbyModal, DashboardHome } from "@/components/dashboard";
+import { useState, useEffect, useMemo } from "react";
+import { SessionLoggerModal, AddHobbyModal, DashboardHome, ChallengeModal } from "@/components/dashboard";
 import type { SessionFormData } from "@/components/dashboard";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { useUser } from "@/lib/hooks/useUser";
 import { useDashboardHome } from "@/lib/hooks/useDashboardHome";
 import { useRoadmapGeneration } from "@/lib/hooks/useRoadmapGeneration";
+import { deriveNudge } from "@/lib/nudge";
+import { useChallengeActions } from "@/lib/hooks/useChallengeActions";
 import { updateHobbyStatus } from "@/app/actions/hobbies";
 import { createSession } from "@/app/actions/sessions";
 import { triggerPracticeFeedback } from "@/app/actions/feedback";
@@ -35,6 +37,17 @@ export default function DashboardPage() {
     errors: roadmapErrors,
   } = useRoadmapGeneration(fetchData);
 
+  /* Derived, not fetched — see lib/nudge.ts. Nothing to poll, nothing to rate
+     limit, and it lands with the first paint rather than a few seconds after. */
+  const nudge = useMemo(
+    () =>
+      isLoading
+        ? null
+        : deriveNudge({ variant, streak, hobbies, hasLiveChallenge: challenges.length > 0 }),
+    [isLoading, variant, streak, hobbies, challenges],
+  );
+
+  const challengeUi = useChallengeActions(fetchData);
   const [loggerOpen, setLoggerOpen] = useState(false);
   const [loggerInitialSlug, setLoggerInitialSlug] = useState<string | undefined>();
   const [loggerInitialDuration, setLoggerInitialDuration] = useState<number | undefined>();
@@ -64,6 +77,7 @@ export default function DashboardPage() {
 
     const result = await createSession({
       userHobbyId: hobby.userHobbyId,
+      userChallengeId: challengeUi.pendingCompletion?.id ?? null,
       sessionType: data.type,
       duration: data.duration,
       mood: data.mood,
@@ -85,6 +99,12 @@ export default function DashboardPage() {
         console.error("[Dashboard] Failed to trigger feedback:", e),
       );
     }
+    /* The only path that completes a challenge: the session is what makes
+       it true, so completion is recorded here rather than by a button. */
+    challengeUi.completeAfterSession().catch((e) =>
+      console.error("[Challenge] Completion failed:", e),
+    );
+
     checkAndAwardMilestones().catch((e) =>
       console.error("[Dashboard] Milestone check failed:", e),
     );
@@ -118,6 +138,15 @@ export default function DashboardPage() {
         initialHobbySlug={loggerInitialSlug}
         initialDuration={loggerInitialDuration}
       />
+      <ChallengeModal
+        challenge={challengeUi.open}
+        onClose={challengeUi.close}
+        generatingNext={challengeUi.generatingNext}
+        onLogAndComplete={(c) => { challengeUi.beginCompletion(c); openLogger(c.hobbySlug); }}
+        onGenerateNext={challengeUi.generateNext}
+        onSwap={challengeUi.swap}
+        error={challengeUi.error}
+      />
       <AddHobbyModal
         isOpen={addHobbyOpen}
         onClose={() => setAddHobbyOpen(false)}
@@ -141,6 +170,11 @@ export default function DashboardPage() {
         onGenerateRoadmap={generateRoadmap}
         onToggleGoal={toggleGoal}
         onTimerComplete={(slug, minutes) => openLogger(slug, minutes)}
+        onOpenChallenge={(id) => {
+          const c = rawChallenges.find((x) => x.id === id);
+          if (c) challengeUi.openChallenge(c);
+        }}
+        nudge={nudge && { message: nudge.message }}
       />
     </>
   );

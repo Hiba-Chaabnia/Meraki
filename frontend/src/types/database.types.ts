@@ -6,12 +6,6 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export interface NotificationPrefs {
-  email_enabled: boolean;
-  streak_reminders: boolean;
-  challenge_alerts: boolean;
-  weekly_digest: boolean;
-}
 
 export interface Database {
   public: {
@@ -24,7 +18,6 @@ export interface Database {
           bio: string;
           location: string;
           public_profile: boolean;
-          notification_prefs: NotificationPrefs;
           created_at: string;
           updated_at: string;
         };
@@ -35,7 +28,6 @@ export interface Database {
           bio?: string;
           location?: string;
           public_profile?: boolean;
-          notification_prefs?: NotificationPrefs;
           created_at?: string;
           updated_at?: string;
         };
@@ -46,7 +38,6 @@ export interface Database {
           bio?: string;
           location?: string;
           public_profile?: boolean;
-          notification_prefs?: NotificationPrefs;
           updated_at?: string;
         };
         Relationships: [];
@@ -119,22 +110,25 @@ export interface Database {
           id: string;
           user_id: string;
           challenge_id: string;
-          status: "active" | "upcoming" | "completed" | "skipped";
+          status: "active" | "completed" | "skipped";
           started_at: string | null;
           completed_at: string | null;
+          skipped_at: string | null;
         };
         Insert: {
           id?: string;
           user_id: string;
           challenge_id: string;
-          status?: "active" | "upcoming" | "completed" | "skipped";
+          status?: "active" | "completed" | "skipped";
           started_at?: string | null;
           completed_at?: string | null;
+          skipped_at?: string | null;
         };
         Update: {
-          status?: "active" | "upcoming" | "completed" | "skipped";
+          status?: "active" | "completed" | "skipped";
           started_at?: string | null;
           completed_at?: string | null;
+          skipped_at?: string | null;
         };
         Relationships: [
           {
@@ -369,42 +363,6 @@ export interface Database {
           location?: string;
           result?: Json;
           created_at?: string;
-        };
-        Relationships: [];
-      };
-      nudges: {
-        Row: {
-          id: string;
-          user_id: string;
-          hobby_slug: string | null;
-          nudge_type: string;
-          message: string;
-          suggested_action: string;
-          action_data: string | null;
-          urgency: "gentle" | "check_in" | "re_engage";
-          acted_on: boolean;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          hobby_slug?: string | null;
-          nudge_type?: string;
-          message?: string;
-          suggested_action?: string;
-          action_data?: string | null;
-          urgency?: "gentle" | "check_in" | "re_engage";
-          acted_on?: boolean;
-          created_at?: string;
-        };
-        Update: {
-          acted_on?: boolean;
-          hobby_slug?: string | null;
-          nudge_type?: string;
-          message?: string;
-          suggested_action?: string;
-          action_data?: string | null;
-          urgency?: "gentle" | "check_in" | "re_engage";
         };
         Relationships: [];
       };

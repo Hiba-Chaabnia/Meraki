@@ -62,14 +62,14 @@ create table public.user_challenges (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid not null references auth.users(id) on delete cascade,
   challenge_id uuid not null references public.challenges(id) on delete cascade,
-  status       text not null default 'upcoming'
-    check (status in ('active', 'upcoming', 'completed', 'skipped')),
+  status       text not null default 'active'
+    check (status in ('active', 'completed', 'skipped')),
   started_at   timestamptz,
   completed_at timestamptz,
+  skipped_at   timestamptz,
   unique (user_id, challenge_id)
 );
 
-create index idx_user_challenges_user     on public.user_challenges(user_id, status);
 create index idx_user_challenges_challenge on public.user_challenges(challenge_id);
 
 
@@ -214,27 +214,7 @@ create index idx_jobs_created_at on public.jobs(created_at desc);
 
 
 -- ─────────────────────────────────────────────────────────
--- 14. NUDGES
--- ─────────────────────────────────────────────────────────
-create table public.nudges (
-  id               uuid primary key default gen_random_uuid(),
-  user_id          uuid not null references auth.users(id) on delete cascade,
-  hobby_slug       text,
-  nudge_type       text not null default '',
-  message          text not null default '',
-  suggested_action text not null default '',
-  action_data      text default '',
-  urgency          text not null default 'gentle'
-    check (urgency in ('gentle', 'check_in', 're_engage')),
-  acted_on         boolean not null default false,
-  created_at       timestamptz not null default now()
-);
-
-create index idx_nudges_user_created on public.nudges(user_id, created_at desc);
-
-
--- ─────────────────────────────────────────────────────────
--- 15. ROADMAPS
+-- 14. ROADMAPS
 -- ─────────────────────────────────────────────────────────
 create table public.roadmaps (
   id           uuid primary key default gen_random_uuid(),
@@ -250,7 +230,7 @@ create index idx_roadmaps_hobby on public.roadmaps(hobby_slug);
 
 
 -- ─────────────────────────────────────────────────────────
--- 16. USER_ROADMAPS
+-- 15. USER_ROADMAPS
 -- Fix: unique constraint is now (user_id, hobby_slug) so a user
 -- has exactly one active roadmap per hobby regardless of roadmap_id.
 -- ─────────────────────────────────────────────────────────
@@ -396,7 +376,6 @@ alter table public.quiz_responses          enable row level security;
 alter table public.hobby_matches           enable row level security;
 alter table public.sampling_results        enable row level security;
 alter table public.local_experience_results enable row level security;
-alter table public.nudges                  enable row level security;
 alter table public.roadmaps                enable row level security;
 alter table public.user_roadmaps           enable row level security;
 -- jobs: no RLS — backend uses service-role key
@@ -508,14 +487,6 @@ create policy "Users can insert own local experience results"
 
 create policy "Users can update own local experience results"
   on public.local_experience_results for update to authenticated using (auth.uid() = user_id);
-
--- ─── nudges — backend inserts via service-role key (no INSERT policy needed) ───
-create policy "Users can read own nudges"
-  on public.nudges for select to authenticated using (auth.uid() = user_id);
-
-create policy "Users can update own nudges"
-  on public.nudges for update to authenticated
-  using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ─── user_roadmaps ───
 create policy "Users can read own user_roadmaps"

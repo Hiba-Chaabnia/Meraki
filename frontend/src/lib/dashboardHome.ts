@@ -105,6 +105,66 @@ function startOfWeek(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() - mondayOffset);
 }
 
+/* ─── Heatmap ────────────────────────────────────────────────────────────── */
+
+/** Minutes practised on one calendar day. */
+export interface HeatmapDay {
+  /** ISO timestamp of a session. */
+  date: string;
+  duration: number;
+}
+
+export interface Heatmap {
+  cells: (0 | 1 | 2 | 3)[];
+  /** Whole Monday-start weeks in `cells`. */
+  weeks: number;
+}
+
+const HEATMAP_WEEKS = 12;
+
+/**
+ * Twelve weeks of practice intensity, one cell per day, Monday-first.
+ *
+ * Built here rather than in the server action for two reasons the old version
+ * got wrong.
+ *
+ * **The grid is aligned to calendar weeks.** It used to run "83 days ago →
+ * today" and chunk that into sevens, so a column was a rolling 7-day block
+ * starting on whatever weekday fell 83 days back. The M/W/F/S row labels beside
+ * it claimed otherwise, and were only truthful when today happened to be a
+ * Sunday. Starting from `startOfWeek` makes each column a real week and the
+ * labels true every day of the year.
+ *
+ * **Days are bucketed by the viewer's local date**, via the same `localDateKey`
+ * `deriveStreak` uses. The server action keyed off `toISOString()`, so a session
+ * logged at 9pm in a western timezone counted toward tomorrow's cell but today's
+ * streak — the two disagreed about which day you practised.
+ */
+export function buildHeatmap(days: HeatmapDay[], now: Date = new Date()): Heatmap {
+  const minutesByDay = new Map<string, number>();
+  for (const d of days) {
+    const key = localDateKey(new Date(d.date));
+    minutesByDay.set(key, (minutesByDay.get(key) ?? 0) + d.duration);
+  }
+
+  // The last cell is the end of *this* week, so the current week is never a
+  // stub — an in-progress week rendered short would misalign every row.
+  const end = startOfWeek(now);
+  end.setDate(end.getDate() + 6);
+  const start = new Date(end);
+  start.setDate(start.getDate() - (HEATMAP_WEEKS * 7 - 1));
+
+  const cells: (0 | 1 | 2 | 3)[] = [];
+  const cursor = new Date(start);
+  for (let i = 0; i < HEATMAP_WEEKS * 7; i += 1) {
+    const minutes = minutesByDay.get(localDateKey(cursor)) ?? 0;
+    cells.push(minutes === 0 ? 0 : minutes < 30 ? 1 : minutes < 60 ? 2 : 3);
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return { cells, weeks: HEATMAP_WEEKS };
+}
+
 /* ─── Labels ─────────────────────────────────────────────────────────────── */
 
 /** "today" | "yesterday" | "3 days ago" — the row's progress-bar sibling. */
@@ -160,6 +220,51 @@ function buildStageGoals(
 }
 
 /**
+ * Active first, then most recently practised. Extracted because the theme a
+ * hobby wears is its *position* in this order, not a property of the hobby —
+ * so the hobby detail page has to reproduce the ordering to paint itself the
+ * same colour as the card you clicked to get there.
+ */
+export function orderHobbies<T extends { slug: string; status: "active" | "paused" }>(
+  hobbies: T[],
+  lastSessionDate: (slug: string) => string,
+): T[] {
+  return [...hobbies].sort((a, b) => {
+    if (a.status !== b.status) return a.status === "active" ? -1 : 1;
+    return lastSessionDate(b.slug).localeCompare(lastSessionDate(a.slug));
+  });
+}
+
+/**
+ * `orderHobbies`' rule applied to `ActiveHobby`, which carries days-since as a
+ * number rather than a date string.
+ *
+ * Same ordering, different input, and the difference matters: this needs only
+ * the hobby rows. Ordering by date string forced every caller to load every
+ * session first, which is why the hobby page used to fetch the whole account
+ * before it could decide what colour to paint itself.
+ */
+export function orderActiveHobbies<
+  T extends { status: "active" | "paused"; lastSessionDaysAgo: number },
+>(hobbies: T[]): T[] {
+  return [...hobbies].sort((a, b) => {
+    if (a.status !== b.status) return a.status === "active" ? -1 : 1;
+    return a.lastSessionDaysAgo - b.lastSessionDaysAgo;
+  });
+}
+
+/** `themeForSlug` for callers holding `ActiveHobby[]` — see `orderActiveHobbies`. */
+export function themeForActiveHobbies(
+  hobbies: { slug: string; status: "active" | "paused"; lastSessionDaysAgo: number }[],
+  slug: string,
+): HobbyTheme {
+  const index = orderActiveHobbies(hobbies).findIndex((h) => h.slug === slug);
+  return index % 2 === 0 ? "primary" : "secondary";
+}
+
+
+
+/**
  * Fold hobbies, their sessions and their roadmaps into the row shape.
  * Active hobbies come first, then by most recently practised — the order the
  * blue/lime rhythm is assigned in, so it stays stable between renders.
@@ -179,12 +284,7 @@ export function buildDashboardHobbies(
 
   const roadmapBySlug = new Map(roadmaps.map((r) => [r.hobbySlug, r]));
 
-  const ordered = [...hobbies].sort((a, b) => {
-    if (a.status !== b.status) return a.status === "active" ? -1 : 1;
-    const aLast = sessionsBySlug.get(a.slug)?.[0]?.date ?? "";
-    const bLast = sessionsBySlug.get(b.slug)?.[0]?.date ?? "";
-    return bLast.localeCompare(aLast);
-  });
+  const ordered = orderHobbies(hobbies, (slug) => sessionsBySlug.get(slug)?.[0]?.date ?? "");
 
   return ordered.map((h, index) => {
     // getSessions() returns newest-first, so [0] is the latest.
