@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { addHobbyDirect } from "@/app/actions/hobbies";
+import { useCommit } from "@/hooks/useCommit";
 import { SamplingCTA } from "@/components/discover/sampling/SamplingCTA";
 import { Button } from "@/components/ui/Button";
 
@@ -22,17 +21,7 @@ export function MicroActivityCard({
   hobbyName,
 }: MicroActivityCardProps) {
   const [done, setDone] = useState(false);
-  const [committing, setCommitting] = useState(false);
-  const router = useRouter();
-
-  async function handleCommit() {
-    setCommitting(true);
-    const { error } = await addHobbyDirect(hobbySlug);
-    if (!error) {
-      router.push(`/dashboard/hobby/${hobbySlug}`);
-    }
-    setCommitting(false);
-  }
+  const { handleCommit, committing, commitError } = useCommit(hobbySlug);
 
   return (
     <div className="p-4 md:p-10">
@@ -73,6 +62,7 @@ export function MicroActivityCard({
               currentPath="micro"
               onCommit={handleCommit}
               committing={committing}
+              commitError={commitError}
             />
           </div>
         )}

@@ -5,6 +5,20 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check } from "lucide-react";
 import { addCustomHobby } from "@/app/actions/hobbies";
+
+/* Must match `JOB_KEY_PREFIX` in lib/hooks/useRoadmapGeneration, which resumes
+   any job it finds under this key — that is how the build started here shows as
+   in-flight on the card instead of the card offering to start one. */
+const ROADMAP_JOB_KEY_PREFIX = "roadmap-job-";
+
+function rememberRoadmapJob(slug: string | undefined, jobId: string | undefined) {
+  if (!slug || !jobId) return;
+  try {
+    sessionStorage.setItem(`${ROADMAP_JOB_KEY_PREFIX}${slug}`, jobId);
+  } catch {
+    /* Private mode or quota — the card still offers the manual build. */
+  }
+}
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -50,6 +64,7 @@ export function AddHobbyModal({
       setError(res.error);
       return;
     }
+    rememberRoadmapJob(res.slug, res.roadmapJobId);
     setSuccess(true);
     setTimeout(() => {
       onClose();
@@ -67,6 +82,7 @@ export function AddHobbyModal({
       setError(res.error ?? "Failed to add hobby");
       return;
     }
+    rememberRoadmapJob(res.slug, res.roadmapJobId);
     onClose();
     router.push(`/discover/sampling/${res.slug}?from=dashboard`);
   };

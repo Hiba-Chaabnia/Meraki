@@ -15,6 +15,8 @@ interface SamplingCTAProps {
   onCommit?: () => void;
   committing?: boolean;
   showCommit?: boolean;
+  /** A refused start — the hobby cap is the usual reason. */
+  commitError?: string | null;
 }
 
 export function SamplingCTA({
@@ -24,6 +26,7 @@ export function SamplingCTA({
   onCommit,
   committing = false,
   showCommit = true,
+  commitError,
 }: SamplingCTAProps) {
   const otherPaths = (Object.keys(pathConfig) as SamplingPath[]).filter(
     (p) => p !== currentPath
@@ -42,6 +45,9 @@ export function SamplingCTA({
           {committing ? "Adding to your hobbies..." : `Commit to ${hobbyName}`}
         </Button>
       )}
+      {/* Was swallowed: a refused start (usually the three-hobby cap) left the
+          button re-enabled with nothing said. */}
+      {commitError && <p className="text-sm text-red-600">{commitError}</p>}
       <div className="flex gap-3">
         {otherPaths.map((path) => (
           <Button

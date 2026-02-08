@@ -362,29 +362,3 @@ export async function getLocalExperienceResult(
 
   return { data: data.result as unknown as LocalExperiencesResult };
 }
-
-// ─── Complete Sampling Action ───
-
-export async function completeSampling(hobbySlug: string) {
-  if (!hobbySlug || hobbySlug.length > 50 || !SLUG_RE.test(hobbySlug))
-    return { error: "Invalid hobby slug." };
-  const auth = await requireAuth();
-  if ("error" in auth) return { error: auth.error };
-  const { supabase, user } = auth;
-
-  const { data, error } = await supabase
-    .from("user_hobbies")
-    .upsert(
-      {
-        user_id: user.id,
-        hobby_slug: hobbySlug,
-        status: "active" as const,
-      },
-      { onConflict: "user_id,hobby_slug" },
-    )
-    .select()
-    .single();
-
-  if (error) return { error: error.message };
-  return { data };
-}

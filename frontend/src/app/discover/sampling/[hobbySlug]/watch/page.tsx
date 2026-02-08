@@ -1,7 +1,6 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { formatSlug } from "@/lib/hobbyData";
 import { PageLayout } from "@/components/layouts/PageLayout";
@@ -19,7 +18,7 @@ export default function WatchPage({
   const { hobbySlug } = use(params);
   const hobbyName = formatSlug(hobbySlug);
   const { previewResult, previewLoading } = useSamplingPreview(hobbySlug);
-  const { handleCommit, committing, committed, commitError } = useCommit(hobbySlug);
+  const { handleCommit, committing, commitError } = useCommit(hobbySlug);
 
   const videos: Video[] = previewResult?.videos ?? [];
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
@@ -49,34 +48,7 @@ export default function WatchPage({
           </motion.div>
         )}
 
-        {committed ? (
-          <div className="flex-1 flex items-center justify-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="text-center max-w-sm w-full space-y-6"
-            >
-              <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl bg-gray-100">
-                🎉
-              </div>
-              <div>
-                <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                  {hobbyName} is now on your list!
-                </h2>
-                <p className="text-gray-500 text-sm">
-                  Head to your dashboard to log your first session and start your journey.
-                </p>
-              </div>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gray-700 transition-all hover:shadow-lg active:scale-95"
-              >
-                Go to Dashboard
-              </Link>
-            </motion.div>
-          </div>
-        ) : hasVideos ? (
+        {hasVideos ? (
           <VideoDisplaySection
             videos={videos}
             selectedVideo={selectedVideo!}
