@@ -10,11 +10,6 @@ Usage:
     python -m meraki_flow.optimization.optimize_discovery --apply
 """
 
-import argparse
-import json
-import os
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -28,14 +23,18 @@ from opik_optimizer import MetaPromptOptimizer, ChatPrompt
 # Paths
 CREW_DIR = Path(__file__).resolve().parent.parent / "crews" / "discovery_crew" / "config"
 AGENTS_YAML = CREW_DIR / "agents.yaml"
-RESULTS_DIR = Path(__file__).resolve().parent / "results"
+from meraki_flow.optimization.harness import (
+    RESULTS_DIR,
+    OptimizerSpec,
+    load_agent,
+    summarise,
+    run_cli,
+)
 
 
 def load_current_prompt() -> str:
     """Load the current discovery_agent backstory from agents.yaml."""
-    with open(AGENTS_YAML) as f:
-        config = yaml.safe_load(f)
-    agent = config["discovery_agent"]
+    agent = load_agent(AGENTS_YAML, "discovery_agent")
     return f"""Role: {agent['role'].strip()}
 
 Goal: {agent['goal'].strip()}
@@ -194,95 +193,27 @@ def run_optimization(n_trials: int = 10) -> dict:
     )
 
     # Print results as plain text (Rich display crashes on Windows cp1252)
-    print(f"\nOptimization complete!")
-    print(f"Initial score: {result.initial_score}")
-    print(f"Best score:    {result.score}")
-    if result.initial_score and result.initial_score != 0:
-        improvement = (result.score - result.initial_score) / abs(result.initial_score) * 100
-        print(f"Improvement:   {improvement:+.1f}%")
-
-    # Serialize result
-    result_data = {
-        "optimizer": "MetaPromptOptimizer",
-        "crew": "discovery",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "initial_score": result.initial_score,
-        "best_score": result.score,
-        "metric": result.metric_name,
-        "optimized_prompt": result.prompt,  # list of {role, content} dicts
-        "initial_prompt": result.initial_prompt,
-        "n_trials": n_trials,
-    }
-
-    return result_data
+    return summarise(result, optimizer="MetaPromptOptimizer", crew="discovery", n_trials=n_trials)
 
 
-def save_results(result_data: dict) -> Path:
-    """Save optimization results to a JSON file."""
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    filepath = RESULTS_DIR / f"discovery_optimization_{timestamp}.json"
-
-    with open(filepath, "w") as f:
-        json.dump(result_data, f, indent=2, default=str)
-
-    print(f"\nResults saved to: {filepath}")
-    return filepath
+def _print_improvement(result_data: dict) -> None:
+    """Discovery only: a MetaPrompt run is judged on the score delta."""
+    print(
+        f"Score improvement: {result_data['initial_score']:.4f} -> "
+        f"{result_data['best_score']:.4f}"
+    )
 
 
-def apply_to_yaml(result_data: dict) -> None:
-    """Update agents.yaml with the optimized backstory from the result."""
-    optimized_messages = result_data.get("optimized_prompt", [])
-    if not optimized_messages:
-        print("No optimized prompt to apply.")
-        return
-
-    # Extract the system message content (the optimized backstory)
-    system_content = None
-    for msg in optimized_messages:
-        if msg.get("role") == "system":
-            system_content = msg["content"]
-            break
-
-    if not system_content:
-        print("No system message found in optimized prompt.")
-        return
-
-    # Load current YAML
-    with open(AGENTS_YAML) as f:
-        config = yaml.safe_load(f)
-
-    # Backup original
-    backup_path = AGENTS_YAML.with_suffix(".yaml.bak")
-    with open(backup_path, "w") as f:
-        yaml.dump(config, f, default_flow_style=False)
-    print(f"Backed up original to: {backup_path}")
-
-    # Update backstory with the optimized content
-    config["discovery_agent"]["backstory"] = system_content
-
-    with open(AGENTS_YAML, "w") as f:
-        yaml.dump(config, f, default_flow_style=False, width=100)
-
-    print(f"Updated {AGENTS_YAML} with optimized backstory")
-    print(f"Score improvement: {result_data['initial_score']:.4f} -> {result_data['best_score']:.4f}")
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Optimize Discovery Agent prompt")
-    parser.add_argument("--trials", type=int, default=10, help="Number of optimization trials")
-    parser.add_argument("--apply", action="store_true", help="Apply optimized prompt to agents.yaml")
-    args = parser.parse_args()
-
-    result_data = run_optimization(n_trials=args.trials)
-    filepath = save_results(result_data)
-
-    if args.apply:
-        apply_to_yaml(result_data)
-    else:
-        print("\nTo apply the optimized prompt to agents.yaml, run with --apply")
-        print(f"Or manually inspect: {filepath}")
+SPEC = OptimizerSpec(
+    prefix="discovery",
+    description="Optimize Discovery Agent prompt",
+    agents_yaml=AGENTS_YAML,
+    agent_key="discovery_agent",
+    default_trials=10,
+    optimize=run_optimization,
+    on_applied=_print_improvement,
+)
 
 
 if __name__ == "__main__":
-    main()
+    run_cli(SPEC)

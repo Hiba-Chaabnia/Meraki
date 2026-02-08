@@ -9,9 +9,7 @@ Usage:
     python -m meraki_flow.optimization.optimize_challenges --apply
 """
 
-import argparse
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -19,18 +17,21 @@ load_dotenv(Path(__file__).resolve().parent.parent.parent.parent / ".env")
 
 import opik
 import yaml
-from opik.evaluation.metrics import LevenshteinRatio
 from opik_optimizer import FewShotBayesianOptimizer, ChatPrompt
 
 CREW_DIR = Path(__file__).resolve().parent.parent / "crews" / "challenge_generation_crew" / "config"
 AGENTS_YAML = CREW_DIR / "agents.yaml"
-RESULTS_DIR = Path(__file__).resolve().parent / "results"
+from meraki_flow.optimization.harness import (
+    RESULTS_DIR,
+    OptimizerSpec,
+    load_agent,
+    summarise,
+    run_cli,
+)
 
 
 def load_current_prompt() -> str:
-    with open(AGENTS_YAML) as f:
-        config = yaml.safe_load(f)
-    agent = config["challenge_designer"]
+    agent = load_agent(AGENTS_YAML, "challenge_designer")
     return f"""{agent['backstory'].strip()}
 
 Design a single creative challenge for the user.
@@ -193,97 +194,30 @@ def run_optimization(n_trials: int = 15) -> dict:
         project_name="meraki-optimize-challenges",
     )
 
-    print(f"\nOptimization complete!")
-    print(f"Initial score: {result.initial_score}")
-    print(f"Best score:    {result.score}")
-    if result.initial_score and result.initial_score != 0:
-        improvement = (result.score - result.initial_score) / abs(result.initial_score) * 100
-        print(f"Improvement:   {improvement:+.1f}%")
-    if result.demonstrations:
-        print(f"Best examples: {len(result.demonstrations)} few-shot demonstrations found")
-
-    result_data = {
-        "optimizer": "FewShotBayesianOptimizer",
-        "crew": "challenge_generation",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "initial_score": result.initial_score,
-        "best_score": result.score,
-        "metric": result.metric_name,
-        "optimized_prompt": result.prompt,
-        "initial_prompt": result.initial_prompt,
-        "demonstrations": result.demonstrations,
-        "n_trials": n_trials,
-    }
-
-    return result_data
+    return summarise(result, optimizer="FewShotBayesianOptimizer", crew="challenge_generation", n_trials=n_trials)
 
 
-def save_results(result_data: dict) -> Path:
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    filepath = RESULTS_DIR / f"challenge_optimization_{timestamp}.json"
-
-    with open(filepath, "w") as f:
-        json.dump(result_data, f, indent=2, default=str)
-
-    print(f"\nResults saved to: {filepath}")
-    return filepath
-
-
-def apply_to_yaml(result_data: dict) -> None:
-    optimized_messages = result_data.get("optimized_prompt", [])
-    if not optimized_messages:
-        print("No optimized prompt to apply.")
-        return
-
-    system_content = None
-    for msg in optimized_messages:
-        if msg.get("role") == "system":
-            system_content = msg["content"]
-            break
-
-    if not system_content:
-        print("No system message found in optimized prompt.")
-        return
-
-    with open(AGENTS_YAML) as f:
-        config = yaml.safe_load(f)
-
-    backup_path = AGENTS_YAML.with_suffix(".yaml.bak")
-    with open(backup_path, "w") as f:
-        yaml.dump(config, f, default_flow_style=False)
-    print(f"Backed up original to: {backup_path}")
-
-    config["challenge_designer"]["backstory"] = system_content
-
-    with open(AGENTS_YAML, "w") as f:
-        yaml.dump(config, f, default_flow_style=False, width=100)
-
-    print(f"Updated {AGENTS_YAML} with optimized backstory")
-
-    # Also save demonstrations separately for easy reference
+def _save_demonstrations(result_data: dict) -> None:
+    """Challenges only: the few-shot examples are the point of a Bayesian run."""
     demos = result_data.get("demonstrations")
-    if demos:
-        demos_path = RESULTS_DIR / "challenge_best_examples.json"
-        with open(demos_path, "w") as f:
-            json.dump(demos, f, indent=2, default=str)
-        print(f"Best few-shot examples saved to: {demos_path}")
+    if not demos:
+        return
+    demos_path = RESULTS_DIR / "challenge_best_examples.json"
+    with open(demos_path, "w") as f:
+        json.dump(demos, f, indent=2, default=str)
+    print(f"Best few-shot examples saved to: {demos_path}")
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Optimize Challenge Designer prompt")
-    parser.add_argument("--trials", type=int, default=15, help="Number of optimization trials")
-    parser.add_argument("--apply", action="store_true", help="Apply optimized prompt to agents.yaml")
-    args = parser.parse_args()
-
-    result_data = run_optimization(n_trials=args.trials)
-    filepath = save_results(result_data)
-
-    if args.apply:
-        apply_to_yaml(result_data)
-    else:
-        print(f"\nTo apply, run with --apply. Inspect results: {filepath}")
+SPEC = OptimizerSpec(
+    prefix="challenge",
+    description="Optimize Challenge Designer prompt",
+    agents_yaml=AGENTS_YAML,
+    agent_key="challenge_designer",
+    default_trials=15,
+    optimize=run_optimization,
+    on_applied=_save_demonstrations,
+)
 
 
 if __name__ == "__main__":
-    main()
+    run_cli(SPEC)

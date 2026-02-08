@@ -4,7 +4,7 @@ Run all optimization scripts sequentially and generate a summary report.
 Usage:
     python -m meraki_flow.optimization.run_all
     python -m meraki_flow.optimization.run_all --apply
-    python -m meraki_flow.optimization.run_all --only discovery challenges motivation
+    python -m meraki_flow.optimization.run_all --only discovery challenges
 """
 
 import argparse
@@ -25,10 +25,6 @@ OPTIMIZERS = {
     "challenges": {
         "module": "meraki_flow.optimization.optimize_challenges",
         "description": "ChallengeGenerationCrew (FewShotBayesianOptimizer)",
-    },
-    "motivation": {
-        "module": "meraki_flow.optimization.optimize_motivation",
-        "description": "MotivationCrew (EvolutionaryOptimizer)",
     },
 }
 
