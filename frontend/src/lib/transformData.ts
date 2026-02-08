@@ -15,6 +15,12 @@ import { formatSlug } from "@/lib/hobbyData";
 type Tables = Database["public"]["Tables"];
 
 type UserHobbyRow = Tables["user_hobbies"]["Row"];
+
+/** What `getUserHobbies` returns: the row plus its practice totals. */
+export type UserHobbyWithTotals = UserHobbyRow & {
+  session_count?: number;
+  last_session_at?: string | null;
+};
 type PracticeSessionRow = Tables["practice_sessions"]["Row"];
 type ChallengesRow = Tables["challenges"]["Row"];
 type UserChallengeRow = Tables["user_challenges"]["Row"];
@@ -55,7 +61,7 @@ type UserStatsRpc = {
 /* ─── Mappers ────────────────────────────────────────────────────────────── */
 
 /** Map a user_hobbies row to ActiveHobby */
-export function toActiveHobby(row: UserHobbyRow): ActiveHobby {
+export function toActiveHobby(row: UserHobbyWithTotals): ActiveHobby {
   return {
     userHobbyId: row.id,
     slug: row.hobby_slug,
@@ -63,12 +69,17 @@ export function toActiveHobby(row: UserHobbyRow): ActiveHobby {
     name: row.custom_name?.trim() || formatSlug(row.hobby_slug),
     status: row.status === "paused" ? "paused" : "active",
     currentStreak: 0,
-    totalSessions: 0,
+    totalSessions: row.session_count ?? 0,
     daysSinceStart: Math.max(
       1,
       Math.floor((Date.now() - new Date(row.started_at).getTime()) / 86_400_000),
     ),
-    lastSessionDaysAgo: 0,
+    /* Number.MAX_SAFE_INTEGER, not 0, for "never practised": callers sort
+       ascending on this to get most-recent-first, and 0 would file an untouched
+       hobby ahead of one practised today. */
+    lastSessionDaysAgo: row.last_session_at
+      ? Math.max(0, Math.floor((Date.now() - new Date(row.last_session_at).getTime()) / 86_400_000))
+      : Number.MAX_SAFE_INTEGER,
     pausedAt: row.paused_at ?? null,
   };
 }
@@ -101,7 +112,8 @@ export function toChallenge(row: UserChallengeWithChallenge): Challenge {
     skills: ch.skills ?? [],
     difficulty: ch.difficulty ?? "easy",
     estimatedTime: ch.estimated_time ?? "",
-    status: row.status ?? "upcoming",
+    // `status` is NOT NULL in the schema, so there is nothing to fall back to.
+    status: row.status,
     startedDate: row.started_at ?? null,
     completedDate: row.completed_at ?? null,
     tips: ch.tips ?? [],
@@ -124,31 +136,13 @@ export function toMilestone(row: MilestoneWithEarned): Milestone {
 /* ─── Collection helpers ─────────────────────────────────────────────────── */
 
 /** Filter raw user_hobbies data to active/paused and map to ActiveHobby[] */
-export function toActiveHobbies(data: UserHobbyRow[] | null): ActiveHobby[] {
+export function toActiveHobbies(data: UserHobbyWithTotals[] | null): ActiveHobby[] {
   return (data ?? [])
     .filter((h) => h.status === "active" || h.status === "paused")
     .map(toActiveHobby);
 }
 
-/** Filter sessions by hobby slug and map to PracticeSession[] */
-export function toSessionsForHobby(
-  data: SessionWithHobby[] | null,
-  hobbySlug: string
-): PracticeSession[] {
-  return (data ?? [])
-    .filter((s) => s.user_hobbies?.hobby_slug === hobbySlug)
-    .map(toPracticeSession);
-}
 
-/** Filter challenges by hobby slug and map to Challenge[] */
-export function toChallengesForHobby(
-  data: UserChallengeWithChallenge[] | null,
-  hobbySlug: string
-): Challenge[] {
-  return (data ?? [])
-    .filter((c) => c.challenges.hobby_slug === hobbySlug)
-    .map(toChallenge);
-}
 
 /** Map all user_roadmaps rows to Roadmap[] */
 export function toRoadmaps(data: UserRoadmapWithRoadmap[] | null): Roadmap[] {

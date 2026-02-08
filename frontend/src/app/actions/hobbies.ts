@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { triggerRoadmapGeneration } from "./roadmap";
 import { requireAuth } from "@/lib/supabase/requireAuth";
 import type { Database } from "@/types/database.types";
 import { CAP_MESSAGE, MAX_ACTIVE_HOBBIES } from "@/lib/hobbyLimits";
@@ -52,6 +53,20 @@ async function countActive(
 
 const capReached = (): HobbyResult<never> => ({ error: CAP_MESSAGE });
 
+/**
+ * Every hobby, with its practice totals folded in.
+ *
+ * The totals are a second, deliberately narrow query — two columns, no join —
+ * rather than an embedded aggregate, because PostgREST cannot give both a count
+ * and a max() per parent in one embed.
+ *
+ * They matter because `toActiveHobby` used to hardcode `totalSessions: 0` and
+ * `lastSessionDaysAgo: 0`, the row carrying neither. Every surface reading an
+ * `ActiveHobby` therefore showed "0 sessions" regardless of the truth — the
+ * profile's hobby list said it in plain text. It also meant ordering hobbies by
+ * recency was impossible without fetching every session, which is why the hobby
+ * page pulled the whole account just to pick its own colour.
+ */
 export async function getUserHobbies() {
   const supabase = await createClient();
   const {
@@ -66,7 +81,35 @@ export async function getUserHobbies() {
     .order("started_at", { ascending: false });
 
   if (error) return { error: error.message };
-  return { data };
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("practice_sessions")
+    .select("user_hobby_id, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (sessionsError) {
+    // Not fatal: the hobbies are the answer, the totals are the trimming.
+    console.error("[getUserHobbies] Session totals failed:", sessionsError.message);
+    return { data };
+  }
+
+  const totals = new Map<string, { count: number; lastAt: string }>();
+  for (const s of sessions ?? []) {
+    if (!s.user_hobby_id) continue;
+    const existing = totals.get(s.user_hobby_id);
+    // Newest-first, so the first row seen for a hobby is its latest.
+    if (existing) existing.count += 1;
+    else totals.set(s.user_hobby_id, { count: 1, lastAt: s.created_at });
+  }
+
+  return {
+    data: (data ?? []).map((h) => ({
+      ...h,
+      session_count: totals.get(h.id)?.count ?? 0,
+      last_session_at: totals.get(h.id)?.lastAt ?? null,
+    })),
+  };
 }
 
 export async function addUserHobby(
@@ -248,14 +291,46 @@ export async function deleteUserHobby(
   return { data: { slug: hobby.hobby_slug } };
 }
 
-export async function addHobbyDirect(slug: string) {
-  if (!slug || slug.length > 50) return { error: "Invalid slug." };
-  return addUserHobby(slug, "active");
+/**
+ * The one way a hobby becomes yours.
+ *
+ * Replaces `addHobbyDirect` and `completeSampling`, which were two upserts of
+ * the same row reached from different sampling pathways — Watch used one and
+ * stopped on a success screen, Micro and Local used the other and navigated.
+ * Same intent, different outcome depending on which card you happened to open.
+ *
+ * It also kicks off the roadmap. A hobby with no roadmap lands on a dashboard
+ * card whose only offer is "build one" and a hobby page of empty states, which
+ * is what the moment of highest intent used to buy you. The job id comes back
+ * so the caller can hand it to `useRoadmapGeneration`, which then shows the
+ * build in flight rather than an empty roadmap slot.
+ *
+ * A failed trigger is not a failed start: the hobby is saved either way, and
+ * the hobby page still offers the manual button.
+ */
+export async function startHobby(
+  slug: string,
+): Promise<HobbyResult & { roadmapJobId?: string }> {
+  if (!slug || !SLUG_RE.test(slug)) return { error: "Invalid hobby slug." };
+
+  const result = await addUserHobby(slug, "active");
+  if ("error" in result && result.error) return result;
+
+  const { job_id, error } = await triggerRoadmapGeneration(slug);
+  if (error) console.error("[startHobby] Roadmap trigger failed:", error);
+
+  return { ...result, roadmapJobId: job_id };
 }
 
+/**
+ * Add a hobby by typing its name, from the dashboard.
+ *
+ * Triggers the roadmap for the same reason `startHobby` does — a hobby added
+ * here used to land as a card whose only offer was "build one".
+ */
 export async function addCustomHobby(
   name: string,
-): Promise<HobbyResult & { slug?: string }> {
+): Promise<HobbyResult & { slug?: string; roadmapJobId?: string }> {
   const trimmed = name.trim();
   if (!trimmed || trimmed.length > 100) return { error: "Invalid hobby name." };
 
@@ -300,5 +375,9 @@ export async function addCustomHobby(
     .single();
 
   if (error) return { error: error.message };
-  return { data, slug };
+
+  const { job_id, error: roadmapError } = await triggerRoadmapGeneration(slug);
+  if (roadmapError) console.error("[addCustomHobby] Roadmap trigger failed:", roadmapError);
+
+  return { data, slug, roadmapJobId: job_id };
 }
