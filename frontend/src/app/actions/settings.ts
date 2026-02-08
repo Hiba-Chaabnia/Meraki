@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { NotificationPrefs } from "@/types/database.types";
 
 /**
  * Every table holding rows scoped to a single user, mapped to the select used
@@ -23,7 +22,6 @@ const USER_DATA_TABLES = {
   hobby_matches: "*",
   sampling_results: "*",
   local_experience_results: "*",
-  nudges: "*",
   user_roadmaps: "*",
 } as const;
 
@@ -57,41 +55,6 @@ export async function changePassword(newPassword: string) {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) return { error: error.message };
   return { success: true };
-}
-
-export async function getNotificationPrefs() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("notification_prefs")
-    .eq("id", user.id)
-    .single();
-
-  if (error) return { error: error.message };
-  return { data: data.notification_prefs };
-}
-
-export async function updateNotificationPrefs(prefs: NotificationPrefs) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ notification_prefs: prefs, updated_at: new Date().toISOString() })
-    .eq("id", user.id)
-    .select("notification_prefs")
-    .single();
-
-  if (error) return { error: error.message };
-  return { data: data.notification_prefs };
 }
 
 export async function exportUserData() {

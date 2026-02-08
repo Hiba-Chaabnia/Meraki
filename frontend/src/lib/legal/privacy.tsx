@@ -102,9 +102,6 @@ export const PRIVACY: LegalDoc = {
               <strong>Hobbies and challenges:</strong> which you have chosen,
               their status, and when you started or completed them.
             </li>
-            <li>
-              <strong>Settings:</strong> your notification preferences.
-            </li>
           </ul>
           <p>
             Your notes and mood entries are the most personal thing in the app.
@@ -202,13 +199,6 @@ export const PRIVACY: LegalDoc = {
             Diagnosing faults, preventing abuse, and protecting accounts.{" "}
             <em>Basis: our legitimate interests</em> in running a functioning,
             non-abused service, balanced against your interests.
-          </p>
-
-          <h3>To send you the emails you chose</h3>
-          <p>
-            Streak reminders, challenge alerts, and a weekly digest — only the
-            ones you switched on. <em>Basis: your consent</em>, which you can
-            withdraw at any time in Settings without affecting anything else.
           </p>
 
           <h3>To meet legal obligations</h3>
@@ -430,11 +420,6 @@ export const PRIVACY: LegalDoc = {
             <li>
               <strong>Object or restrict</strong> — ask us to stop or limit a
               particular use of your data.
-            </li>
-            <li>
-              <strong>Withdraw consent</strong> — turn off notification emails
-              in Settings at any time. Withdrawing consent does not affect
-              anything done before you withdrew it.
             </li>
             <li>
               <strong>Portability</strong> — the export is machine-readable, so
