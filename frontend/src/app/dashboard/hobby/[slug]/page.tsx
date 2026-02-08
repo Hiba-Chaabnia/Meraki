@@ -11,6 +11,7 @@ import {
   RoadmapModal,
 } from "@/components/dashboard";
 import type { SessionFormData } from "@/components/dashboard";
+import type { Challenge } from "@/lib/dashboardData";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { createSession } from "@/app/actions/sessions";
 import { triggerPracticeFeedback } from "@/app/actions/feedback";
@@ -29,6 +30,15 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
 
   const page = useHobbyPage(slug);
   const challengeUi = useChallengeActions(page.fetchData);
+
+  /* Records the intent, then opens the logger — the session is what completes
+     the challenge. Skipping `beginCompletion` leaves `pendingCompletion` null,
+     which silently drops both the session's `userChallengeId` and the
+     completion write. */
+  const logAndComplete = (challenge: Challenge) => {
+    challengeUi.beginCompletion(challenge);
+    setLoggerOpen(true);
+  };
 
   /* Both generation flows share the roadmap hook's shape: the job survives
      leaving the page, so coming back mid-build shows it still running rather
@@ -86,7 +96,7 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         challenge={challengeUi.open}
         onClose={challengeUi.close}
         generatingNext={challengeUi.generatingNext}
-        onLogAndComplete={() => { challengeUi.close(); setLoggerOpen(true); }}
+        onLogAndComplete={logAndComplete}
         onGenerateNext={challengeUi.generateNext}
         onSwap={challengeUi.swap}
         error={challengeUi.error}
