@@ -704,121 +704,6 @@ def create_challenges_dataset(client: opik.Opik, reset: bool = False) -> opik.Da
     return dataset
 
 
-def create_motivation_dataset(client: opik.Opik, reset: bool = False) -> opik.Dataset:
-    """Motivation crew expects: hobby_name, days_since_last_session, recent_moods, challenge_skip_rate, current_streak, longest_streak, session_frequency_trend."""
-    name = "meraki-eval-motivation"
-    if reset:
-        try:
-            client.delete_dataset(name=name)
-        except Exception:
-            pass
-
-    dataset = client.get_or_create_dataset(
-        name=name,
-        description="Evaluation dataset for MotivationCrew — nudge urgency calibration",
-    )
-
-    dataset.insert([
-        {
-            "input": "Active guitarist on a 5-day streak",
-            "expected_output": json.dumps({
-                "urgency": "gentle",
-                "nudge_type": "streak_reminder",
-            }),
-            "metadata": {
-                "scenario": "active_streaker",
-                "crew_inputs": {
-                    "hobby_name": "guitar",
-                    "days_since_last_session": "2",
-                    "recent_moods": "happy, happy, neutral",
-                    "challenge_skip_rate": "0.1",
-                    "current_streak": "5",
-                    "longest_streak": "7",
-                    "session_frequency_trend": "stable",
-                },
-            },
-        },
-        {
-            "input": "Frustrated painter with declining engagement",
-            "expected_output": json.dumps({
-                "urgency": "check_in",
-                "nudge_type": "empathy",
-            }),
-            "metadata": {
-                "scenario": "frustrated_declining",
-                "crew_inputs": {
-                    "hobby_name": "painting",
-                    "days_since_last_session": "6",
-                    "recent_moods": "frustrated, neutral, frustrated",
-                    "challenge_skip_rate": "0.4",
-                    "current_streak": "0",
-                    "longest_streak": "3",
-                    "session_frequency_trend": "declining",
-                },
-            },
-        },
-        {
-            "input": "Knitter inactive for 2 weeks",
-            "expected_output": json.dumps({
-                "urgency": "re_engage",
-                "nudge_type": "fresh_start",
-            }),
-            "metadata": {
-                "scenario": "long_inactive",
-                "crew_inputs": {
-                    "hobby_name": "knitting",
-                    "days_since_last_session": "14",
-                    "recent_moods": "none recorded",
-                    "challenge_skip_rate": "0.8",
-                    "current_streak": "0",
-                    "longest_streak": "4",
-                    "session_frequency_trend": "inactive",
-                },
-            },
-        },
-        {
-            "input": "Sketcher with slight engagement dip",
-            "expected_output": json.dumps({
-                "urgency": "gentle",
-                "nudge_type": "micro_challenge",
-            }),
-            "metadata": {
-                "scenario": "slight_dip",
-                "crew_inputs": {
-                    "hobby_name": "sketching",
-                    "days_since_last_session": "4",
-                    "recent_moods": "neutral, happy, neutral",
-                    "challenge_skip_rate": "0.2",
-                    "current_streak": "2",
-                    "longest_streak": "10",
-                    "session_frequency_trend": "slightly declining",
-                },
-            },
-        },
-        {
-            "input": "Frustrated potter considering quitting",
-            "expected_output": json.dumps({
-                "urgency": "re_engage",
-                "nudge_type": "reframe",
-            }),
-            "metadata": {
-                "scenario": "frustrated_dropout",
-                "crew_inputs": {
-                    "hobby_name": "pottery",
-                    "days_since_last_session": "10",
-                    "recent_moods": "frustrated, frustrated, sad",
-                    "challenge_skip_rate": "0.6",
-                    "current_streak": "0",
-                    "longest_streak": "8",
-                    "session_frequency_trend": "sharp decline",
-                },
-            },
-        },
-    ])
-
-    return dataset
-
-
 def create_roadmap_dataset(client: opik.Opik, reset: bool = False) -> opik.Dataset:
     """Roadmap crew expects: hobby_name, session_count, avg_duration, days_active, completed_challenges, user_goals."""
     name = "meraki-eval-roadmap"
@@ -925,7 +810,6 @@ DATASET_CREATORS = {
     "local_experiences": create_local_experiences_dataset,
     "practice_feedback": create_practice_feedback_dataset,
     "challenges": create_challenges_dataset,
-    "motivation": create_motivation_dataset,
     "roadmap": create_roadmap_dataset,
 }
 

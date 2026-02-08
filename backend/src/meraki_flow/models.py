@@ -91,16 +91,6 @@ class GeneratedChallenge(BaseModel):
     what_youll_learn: list[str]
 
 
-# --- Motivation Nudge Models ---
-
-class MotivationNudge(BaseModel):
-    nudge_type: str
-    message: str
-    suggested_action: str
-    action_data: str = ""
-    urgency: str = "gentle"
-
-
 # --- Roadmap Models ---
 
 class RoadmapPhase(BaseModel):

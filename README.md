@@ -48,8 +48,6 @@ flowchart TD
     J --> P["RoadmapCrew\ngenerates learning path"]
     P --> Q["Multi-Phase Roadmap\n(personalized curriculum)"]
 
-    J --> R["MotivationCrew\nmonitors engagement"]
-    R --> S["Timely Nudges\n(non-guilt, warm reminders)"]
 
     style D fill:#4f46e5,color:#fff
     style L fill:#4f46e5,color:#fff
@@ -93,7 +91,6 @@ graph TB
         PFC["PracticeFeedbackCrew\nSession Analysis"]
         CGC["ChallengeGenerationCrew\nAdaptive Challenges"]
         RC["RoadmapCrew\nLearning Paths"]
-        MC["MotivationCrew\nEngagement Nudges"]
     end
 
     User["User"] --> DC
@@ -182,21 +179,6 @@ Creates structured, multi-phase learning roadmaps personalized to the user's cur
 |---|---|---|
 | `roadmap_designer` | Learning Path Designer | Phases with goals, activities, and weekly time estimates |
 
-#### 7. MotivationCrew — Engagement Nudges
-
-Monitors engagement signals and delivers perfectly-timed, non-guilt motivation nudges using behavioral psychology principles.
-
-| Agent | Role | Output |
-|---|---|---|
-| `motivation_specialist` | Creative Motivation Specialist | Nudge type, message, suggested action, urgency |
-
-**Urgency Calibration:**
-```
-1-3 days inactive   ->  "gentle"     (warm reminder)
-4-7 days inactive   ->  "check_in"   (caring check-in)
-7+ days inactive    ->  "re_engage"  (fresh-start invitation)
-```
-
 ---
 
 ## Async Job Architecture
@@ -232,7 +214,7 @@ sequenceDiagram
 
 **Job States:** `pending` -> `running` -> `completed` | `failed`
 
-All results are persisted to their respective Supabase tables (hobby_matches, sampling_results, challenges, roadmaps, nudges, etc.) for subsequent use across the platform.
+All results are persisted to their respective Supabase tables (hobby_matches, sampling_results, challenges, roadmaps, etc.) for subsequent use across the platform.
 
 ---
 
@@ -309,7 +291,6 @@ flowchart LR
     R --> C3["LocalExperiencesCrew"]
     R --> C4["PracticeFeedbackCrew"]
     R --> C5["ChallengeGenerationCrew"]
-    R --> C6["MotivationCrew"]
     R --> C7["RoadmapCrew"]
 
     C1 --> M["Heuristic Metrics"]
@@ -317,7 +298,6 @@ flowchart LR
     C3 --> M
     C4 --> M
     C5 --> M
-    C6 --> M
     C7 --> M
 
     M --> Rep["Timestamped Reports\nevaluation/results/"]
@@ -326,7 +306,7 @@ flowchart LR
 
 ### Agent Prompt Optimization
 
-Beyond evaluation, Meraki uses **opik-optimizer** to automatically improve agent prompts. Three different optimization strategies are applied — each chosen to match the nature of the crew being optimized:
+Beyond evaluation, Meraki uses **opik-optimizer** to automatically improve agent prompts. Two different optimization strategies are applied — each chosen to match the nature of the crew being optimized:
 
 ```mermaid
 flowchart TB
@@ -334,34 +314,28 @@ flowchart TB
         direction TB
         D["DiscoveryCrew\n(hobby matching)"]
         C["ChallengeGenerationCrew\n(adaptive challenges)"]
-        M["MotivationCrew\n(engagement nudges)"]
     end
 
     subgraph "Optimizer Strategy"
         direction TB
         MPO["MetaPromptOptimizer\nRewrites the prompt itself\nusing meta-reasoning"]
         FSBO["FewShotBayesianOptimizer\nFinds optimal few-shot examples\nvia Bayesian search"]
-        EVO["EvolutionaryOptimizer\nEvolves prompt phrasing\nusing genetic algorithms"]
     end
 
     D --> MPO
     C --> FSBO
-    M --> EVO
 
     MPO --> R1["Optimized backstory\nwritten to agents.yaml"]
     FSBO --> R2["Best few-shot demos +\noptimized backstory"]
-    EVO --> R3["Evolved prompt\nwith better urgency calibration"]
 
     style MPO fill:#3b82f6,color:#fff
     style FSBO fill:#8b5cf6,color:#fff
-    style EVO fill:#f59e0b,color:#fff
 ```
 
 | Crew | Optimizer | Why This Strategy |
 |---|---|---|
 | **DiscoveryCrew** | `MetaPromptOptimizer` | The discovery prompt is complex (9-dimension analysis). Meta-reasoning rewrites the entire system prompt to improve how the agent reasons about user profiles. |
 | **ChallengeGenerationCrew** | `FewShotBayesianOptimizer` | Challenge design benefits from concrete examples. Bayesian search finds the optimal set of 2-5 few-shot demonstrations that best calibrate difficulty and creativity. |
-| **MotivationCrew** | `EvolutionaryOptimizer` | Nudge tone is subtle and hard to specify directly. Genetic algorithms explore novel phrasings and urgency calibrations that would be hard to hand-author. |
 
 **How it works:**
 
@@ -407,8 +381,6 @@ All endpoints follow a **POST to create job -> GET to poll result** pattern.
 | `GET` | `/practice/feedback/{job_id}` | — | Poll feedback results |
 | `POST` | `/challenges/generate` | ChallengeGenerationCrew | Generate a calibrated challenge |
 | `GET` | `/challenges/generate/{job_id}` | — | Poll challenge results |
-| `POST` | `/motivation/check` | MotivationCrew | Check engagement and generate nudge |
-| `GET` | `/motivation/check/{job_id}` | — | Poll nudge results |
 | `POST` | `/roadmap/generate` | RoadmapCrew | Generate a learning roadmap |
 | `GET` | `/roadmap/generate/{job_id}` | — | Poll roadmap results |
 | `GET` | `/health` | — | Health check |
@@ -432,7 +404,6 @@ Meraki/
 │       │   ├── local_experiences_crew/     # In-person discovery
 │       │   ├── practice_feedback_crew/     # Session analysis
 │       │   ├── challenge_generation_crew/  # Adaptive challenges
-│       │   ├── motivation_crew/            # Engagement nudges
 │       │   └── roadmap_crew/              # Learning paths
 │       ├── evaluation/
 │       │   ├── datasets.py                 # 7 Opik evaluation datasets

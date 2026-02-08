@@ -30,7 +30,6 @@ from meraki_flow.opik_metrics import (
     LocalExperiencesCompletenessMetric,
     FeedbackSpecificityMetric,
     ChallengeCalibrationMetric,
-    NudgeUrgencyCalibrationMetric,
     RoadmapCompletenessMetric,
 )
 
@@ -59,24 +58,6 @@ class ChallengeCalibrationAdapter(base_metric.BaseMetric):
         session_count = int(crew_inputs.get("session_count", 0))
 
         return self._inner.score(difficulty=difficulty, session_count=session_count)
-
-
-class NudgeUrgencyAdapter(base_metric.BaseMetric):
-    """Wraps NudgeUrgencyCalibrationMetric to extract fields from raw output + metadata."""
-
-    def __init__(self):
-        super().__init__(name="nudge_urgency_calibration")
-        self._inner = NudgeUrgencyCalibrationMetric()
-
-    def score(self, output: str, **kwargs) -> score_result.ScoreResult:
-        urgency_match = re.search(r'"urgency"\s*:\s*"(\w+)"', output)
-        urgency = urgency_match.group(1) if urgency_match else "check_in"
-
-        metadata = kwargs.get("metadata", {})
-        crew_inputs = metadata.get("crew_inputs", {})
-        days = int(crew_inputs.get("days_since_last_session", 3))
-
-        return self._inner.score(urgency=urgency, days_since_last_session=days)
 
 
 # ---------------------------------------------------------------------------
@@ -137,15 +118,6 @@ def _run_challenges_task(dataset_item: dict) -> dict:
     return {"output": raw, "metadata": metadata}
 
 
-def _run_motivation_task(dataset_item: dict) -> dict:
-    from meraki_flow.crews.motivation_crew.motivation_crew import MotivationCrew
-    crew_inputs, metadata = _extract_inputs(dataset_item)
-    crew = MotivationCrew()
-    result = crew.crew().kickoff(inputs=crew_inputs)
-    raw = result.raw if hasattr(result, 'raw') else str(result)
-    return {"output": raw, "metadata": metadata}
-
-
 def _run_roadmap_task(dataset_item: dict) -> dict:
     from meraki_flow.crews.roadmap_crew.roadmap_crew import RoadmapCrew
     crew_inputs, metadata = _extract_inputs(dataset_item)
@@ -199,12 +171,6 @@ EVAL_CONFIGS = {
         "task_fn": _run_challenges_task,
         "heuristic_metrics": [ChallengeCalibrationAdapter()],
         "experiment_name": "meraki-eval-challenges",
-    },
-    "motivation": {
-        "dataset_name": "meraki-eval-motivation",
-        "task_fn": _run_motivation_task,
-        "heuristic_metrics": [NudgeUrgencyAdapter()],
-        "experiment_name": "meraki-eval-motivation",
     },
     "roadmap": {
         "dataset_name": "meraki-eval-roadmap",
