@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { FlowerShape } from "@/components/ui/FlowerShape";
 import { HobbyCard, NoRoadmapHobbyCard, PausedHobbyCard } from "./HobbyCard";
 import { PracticeWeek } from "./PracticeWeek";
 import { FocusTimerCard } from "./FocusTimerCard";
-import { ActiveChallengeCard, ReEntryCard, RetakeQuizCard } from "./DashboardCards";
+import { ActiveChallengeCard, RetakeQuizCard } from "./DashboardCards";
+import { Greeting, type NudgeView } from "./Greeting";
 import {
   needsRoadmap,
   lastSessionLabel,
@@ -19,6 +20,8 @@ import {
   type WeekDay,
 } from "@/lib/dashboardHome";
 import { fadeUp } from "@/components/ui/animations";
+
+export type { NudgeView };
 
 export interface DashboardHomeProps {
   variant: DashboardVariant;
@@ -43,6 +46,11 @@ export interface DashboardHomeProps {
   onToggleGoal?: (userRoadmapId: string, goalKey: string) => void;
   /** Fired when the focus timer runs out. Omitting it hides the timer card. */
   onTimerComplete?: (hobbySlug: string, minutes: number) => void;
+  /** The motivation line, when there is one — it replaces the greeting's
+   *  second line. See `deriveNudge`. */
+  nudge?: NudgeView | null;
+  /** Opens a challenge in the modal the page owns. */
+  onOpenChallenge?: (challengeId: string) => void;
 }
 
 /*
@@ -65,8 +73,8 @@ const SECTION_LABEL =
  * component never fetches. The real page and /preview/pages/dashboard both
  * render it, which is what keeps the preview honest.
  *
- * The left rail from the design handoff is deliberately absent: the app's own
- * DashboardNav already owns navigation and is left untouched.
+ * The left rail from the design handoff is deliberately absent, and the app's
+ * own sidebar is gone too: AppShell is one header row over a two-page app.
  */
 export function DashboardHome(props: DashboardHomeProps) {
   const { variant, firstName, streak, hobbies, onLog } = props;
@@ -74,21 +82,23 @@ export function DashboardHome(props: DashboardHomeProps) {
   const active = hobbies.filter((h) => h.status === "active");
   const paused = hobbies.filter((h) => h.status === "paused");
 
-  // Dormant shows a re-entry card for one hobby. No card in the list competes
-  // with it any more — every hobby card carries the same weight, so there is
-  // no "suggested" row to demote.
-  const reEntryHobby = variant === "dormant" ? (active[0] ?? null) : null;
 
   if (variant === "new") return <NewUserEmptyState />;
 
   return (
     /* No page header. It carried only the weekday, which now rides above the
        greeting as an eyebrow — a 56px bordered band was a lot of chrome for one
-       word. Without it there is nothing to run edge to edge, so DashboardNav's
+       word. Without it there is nothing to run edge to edge, so AppShell's
        own <main> padding is left alone rather than cancelled and re-added. */
     <div>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <Greeting variant={variant} firstName={firstName} hobbies={active} streak={streak} />
+        <Greeting
+          variant={variant}
+          firstName={firstName}
+          hobbies={active}
+          streak={streak}
+          nudge={props.nudge}
+        />
 
         {/* Mobile only. It guesses nothing — the modal opens with no hobby
             chosen — which makes it strictly more work than any card's own
@@ -114,7 +124,7 @@ export function DashboardHome(props: DashboardHomeProps) {
           order also decides the mobile stack, where the focus card leads. */}
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <FocusColumn {...props} active={active} reEntryHobby={reEntryHobby} />
+          <FocusColumn {...props} active={active} />
         </div>
         <div className="lg:col-span-5">
           <HobbyColumn {...props} active={active} paused={paused} />
@@ -125,68 +135,6 @@ export function DashboardHome(props: DashboardHomeProps) {
 }
 
 /* ─── Greeting ───────────────────────────────────────────────────────────── */
-
-/**
- * Every state gets a header, `active` included — it is the one users see daily,
- * and it used to open on a bare row count.
- *
- * Re-entry without guilt throughout: no "you broke your streak", no
- * lost-progress framing, and the ask is shrunk rather than raised.
- */
-function Greeting({
-  variant,
-  firstName,
-  hobbies,
-  streak,
-}: {
-  variant: DashboardVariant;
-  firstName: string;
-  hobbies: DashboardHobby[];
-  streak: StreakState;
-}) {
-  const gapDays = hobbies
-    .map((h) => h.lastSessionDaysAgo)
-    .filter((d): d is number => d !== null)
-    .sort((a, b) => a - b)[0];
-
-  let title: string;
-  let line: ReactNode;
-
-  if (variant === "all-paused") {
-    title = `Everything's on pause, ${firstName}`;
-    line = "Which is allowed. Resume one when you're ready, or try something different.";
-  } else if (variant === "dormant") {
-    if (gapDays === undefined) {
-      title = `Ready when you are, ${firstName}`;
-      line = "Nothing logged yet. Pick a hobby and start as small as you like.";
-    } else {
-      title = `Welcome back, ${firstName}`;
-      line = `It's been ${gapDays} days. Everything's exactly where you left it.`;
-    }
-  } else if (streak.loggedToday) {
-    // Today is already covered — acknowledge it and ask for nothing further.
-    title = `That's today done, ${firstName}`;
-    line = "Anything else you do today is a bonus.";
-  } else {
-    /* Running normally — the title says hello and nothing more.
-       The second line used to read "<hobby> was yesterday. Ten minutes today
-       would be plenty", which the focus timer directly below already says as
-       "Ten minutes is plenty", and which the tinted suggested card already
-       says by being tinted. Three statements of one recommendation reads as
-       insistence, against the §8 low-pressure voice.
-       The other branches keep their line: they are the re-entry-without-guilt
-       copy, and nothing else on the page carries it. */
-    title = `Good to see you, ${firstName}`;
-    line = null;
-  }
-
-  return (
-    <motion.div variants={fadeUp} initial="hidden" animate="show" className="min-w-0">
-      <p className="text-[19px] font-semibold text-[var(--foreground)]">{title}</p>
-      {line && <p className="mt-1 text-[13px] text-[#6b7280]">{line}</p>}
-    </motion.div>
-  );
-}
 
 /* ─── Hobby column ───────────────────────────────────────────────────────── */
 
@@ -351,12 +299,11 @@ function FocusColumn({
   week,
   streak,
   challenges,
-  reEntryHobby,
   suggestedHobbyId,
   onTimerComplete,
+  onOpenChallenge,
 }: DashboardHomeProps & {
   active: DashboardHobby[];
-  reEntryHobby: DashboardHobby | null;
 }) {
   const allPaused = variant === "all-paused";
 
@@ -365,25 +312,28 @@ function FocusColumn({
   // works if the list is complete.
   const legend = active.map((h) => ({ name: h.name, theme: h.theme }));
 
-  /* The challenge slot is replaced, never shown empty. */
+  /* All-paused is the only state that swaps the slot, because a paused user has
+     no live challenge by definition — `buildLiveChallenges` filters to active
+     hobbies, so the slot could never fill.
+
+     Dormant used to get a ReEntryCard here. It does not now: a challenge stays
+     `active` with no staleness cutoff, so someone who drifted mid-challenge
+     still has the real thing to come back to, and "Continue" on the work they
+     abandoned beats a generic card telling them to go easy. With no live
+     challenge the slot is simply empty — already the case for an active user
+     between challenges — and the focus timer leads instead, which is a better
+     first thing for a returning user than another reassurance. */
   const topSlot = allPaused ? (
     <>
       <p className={`mb-2.5 ${SECTION_LABEL}`}>Somewhere to go next</p>
       <RetakeQuizCard />
     </>
-  ) : variant === "dormant" ? (
-    reEntryHobby && (
-      <>
-        <p className={`mb-2.5 ${SECTION_LABEL}`}>Pick up where you left off</p>
-        <ReEntryCard hobbyName={reEntryHobby.name} hobbySlug={reEntryHobby.slug} />
-      </>
-    )
   ) : challenges.length > 0 ? (
     /* No label. The dark card already announces itself as the challenge — its
        own chip names the hobby. Which one of the list is showing is the card's
        business; the guard stays here so `topSlot` still reports "empty" to the
        spacing below. */
-    <ActiveChallengeCard challenges={challenges} />
+    <ActiveChallengeCard challenges={challenges} onOpen={onOpenChallenge} />
   ) : null;
 
   return (

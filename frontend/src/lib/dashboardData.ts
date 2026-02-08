@@ -53,7 +53,12 @@ export interface PracticeSession {
 }
 
 /* ─── Challenges ─── */
-export type ChallengeStatus = "active" | "upcoming" | "completed" | "skipped";
+/**
+ * `upcoming` was the column default but nothing ever wrote it —
+ * save_generated_challenge always inserts "active" — so it was a state no code
+ * could produce and no screen could reach. Removed in migration 008.
+ */
+export type ChallengeStatus = "active" | "completed" | "skipped";
 export type ChallengeDifficulty = "easy" | "medium" | "hard" | "stretch";
 
 export interface Challenge {

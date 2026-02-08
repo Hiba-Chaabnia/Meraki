@@ -72,6 +72,8 @@ interface ActiveChallengeCardProps {
   challenges: DashboardChallenge[];
   /** Tuning seam for the preview harness. Production leaves this alone. */
   wallpaper?: Wallpaper;
+  /** Opens the challenge. Omitted leaves Continue inert (previews). */
+  onOpen?: (challengeId: string) => void;
 }
 
 /**
@@ -151,6 +153,7 @@ function ChallengeStepper({ challenges, activeIndex, onSelect }: ChallengeSteppe
 export function ActiveChallengeCard({
   challenges,
   wallpaper = CHALLENGE_WALLPAPER,
+  onOpen,
 }: ActiveChallengeCardProps) {
   const [index, setIndex] = useState(0);
 
@@ -176,14 +179,30 @@ export function ActiveChallengeCard({
           iconSize={wallpaper.size}
         />
 
-        {/* Keyed so switching remounts the body and it fades in. The panel
-            stays put — only its contents change. */}
+        {/* The body opens the challenge, matching every other challenge card in
+            the app — those are clickable in full, and this being inert except
+            for its small Continue button made the page's focal object the one
+            thing you could not click. Deliberately not the whole panel: the
+            stepper below switches between challenges and must not open one. */}
         <motion.div
           key={challenge.id}
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="relative z-10"
+          onClick={onOpen ? () => onOpen(challenge.id) : undefined}
+          role={onOpen ? "button" : undefined}
+          tabIndex={onOpen ? 0 : undefined}
+          onKeyDown={
+            onOpen
+              ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onOpen(challenge.id);
+                  }
+                }
+              : undefined
+          }
+          className={`relative z-10 ${onOpen ? "cursor-pointer" : ""}`}
         >
           <div className="mb-2.5 flex items-center justify-between gap-3">
             {/* The landing header's outline button, borrowed: cream border and
@@ -257,42 +276,12 @@ export function ActiveChallengeCard({
             <span aria-hidden />
           )}
           <div className="flex justify-end">
-            <Button href={`/dashboard/challenges/${challenge.id}`} size="sm" variant="secondary">
+            <Button onClick={onOpen ? () => onOpen(challenge.id) : undefined} size="sm" variant="secondary">
               Continue
             </Button>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-interface ReEntryCardProps {
-  hobbyName: string;
-  hobbySlug: string;
-}
-
-/**
- * Dormant state. Deliberately smaller than a real challenge — the ask has to
- * feel trivial, so it never mentions the gap or what was lost.
- */
-export function ReEntryCard({ hobbyName, hobbySlug }: ReEntryCardProps) {
-  return (
-    <div className="rounded-2xl border-[1.5px] border-[var(--primary-lighter)] bg-[var(--primary-theme-bg)] p-4">
-      <p className="mb-1.5 truncate text-[10px] font-bold uppercase tracking-[.06em] text-[var(--primary)]">
-        {hobbyName} · smallest step
-      </p>
-      {/* Design copy was watercolour-specific ("Ten minutes, one colour"); this
-          reads the same but survives any hobby the user actually has. */}
-      <p className="text-sm font-bold leading-[1.35] text-[var(--foreground)]">
-        Ten minutes, nothing to finish
-      </p>
-      <p className="mt-1.5 text-[11.5px] leading-[1.55] text-[#6b7280]">
-        No goal, no finished piece. Just get your hands <em>moving</em> again.
-      </p>
-      <Button href={`/dashboard/hobby/${hobbySlug}`} size="sm" className="mt-3">
-        Start
-      </Button>
     </div>
   );
 }
