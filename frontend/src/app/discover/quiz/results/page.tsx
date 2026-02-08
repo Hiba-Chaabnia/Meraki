@@ -35,39 +35,6 @@ interface MatchCard {
   tags: string[];
 }
 
-/* Placeholder matches used as fallback when no DB matches exist */
-const PLACEHOLDER_MATCHES: MatchCard[] = [
-  {
-    slug: "pottery",
-    name: "Pottery",
-    tagline:
-      "Get your hands dirty and create something beautiful from nothing but clay and intention.",
-    matchPercent: 94,
-    color: "#D4845A",
-    lightColor: "#F2DCCF",
-    tags: ["Tactile", "Meditative", "Solo-friendly"],
-  },
-  {
-    slug: "watercolor",
-    name: "Watercolor Painting",
-    tagline:
-      "Embrace happy accidents — watercolor rewards the bold and the patient alike.",
-    matchPercent: 87,
-    color: "#60B5FF",
-    lightColor: "#AFDDFF",
-    tags: ["Visual", "Portable", "Low mess"],
-  },
-  {
-    slug: "knitting",
-    name: "Knitting",
-    tagline:
-      "Rhythmic, portable, and surprisingly addictive — plus you get cozy things to wear.",
-    matchPercent: 82,
-    color: "#B8A9E8",
-    lightColor: "#E8E2F7",
-    tags: ["Repetitive", "Relaxing", "Practical"],
-  },
-];
 
 function dbMatchToCard(row: HobbyMatchRow): MatchCard {
   const slug = row.hobbies?.slug ?? "";
@@ -102,10 +69,6 @@ function AnalyzingPhase({ onComplete }: { onComplete: (matches: MatchCard[]) => 
       if (result.error) {
         console.error("[Results] Discovery error:", result.error);
         setError(result.error);
-        // Fallback to placeholders after a delay
-        setTimeout(() => {
-          if (mounted) onComplete(PLACEHOLDER_MATCHES);
-        }, 2000);
         return;
       }
 
@@ -130,9 +93,6 @@ function AnalyzingPhase({ onComplete }: { onComplete: (matches: MatchCard[]) => 
           console.error("[Results] Poll error:", pollResult.error);
           setError(pollResult.error);
           stopPolling();
-          setTimeout(() => {
-            if (mounted) onComplete(PLACEHOLDER_MATCHES);
-          }, 2000);
           return;
         }
 
@@ -175,16 +135,13 @@ function AnalyzingPhase({ onComplete }: { onComplete: (matches: MatchCard[]) => 
               console.log("[Results] Displaying cards:", cards.length);
               onComplete(cards);
             } else {
-              console.log("[Results] No matches, using placeholders");
-              onComplete(PLACEHOLDER_MATCHES);
+              console.log("[Results] No matches returned");
+              onComplete([]);
             }
             break;
           case "failed":
             stopPolling();
             setError(response.error || "Analysis failed");
-            setTimeout(() => {
-              if (mounted) onComplete(PLACEHOLDER_MATCHES);
-            }, 2000);
             break;
         }
       }, 2000); // Poll every 2 seconds
@@ -216,9 +173,16 @@ function AnalyzingPhase({ onComplete }: { onComplete: (matches: MatchCard[]) => 
         <h1 className="!text-2xl md:!text-3xl">Analyzing Your Profile</h1>
         <p className="text-gray-500">{status}</p>
         {error && (
-          <p className="text-amber-500 text-sm">
-            {error}. Using default recommendations...
-          </p>
+          <div className="space-y-3">
+            <p className="text-red-400 text-sm">{error}</p>
+            <Link
+              href="/discover/quiz"
+              className="inline-block px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95"
+              style={{ backgroundColor: "var(--lavender)" }}
+            >
+              Retake the Quiz
+            </Link>
+          </div>
         )}
       </motion.div>
     </div>
@@ -299,12 +263,12 @@ function QuizResultsContent() {
               (result.data as unknown as HobbyMatchRow[]).map(dbMatchToCard)
             );
           } else {
-            setMatches(PLACEHOLDER_MATCHES);
+            setMatches([]);
           }
           setLoading(false);
         })
         .catch(() => {
-          setMatches(PLACEHOLDER_MATCHES);
+          setMatches([]);
           setLoading(false);
         });
     }

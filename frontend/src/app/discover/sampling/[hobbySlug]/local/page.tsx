@@ -3,9 +3,8 @@
 import { use, useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { getHobby, getLocalSpots } from "@/lib/hobbyData";
+import { getHobby } from "@/lib/hobbyData";
 import { useGoogleMaps, reverseGeocode } from "@/lib/useGoogleMaps";
-import type { LocalSpot as StaticLocalSpot } from "@/lib/hobbyData";
 import {
   triggerLocalExperiences,
   pollLocalExperiencesStatus,
@@ -71,7 +70,6 @@ export default function LocalPage({
 }) {
   const { hobbySlug } = use(params);
   const hobby = getHobby(hobbySlug);
-  const staticSpots = getLocalSpots(hobbySlug);
 
   const { ready: mapsReady } = useGoogleMaps();
 
@@ -164,7 +162,7 @@ export default function LocalPage({
         }
       }, 2000);
 
-      // Timeout after 60 seconds — use ref to avoid stale closure
+      // Timeout after 120 seconds — use ref to avoid stale closure
       setTimeout(() => {
         clearInterval(pollInterval);
         if (loadingRef.current) {
@@ -172,7 +170,7 @@ export default function LocalPage({
           setLoading(false);
           loadingRef.current = false;
         }
-      }, 60000);
+      }, 120000);
     } catch (e) {
       setApiError(`Failed to search: ${e}`);
       setLoading(false);
@@ -243,14 +241,10 @@ export default function LocalPage({
 
   const filters: FilterType[] = ["All", "Workshop", "Studio", "Class", "Meetup", "Drop-in Class"];
 
-  // Use dynamic spots if available, otherwise fall back to static
-  const spotsToShow = dynamicSpots || staticSpots;
+  const spotsToShow = dynamicSpots || [];
   const filteredSpots = filter === "All"
     ? spotsToShow
-    : spotsToShow.filter((s) => {
-        const spotType = "type" in s ? s.type : "";
-        return spotType.toLowerCase().includes(filter.toLowerCase());
-      });
+    : spotsToShow.filter((s) => s.type.toLowerCase().includes(filter.toLowerCase()));
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
@@ -435,8 +429,15 @@ export default function LocalPage({
 
             {/* API Error */}
             {apiError && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-amber-800 text-sm">
-                {apiError}. Showing example spots instead.
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
+                <p className="text-amber-800 text-sm">{apiError}</p>
+                <button
+                  onClick={() => fetchLocalExperiences(location)}
+                  className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95"
+                  style={{ backgroundColor: "var(--green)" }}
+                >
+                  Retry
+                </button>
               </div>
             )}
 
@@ -505,18 +506,31 @@ export default function LocalPage({
             >
               {filteredSpots.map((spot, index) => (
                 <SpotCard
-                  key={"name" in spot ? spot.name : index}
+                  key={spot.name || index}
                   spot={spot}
                   hobby={hobby}
-                  isDynamic={!!dynamicSpots}
                 />
               ))}
             </motion.div>
 
             {filteredSpots.length === 0 && !loading && (
-              <p className="text-center text-gray-400 py-12">
-                No {filter.toLowerCase()} spots found. Try a different filter!
-              </p>
+              <div className="text-center py-12 space-y-4">
+                <MapPinIcon className="w-10 h-10 text-gray-200 mx-auto" />
+                <p className="text-gray-400">
+                  {filter !== "All"
+                    ? `No ${filter.toLowerCase()} spots found. Try a different filter!`
+                    : "No spots found for this location."}
+                </p>
+                {filter === "All" && (
+                  <button
+                    onClick={() => fetchLocalExperiences(location)}
+                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95"
+                    style={{ backgroundColor: "var(--green)" }}
+                  >
+                    Retry Search
+                  </button>
+                )}
+              </div>
             )}
           </>
         )}
@@ -529,28 +543,10 @@ export default function LocalPage({
 function SpotCard({
   spot,
   hobby,
-  isDynamic,
 }: {
-  spot: DynamicLocalSpot | StaticLocalSpot;
+  spot: DynamicLocalSpot;
   hobby: { color: string; lightColor: string };
-  isDynamic: boolean;
 }) {
-  // Handle both dynamic (API) and static (fallback) spot formats
-  const isDynamicSpot = "beginner_friendly" in spot;
-
-  const name = spot.name;
-  const type = spot.type;
-  const rating = isDynamicSpot ? spot.rating : (spot as StaticLocalSpot).rating;
-  const address = isDynamicSpot ? spot.address : undefined;
-  const price = isDynamicSpot ? spot.price : (spot as StaticLocalSpot).price;
-  const url = isDynamicSpot ? spot.url : undefined;
-  const beginnerFriendly = isDynamicSpot ? spot.beginner_friendly : (spot as StaticLocalSpot).beginnerFriendly;
-  const beginnerTips = isDynamicSpot ? spot.beginner_tips : undefined;
-  const description = !isDynamicSpot ? (spot as StaticLocalSpot).description : undefined;
-  const reviewCount = isDynamicSpot ? spot.reviews_count : (spot as StaticLocalSpot).reviewCount;
-  const distance = !isDynamicSpot ? (spot as StaticLocalSpot).distance : undefined;
-  const nextDate = !isDynamicSpot ? (spot as StaticLocalSpot).nextDate : undefined;
-
   return (
     <motion.div
       variants={fadeUp}
@@ -560,15 +556,15 @@ function SpotCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2 flex-wrap">
             <h3 className="!text-base !font-semibold !tracking-normal !text-gray-800">
-              {name}
+              {spot.name}
             </h3>
             <span
               className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
               style={{ backgroundColor: hobby.lightColor, color: hobby.color }}
             >
-              {type}
+              {spot.type}
             </span>
-            {beginnerFriendly && (
+            {spot.beginner_friendly && (
               <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-50 text-green-600 flex items-center gap-1">
                 <CheckIcon className="w-3 h-3" />
                 Beginner-friendly
@@ -576,48 +572,34 @@ function SpotCard({
             )}
           </div>
 
-          {description && (
-            <p className="text-sm text-gray-500 leading-relaxed mb-3">
-              {description}
-            </p>
-          )}
-
-          {beginnerTips && (
+          {spot.beginner_tips && (
             <p className="text-sm text-gray-500 leading-relaxed mb-3 italic">
-              &ldquo;{beginnerTips}&rdquo;
+              &ldquo;{spot.beginner_tips}&rdquo;
             </p>
           )}
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-            {address && (
+            {spot.address && (
               <span className="flex items-center gap-1">
-                <MapPinIcon className="w-3.5 h-3.5" /> {address}
+                <MapPinIcon className="w-3.5 h-3.5" /> {spot.address}
               </span>
             )}
-            {distance && (
-              <span className="flex items-center gap-1">
-                <MapPinIcon className="w-3.5 h-3.5" /> {distance}
-              </span>
-            )}
-            {rating && (
+            {spot.rating && (
               <span className="flex items-center gap-1">
                 <StarIcon className="w-3.5 h-3.5 text-yellow-400" />
-                {rating} {reviewCount ? `(${reviewCount})` : ""}
+                {spot.rating} {spot.reviews_count ? `(${spot.reviews_count})` : ""}
               </span>
             )}
-            {nextDate && (
-              <span>{nextDate}</span>
-            )}
-            {price && (
-              <span className="font-medium text-gray-500">{price}</span>
+            {spot.price && (
+              <span className="font-medium text-gray-500">{spot.price}</span>
             )}
           </div>
         </div>
 
         <div className="flex-shrink-0">
-          {url ? (
+          {spot.url ? (
             <a
-              href={url}
+              href={spot.url}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg active:scale-95"

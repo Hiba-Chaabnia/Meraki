@@ -99,6 +99,19 @@ function RecommendedBadge() {
   );
 }
 
+/* ─── Module-level caches ───
+   These survive component unmount/remount during client-side navigation.
+   This is the primary guard against re-triggering the crew on back-nav. */
+const resultCache = new Map<string, SamplingPreviewResult>();
+const jobIdCache = new Map<string, string>();
+
+function cacheResult(slug: string, result: SamplingPreviewResult) {
+  resultCache.set(slug, result);
+  try {
+    sessionStorage.setItem(`sampling-preview-${slug}`, JSON.stringify(result));
+  } catch { /* quota exceeded — module cache is still the primary */ }
+}
+
 /* ═══════════════════════════════════════════════════════
    Main page
    ═══════════════════════════════════════════════════════ */
@@ -116,19 +129,36 @@ export default function SamplingPage({
   const backHref = from === "discover" ? "/discover" : "/discover/quiz/results";
   const backLabel = from === "discover" ? "Back to discover" : "Back to quiz results";
 
-  // Sampling preview state
-  const [previewResult, setPreviewResult] = useState<SamplingPreviewResult | null>(null);
+  // Initialize state from module cache — instant on back-nav, no effect needed
+  const [previewResult, setPreviewResult] = useState<SamplingPreviewResult | null>(
+    () => resultCache.get(hobbySlug) ?? null
+  );
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
-  const [previewJobId, setPreviewJobId] = useState<string | null>(null);
+  const [previewJobId, setPreviewJobId] = useState<string | null>(
+    () => jobIdCache.get(hobbySlug) ?? null
+  );
 
-  // Fetch sampling preview on mount
+  // Fetch sampling preview on mount — skips entirely if module cache has data
   useEffect(() => {
+    // If module cache already has a result, nothing to do
+    if (resultCache.has(hobbySlug)) return;
+
     let cancelled = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
+    function storeResult(result: SamplingPreviewResult, jobId?: string) {
+      cacheResult(hobbySlug, result);
+      if (jobId) jobIdCache.set(hobbySlug, jobId);
+      if (!cancelled) {
+        setPreviewResult(result);
+        setPreviewLoading(false);
+      }
+    }
+
     function startPolling(jobId: string) {
-      setPreviewJobId(jobId);
+      jobIdCache.set(hobbySlug, jobId);
+      if (!cancelled) setPreviewJobId(jobId);
       pollTimer = setInterval(async () => {
         const status = await pollSamplingPreviewStatus(jobId);
         if (cancelled) return;
@@ -142,14 +172,8 @@ export default function SamplingPage({
 
         if (status.status === "completed" && status.result) {
           if (pollTimer) clearInterval(pollTimer);
-          setPreviewResult(status.result);
-          sessionStorage.setItem(
-            `sampling-preview-${hobbySlug}`,
-            JSON.stringify(status.result)
-          );
-          // Persist to DB
+          storeResult(status.result, jobId);
           saveSamplingResult(hobbySlug, status.result).catch(() => {});
-          setPreviewLoading(false);
         } else if (status.status === "failed") {
           if (pollTimer) clearInterval(pollTimer);
           setPreviewError(status.error || "Preview generation failed");
@@ -159,54 +183,42 @@ export default function SamplingPage({
     }
 
     async function fetchPreview() {
-      setPreviewLoading(true);
       setPreviewError(null);
 
+      // 1. Check sessionStorage (sync, secondary cache)
       try {
-        // 1. Check sessionStorage first (fastest)
-        const storedResult = sessionStorage.getItem(`sampling-preview-${hobbySlug}`);
-        if (storedResult) {
-          try {
-            const data: SamplingPreviewResult = JSON.parse(storedResult);
-            // Accept partial results — don't require all 3 fields
-            if (data.recommendation || data.micro_activity || (data.videos && data.videos.length > 0)) {
-              setPreviewResult(data);
-              setPreviewLoading(false);
-              return;
-            }
-          } catch {
-            sessionStorage.removeItem(`sampling-preview-${hobbySlug}`);
+        const stored = sessionStorage.getItem(`sampling-preview-${hobbySlug}`);
+        if (stored) {
+          const data: SamplingPreviewResult = JSON.parse(stored);
+          if (data.recommendation || data.micro_activity || (data.videos && data.videos.length > 0)) {
+            storeResult(data);
+            return;
           }
         }
+      } catch { /* parse error — continue to DB */ }
 
+      // Only show loading after all sync checks miss
+      setPreviewLoading(true);
+
+      try {
         // 2. Check database (survives page refresh / restart)
         const dbResult = await getSamplingResult(hobbySlug);
         if (cancelled) return;
         if (dbResult.data) {
-          setPreviewResult(dbResult.data);
-          sessionStorage.setItem(
-            `sampling-preview-${hobbySlug}`,
-            JSON.stringify(dbResult.data)
-          );
-          setPreviewLoading(false);
+          storeResult(dbResult.data);
           return;
         }
 
         // 3. Check if there's an existing job still running
-        const existingJobId = sessionStorage.getItem(`sampling-job-${hobbySlug}`);
+        const existingJobId = jobIdCache.get(hobbySlug)
+          || sessionStorage.getItem(`sampling-job-${hobbySlug}`);
         if (existingJobId) {
-          setPreviewJobId(existingJobId);
           const status = await pollSamplingPreviewStatus(existingJobId);
           if (cancelled) return;
           if ("status" in status) {
             if (status.status === "completed" && status.result) {
-              setPreviewResult(status.result);
-              sessionStorage.setItem(
-                `sampling-preview-${hobbySlug}`,
-                JSON.stringify(status.result)
-              );
+              storeResult(status.result, existingJobId);
               saveSamplingResult(hobbySlug, status.result).catch(() => {});
-              setPreviewLoading(false);
               return;
             } else if (status.status === "pending" || status.status === "running") {
               startPolling(existingJobId);
@@ -216,6 +228,7 @@ export default function SamplingPage({
         }
 
         // 4. Only trigger a new job if no existing result or job
+        console.log("[Sampling] All caches missed — triggering new crew for", hobbySlug);
         const { job_id, error } = await triggerSamplingPreview(hobbySlug);
         if (cancelled) return;
         if (error || !job_id) {
@@ -224,8 +237,9 @@ export default function SamplingPage({
           return;
         }
 
+        jobIdCache.set(hobbySlug, job_id);
         setPreviewJobId(job_id);
-        sessionStorage.setItem(`sampling-job-${hobbySlug}`, job_id);
+        try { sessionStorage.setItem(`sampling-job-${hobbySlug}`, job_id); } catch {}
         startPolling(job_id);
       } catch (e) {
         if (!cancelled) {
