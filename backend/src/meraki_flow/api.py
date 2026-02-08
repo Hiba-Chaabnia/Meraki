@@ -34,7 +34,6 @@ from meraki_flow.crews.sampling_preview_crew.sampling_preview_crew import Sampli
 from meraki_flow.crews.local_experiences_crew.local_experiences_crew import LocalExperiencesCrew
 from meraki_flow.crews.practice_feedback_crew.practice_feedback_crew import PracticeFeedbackCrew
 from meraki_flow.crews.challenge_generation_crew.challenge_generation_crew import ChallengeGenerationCrew
-from meraki_flow.crews.motivation_crew.motivation_crew import MotivationCrew
 from meraki_flow.crews.roadmap_crew.roadmap_crew import RoadmapCrew
 from meraki_flow.models import SamplingRecommendation, MicroActivity, CuratedVideos
 from meraki_flow.db import (
@@ -49,7 +48,6 @@ from meraki_flow.db import (
     save_hobby_matches,
     save_ai_feedback,
     save_generated_challenge,
-    save_nudge,
     save_generated_roadmap,
 )
 
@@ -119,18 +117,6 @@ class ChallengeGenerationRequest(BaseModel):
     skipped_challenges: str = ""
     recent_feedback: str = ""
     last_mood_trend: str = ""
-
-
-class MotivationCheckRequest(BaseModel):
-    user_id: str
-    hobby_name: str
-    hobby_slug: str = ""
-    days_since_last_session: int = 0
-    recent_moods: str = ""
-    challenge_skip_rate: float = 0.0
-    current_streak: int = 0
-    longest_streak: int = 0
-    session_frequency_trend: str = ""
 
 
 class RoadmapGenerationRequest(BaseModel):
@@ -770,91 +756,6 @@ async def get_challenge_generation_status(job_id: str):
     }
 
 
-# ─── Motivation Check Endpoints ───
-
-def run_motivation_check_job(job_id: str) -> None:
-    """Run the motivation crew in a background thread."""
-    import traceback
-
-    job = get_job(job_id)
-    if not job:
-        return
-
-    try:
-        update_job_status(job_id, "running")
-
-        request_data = job["request_data"]
-        inputs = {
-            "hobby_name": request_data.get("hobby_name", ""),
-            "days_since_last_session": str(request_data.get("days_since_last_session", 0)),
-            "recent_moods": request_data.get("recent_moods", ""),
-            "challenge_skip_rate": str(request_data.get("challenge_skip_rate", 0)),
-            "current_streak": str(request_data.get("current_streak", 0)),
-            "longest_streak": str(request_data.get("longest_streak", 0)),
-            "session_frequency_trend": request_data.get("session_frequency_trend", ""),
-        }
-
-        print(f"[Motivation Check Job {job_id}] Starting crew for: {inputs['hobby_name']}")
-
-        result = MotivationCrew().crew().kickoff(inputs=inputs)
-
-        if result.tasks_output and result.tasks_output[0].pydantic:
-            parsed = result.tasks_output[0].pydantic.model_dump()
-        else:
-            parsed = parse_task_output_json(result.raw or "")
-            if not parsed:
-                parsed = {"nudge_type": "", "message": "", "suggested_action": "", "urgency": "gentle"}
-
-        update_job_result(job_id, parsed)
-
-        user_id = request_data.get("user_id", "")
-        hobby_slug = request_data.get("hobby_slug", "")
-        if user_id and parsed.get("message"):
-            try:
-                save_nudge(user_id, hobby_slug, parsed)
-                print(f"[Motivation Check Job {job_id}] Saved nudge")
-            except Exception as e:
-                print(f"[Motivation Check Job {job_id}] Failed to save nudge: {e}")
-
-        print(f"[Motivation Check Job {job_id}] Job completed successfully")
-
-    except Exception as e:
-        error_details = f"{str(e)}\n{traceback.format_exc()}"
-        print(f"[Motivation Check Job {job_id}] FAILED: {error_details}")
-        update_job_error(job_id, str(e))
-
-
-@app.post("/motivation/check", response_model=JobResponse)
-async def start_motivation_check(request: MotivationCheckRequest):
-    """Start a motivation check job."""
-    request_data = request.model_dump()
-    user_id = request_data.get("user_id", "")
-
-    job_id = create_job("motivation_check", request_data, user_id)
-
-    thread = Thread(target=run_motivation_check_job, args=(job_id,))
-    thread.start()
-
-    return JobResponse(job_id=job_id)
-
-
-@app.get("/motivation/check/{job_id}")
-async def get_motivation_check_status(job_id: str):
-    """Get the status and result of a motivation check job."""
-    job = get_job(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    return {
-        "job_id": job["id"],
-        "status": job["status"],
-        "result": job["result"],
-        "error": job["error"],
-        "created_at": job["created_at"],
-        "updated_at": job["updated_at"],
-    }
-
-
 # ─── Roadmap Generation Endpoints ───
 
 def run_roadmap_generation_job(job_id: str) -> None:
@@ -891,15 +792,29 @@ def run_roadmap_generation_job(job_id: str) -> None:
 
         update_job_result(job_id, parsed)
 
+        # A roadmap that never reached the database is not a completed job.
+        # save_generated_roadmap refuses a phase list with an empty checklist,
+        # and the crew sometimes returns no phases at all -- both used to land
+        # as "completed", so the UI refetched, found nothing, and re-offered the
+        # same build with no explanation for the minute it just spent.
         user_id = request_data.get("user_id", "")
         hobby_slug = request_data.get("hobby_slug", "")
-        if user_id and hobby_slug and parsed.get("phases"):
+        if user_id and hobby_slug:
+            if not parsed.get("phases"):
+                update_job_error(job_id, "The roadmap came back empty. Try again.")
+                print(f"[Roadmap Generation Job {job_id}] FAILED: no phases in crew output")
+                return
             try:
                 ur_id = save_generated_roadmap(user_id, hobby_slug, parsed)
-                if ur_id:
-                    print(f"[Roadmap Generation Job {job_id}] Saved roadmap, user_roadmap_id={ur_id}")
             except Exception as e:
                 print(f"[Roadmap Generation Job {job_id}] Failed to save roadmap: {e}")
+                update_job_error(job_id, "Could not save the roadmap. Try again.")
+                return
+            if not ur_id:
+                update_job_error(job_id, "The roadmap came back incomplete. Try again.")
+                print(f"[Roadmap Generation Job {job_id}] FAILED: roadmap rejected on save")
+                return
+            print(f"[Roadmap Generation Job {job_id}] Saved roadmap, user_roadmap_id={ur_id}")
 
         print(f"[Roadmap Generation Job {job_id}] Job completed successfully")
 

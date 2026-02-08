@@ -218,84 +218,12 @@ def save_generated_challenge(
         return None
     new_uc_id = uc_resp.data[0]["id"]
 
-    # Retire whatever this one replaces. Only after the insert succeeded — if
-    # generation fails the user keeps the challenge they had, which is what the
-    # dashboard's failure card promises them.
-    #
-    # Guarded separately: the new challenge is already saved by this point, so a
-    # failure here must not surface to the caller as "failed to save".
-    try:
-        _skip_previous_active_challenges(user_id, hobby_slug, new_uc_id)
-    except Exception as e:
-        print(f"[save_generated_challenge] Could not skip previous challenges: {e}")
+    # Nothing to retire: triggerChallengeGeneration refuses to run while a
+    # challenge is active for this hobby, so a second one cannot exist. The old
+    # _skip_previous_active_challenges silently marked the previous challenge
+    # `skipped`, which is now a user action and means something different.
 
     return new_uc_id
-
-
-def _skip_previous_active_challenges(
-    user_id: str,
-    hobby_slug: str,
-    keep_uc_id: str,
-) -> None:
-    """
-    Mark the user's other active challenges for this hobby as skipped.
-
-    Without this, "Swap" on the dashboard only ever *added* a challenge: the old
-    one stayed active, and since the dashboard shows the longest-running active
-    challenge first, the card never changed.
-
-    Skipped titles are also fed back to the generation crew as
-    `skipped_challenges`, so this is what lets a swap teach the model what the
-    user turned down.
-    """
-    sb = get_supabase()
-
-    # hobby_slug lives on `challenges`, not `user_challenges`, so the rows have
-    # to be read and filtered before they can be updated by id.
-    resp = (
-        sb.table("user_challenges")
-        .select("id, challenges(hobby_slug)")
-        .eq("user_id", user_id)
-        .eq("status", "active")
-        .execute()
-    )
-
-    stale_ids = [
-        row["id"]
-        for row in (resp.data or [])
-        if row["id"] != keep_uc_id
-        and (row.get("challenges") or {}).get("hobby_slug") == hobby_slug
-    ]
-    if not stale_ids:
-        return
-
-    # `completed_at` stays null — it means "when completed", and a skipped
-    # challenge was not.
-    sb.table("user_challenges").update({"status": "skipped"}).in_(
-        "id", stale_ids
-    ).execute()
-
-
-def save_nudge(
-    user_id: str,
-    hobby_slug: str,
-    nudge_data: dict[str, Any],
-) -> None:
-    """INSERT a motivation nudge for a user."""
-    if not user_id:
-        return
-    sb = get_supabase()
-    now = datetime.now(timezone.utc).isoformat()
-    sb.table("nudges").insert({
-        "user_id": user_id,
-        "hobby_slug": hobby_slug or None,
-        "nudge_type": nudge_data.get("nudge_type", ""),
-        "message": nudge_data.get("message", ""),
-        "suggested_action": nudge_data.get("suggested_action", ""),
-        "action_data": nudge_data.get("action_data", ""),
-        "urgency": nudge_data.get("urgency", "gentle"),
-        "created_at": now,
-    }).execute()
 
 
 def save_generated_roadmap(
@@ -322,6 +250,19 @@ def save_generated_roadmap(
         )
         return None
 
+    # Read before writing: the upsert below overwrites roadmap_id, so this is
+    # the last chance to learn which row it supersedes.
+    prev_resp = (
+        sb.table("user_roadmaps")
+        .select("roadmap_id")
+        .eq("user_id", user_id)
+        .eq("hobby_slug", hobby_slug)
+        .limit(1)
+        .execute()
+    )
+    prev_rows = prev_resp.data or []
+    previous_roadmap_id = prev_rows[0]["roadmap_id"] if prev_rows else None
+
     # Insert roadmap
     roadmap_row = {
         "hobby_slug": hobby_slug,
@@ -346,12 +287,16 @@ def save_generated_roadmap(
     #
     # current_phase resets to 0 because the new phases are a different list;
     # carrying the old index would land the user mid-way through a roadmap they
-    # have not started.
+    # have not started. completed_goals resets for the same reason and is the
+    # sharper version of it: the keys are positional -- roadmapGoalKey() is
+    # `phase-index` -- so a surviving "2-1" would tick whatever item happens to
+    # sit at that position in the new phases.
     ur_row = {
         "user_id": user_id,
         "roadmap_id": roadmap_id,
         "hobby_slug": hobby_slug,
         "current_phase": 0,
+        "completed_goals": [],
         "started_at": now,
         "updated_at": now,
     }
@@ -362,6 +307,27 @@ def save_generated_roadmap(
     )
     if not ur_resp.data or len(ur_resp.data) == 0:
         return None
+
+    # The upsert repoints user_roadmaps at the new roadmap; without this the
+    # one it replaced stays in `roadmaps` forever with nothing referencing it.
+    #
+    # Checked for references first because user_roadmaps.roadmap_id is
+    # `on delete cascade`: a roadmaps row that some other user_roadmaps row
+    # still points at would take that row down with it.
+    if previous_roadmap_id and previous_roadmap_id != roadmap_id:
+        try:
+            refs = (
+                sb.table("user_roadmaps")
+                .select("id")
+                .eq("roadmap_id", previous_roadmap_id)
+                .limit(1)
+                .execute()
+            )
+            if not (refs.data or []):
+                sb.table("roadmaps").delete().eq("id", previous_roadmap_id).execute()
+        except Exception as e:
+            print(f"[db] Could not remove superseded roadmap {previous_roadmap_id}: {e}")
+
     return ur_resp.data[0]["id"]
 
 
