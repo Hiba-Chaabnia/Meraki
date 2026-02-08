@@ -5,12 +5,39 @@ import { formatSlug } from "@/lib/hobbyData";
 import { SERVER_API_URL } from "@/lib/config";
 import { getPracticeContext } from "@/lib/practiceContext";
 
+/**
+ * Build the roadmap for one hobby. Refused if that hobby already has one.
+ *
+ * Enforced here rather than only in the UI, which hides the offer behind
+ * `needsRoadmap` (stageCount === 0). A second tab or a page left open across a
+ * build defeats that, and the save is an upsert that resets `current_phase`
+ * and `completed_goals` -- so an accidental second run does not duplicate the
+ * roadmap, it silently erases the progress through the existing one.
+ *
+ * A roadmap with a goal-less phase is the exception: the backend now refuses to
+ * save one, but rows predating that check are already stored, and they render a
+ * stage with an empty checklist. Those stay rebuildable -- a guard with no way
+ * out would make a broken roadmap permanent.
+ */
 export async function triggerRoadmapGeneration(
   hobbySlug: string
 ): Promise<{ job_id?: string; error?: string }> {
   const auth = await requireAuth();
   if ("error" in auth) return { error: auth.error };
   const { supabase, user } = auth;
+
+  const { data: existing } = await supabase
+    .from("user_roadmaps")
+    .select("id, roadmaps(phases)")
+    .eq("user_id", user.id)
+    .eq("hobby_slug", hobbySlug)
+    .maybeSingle();
+
+  type ExistingRoadmap = { roadmaps: { phases: { goals?: string[] }[] | null } | null };
+  const phases = (existing as ExistingRoadmap | null)?.roadmaps?.phases ?? [];
+  const usable = phases.length > 0 && phases.every((p) => (p.goals?.length ?? 0) > 0);
+
+  if (existing && usable) return { error: "This hobby already has a roadmap." };
 
   const hobbyName = formatSlug(hobbySlug);
   const ctx = await getPracticeContext(supabase, user.id);
