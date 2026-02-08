@@ -2,12 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
-import { ErrorState } from "@/components/ui/ErrorState";
-import { FlowerSpinner } from "@/components/ui/FlowerSpinner";
-import { AnalyzingSteps } from "@/components/discover/quiz/AnalyzingSteps";
-import { fadeUp, staggerContainer } from "@/components/ui/animations";
+import { AnalyzingView } from "@/components/discover/quiz/AnalyzingView";
 import { saveHobbyMatches } from "@/app/actions/quiz";
 import {
   triggerDiscovery,
@@ -16,8 +11,6 @@ import {
 } from "@/app/actions/discovery";
 import { DISCOVERY_STEPS } from "@/lib/discovery";
 import { formatSlug } from "@/lib/hobbyData";
-
-const stagger = staggerContainer(0.08);
 
 const POLL_INTERVAL_MS = 2_000;
 /** Give up rather than spin forever if the job never reports back. */
@@ -218,71 +211,13 @@ export default function AnalyzingPage() {
     };
   }, [router, attempt]);
 
-  /* ── Failure ──
-     A terminal state, so it drops the loading furniture entirely: no spinner,
-     no "Finding your…" headline, no motion. Mirrors app/discover/error.tsx —
-     heading, one plain sentence, two actions. The underlying error is logged,
-     not shown; raw backend strings aren't user-facing anywhere else either. */
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="w-full flex justify-center"
-        >
-          <ErrorState
-            message="Match failed. Your answers are saved. Please try again."
-            actions={
-              <>
-                <Button onClick={retry} variant="secondary">
-                  Try again
-                </Button>
-                <Button href="/discover/quiz" variant="ghost">
-                  Retake the quiz
-                </Button>
-              </>
-            }
-          />
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4 py-12">
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        animate="show"
-        className="text-center max-w-md w-full"
-      >
-        <motion.div variants={fadeUp} className="flex justify-center mb-8">
-          <FlowerSpinner size={72} color="var(--secondary)" />
-        </motion.div>
-
-        <motion.h1 variants={fadeUp} className="page-title mb-6">
-          Finding your <em>creative</em> match
-        </motion.h1>
-
-        <motion.div variants={fadeUp}>
-          {/* Always `running` here: this branch only renders while work is
-              underway, and "Reading your answers" is honest from the moment
-              we mount — triggerDiscovery() is literally fetching them. */}
-          <AnalyzingSteps
-            steps={DISCOVERY_STEPS}
-            completed={completedSteps}
-            running
-          />
-        </motion.div>
-
-        <motion.p variants={fadeUp} className="caption mt-6">
-          {slow
-            ? "Still working — this one's taking a little longer than usual."
-            : "Good matches take a moment."}
-        </motion.p>
-      </motion.div>
-    </div>
+    <AnalyzingView
+      completedSteps={completedSteps}
+      slow={slow}
+      failed={Boolean(error)}
+      onRetry={retry}
+      quizHref="/discover/quiz"
+    />
   );
 }
