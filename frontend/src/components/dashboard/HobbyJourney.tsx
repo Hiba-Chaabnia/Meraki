@@ -3,9 +3,10 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Flame, Map, Tv, MapPin, Zap, Check, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, Flame, Map, Tv, MapPin, Zap, ChevronDown } from "lucide-react";
 import { ChallengeCard } from "./ChallengeCard";
 import { ActiveChallengePanel } from "./ActiveChallengePanel";
+import { RoadmapDetail } from "./RoadmapDetail";
 import { Button } from "@/components/ui/Button";
 import { moodEmojis } from "@/lib/dashboardData";
 import type { ActiveHobby, PracticeSession, Challenge, Roadmap } from "@/lib/dashboardData";
@@ -40,7 +41,6 @@ export interface HobbyJourneyProps {
   backHref: string;
   sessionHref: (sessionId: string) => string;
   /** Opens the roadmap modal the page owns. */
-  onOpenRoadmap: () => void;
   watchHref: string;
   microHref: string;
   localHref: string;
@@ -60,6 +60,12 @@ export interface HobbyJourneyProps {
   /* ── The active challenge's own actions, now that it is open on the page ── */
   /** Hands over to the session logger; the page completes it once a session saves. */
   onLogAndComplete?: (challenge: Challenge) => void;
+
+  /* ── The roadmap's own actions, now that it is open on the page ── */
+  advancingPhase?: boolean;
+  advanceError?: string | null;
+  onAdvancePhase?: () => void;
+  onToggleGoal?: (userRoadmapId: string, goalKey: string) => void;
 
   /** The danger zone, which only the real page can wire to its mutations. */
   dangerZone?: ReactNode;
@@ -88,7 +94,6 @@ export function HobbyJourney({
   feedbackMap,
   backHref,
   sessionHref,
-  onOpenRoadmap,
   watchHref,
   microHref,
   localHref,
@@ -101,6 +106,10 @@ export function HobbyJourney({
   onLogPractice,
   onOpenChallenge,
   onLogAndComplete,
+  advancingPhase = false,
+  advanceError,
+  onAdvancePhase,
+  onToggleGoal,
   dangerZone,
 }: HobbyJourneyProps) {
   const [pastOpen, setPastOpen] = useState(false);
@@ -195,65 +204,19 @@ export function HobbyJourney({
 
           <motion.div variants={fadeUp}>
             <h2 className="card-heading mb-4">Learning Roadmap</h2>
-            {roadmap ? (
-              /* The path, not the current phase. The dashboard card already
-                 shows the stage you are on with its goals ticked; repeating it
-                 here would make the deeper page the shallower one. What this
-                 adds is shape — every phase, named, and where you are among
-                 them — with the detail one click away in the modal. */
-              <button
-                type="button"
-                onClick={onOpenRoadmap}
-                className="w-full cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 text-left shadow-sm transition-shadow hover:shadow-md"
-              >
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="label truncate">{roadmap.title}</p>
-                    <p className="caption">Phase {roadmap.currentPhase + 1} of {roadmap.totalPhases}</p>
-                  </div>
-                  <Map className="h-5 w-5 flex-shrink-0" style={{ color: META.color }} />
-                </div>
-
-                <ol className="space-y-2.5">
-                  {roadmap.phases.map((phase, i) => {
-                    const isComplete = i < roadmap.currentPhase;
-                    const isCurrent = i === roadmap.currentPhase;
-                    return (
-                      <li key={i} className="flex items-center gap-3">
-                        <span
-                          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                          style={
-                            isCurrent
-                              ? { backgroundColor: META.color, color: "#fff" }
-                              : isComplete
-                                ? { backgroundColor: META.color + "25", color: META.color }
-                                : { backgroundColor: "#f3f4f6", color: "#9ca3af" }
-                          }
-                        >
-                          {isComplete ? <Check className="h-3 w-3" /> : phase.phase_number}
-                        </span>
-                        <span
-                          className={`truncate text-sm ${
-                            isCurrent ? "font-semibold text-gray-800" : isComplete ? "text-gray-500" : "text-gray-400"
-                          }`}
-                        >
-                          {phase.title}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ol>
-
-                {roadmap.phases[roadmap.currentPhase] && (
-                  <p className="mt-4 text-sm text-gray-500">
-                    {roadmap.phases[roadmap.currentPhase].description}
-                  </p>
-                )}
-
-                <span className="mt-4 inline-block text-sm font-medium" style={{ color: META.color }}>
-                  Open the full roadmap &rarr;
-                </span>
-              </button>
+            {roadmap && onAdvancePhase ? (
+              /* The whole path, open. It was a summary that opened a modal
+                 holding this exact component — a click that bought nothing but
+                 a second header, on the one page the roadmap belongs to. */
+              <RoadmapDetail
+                inline
+                roadmap={roadmap}
+                themeColor={META.color}
+                advancing={advancingPhase}
+                error={advanceError}
+                onAdvance={onAdvancePhase}
+                onToggleGoal={onToggleGoal}
+              />
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
                 <p className="text-sm text-gray-400 mb-3">No roadmap yet for {name}</p>

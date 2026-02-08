@@ -8,7 +8,6 @@ import {
   HobbyDangerZone,
   HobbyJourney,
   ChallengeModal,
-  RoadmapModal,
 } from "@/components/dashboard";
 import type { SessionFormData } from "@/components/dashboard";
 import type { Challenge } from "@/lib/dashboardData";
@@ -26,7 +25,6 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
   const router = useRouter();
 
   const [loggerOpen, setLoggerOpen] = useState(false);
-  const [roadmapOpen, setRoadmapOpen] = useState(false);
 
   const page = useHobbyPage(slug);
   const challengeUi = useChallengeActions(page.fetchData);
@@ -102,15 +100,6 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         error={challengeUi.error}
       />
 
-      <RoadmapModal
-        roadmap={roadmapOpen ? page.roadmap : null}
-        onClose={() => setRoadmapOpen(false)}
-        advancing={page.advancing}
-        error={page.advanceError}
-        onAdvance={page.advancePhase}
-        onToggleGoal={page.toggleGoal}
-      />
-
       <HobbyJourney
         name={page.name}
         slug={slug}
@@ -122,7 +111,6 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         feedbackMap={page.feedbackMap}
         backHref="/dashboard"
         sessionHref={(id) => `/dashboard/sessions/${id}`}
-        onOpenRoadmap={() => setRoadmapOpen(true)}
         watchHref={`/discover/sampling/${slug}/watch`}
         microHref={`/discover/sampling/${slug}/micro`}
         localHref={`/discover/sampling/${slug}/local`}
@@ -133,6 +121,10 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         onGenerateChallenge={() => challengeGen.generate(slug)}
         onGenerateRoadmap={() => roadmapGen.generate(slug)}
         onLogPractice={() => setLoggerOpen(true)}
+        onAdvancePhase={page.advancePhase}
+        onToggleGoal={page.toggleGoal}
+        advancingPhase={page.advancing}
+        advanceError={page.advanceError}
         onOpenChallenge={challengeUi.openChallenge}
         onLogAndComplete={logAndComplete}
         dangerZone={
