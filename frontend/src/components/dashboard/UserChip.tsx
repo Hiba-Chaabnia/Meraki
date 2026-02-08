@@ -8,7 +8,6 @@ import { User, Settings, LogOut } from "lucide-react";
 interface UserChipProps {
   displayName: string;
   displayInitial: string;
-  expanded: boolean;
   onSignOut: () => void;
 }
 
@@ -20,7 +19,7 @@ function Avatar({ initial, ring }: { initial: string; ring?: boolean }) {
   );
 }
 
-export function UserChip({ displayName, displayInitial, expanded, onSignOut }: UserChipProps) {
+export function UserChip({ displayName, displayInitial, onSignOut }: UserChipProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -35,17 +34,18 @@ export function UserChip({ displayName, displayInitial, expanded, onSignOut }: U
   }, [open]);
 
   return (
-    <div ref={ref} className="relative w-full">
-      {/* Dropdown menu — anchored above the chip */}
+    <div ref={ref} className="relative">
+      {/* Opens downward: the chip moved from the sidebar footer to a top header. */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
+            exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-lg border border-[var(--white-muted)] py-1.5 z-50"
+            className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-[var(--white-muted)] py-1.5 z-50"
           >
+            <p className="label truncate px-4 pb-1.5 pt-0.5 text-gray-400">{displayName}</p>
             <Link
               href="/profile"
               onClick={() => setOpen(false)}
@@ -71,30 +71,16 @@ export function UserChip({ displayName, displayInitial, expanded, onSignOut }: U
         )}
       </AnimatePresence>
 
-      {/* Chip button — two layouts based on expanded prop */}
-      {expanded ? (
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className={`w-full h-8 flex items-center gap-2.5 px-2 rounded-lg transition-colors cursor-pointer ${
-            open ? "bg-[var(--white-muted)]" : "hover:bg-[var(--white-muted)]"
-          }`}
-        >
-          <div className="h-full aspect-square flex-shrink-0">
-            <Avatar initial={displayInitial} ring={open} />
-          </div>
-          <span className="label truncate">{displayName}</span>
-        </button>
-      ) : (
-        <button
-          onClick={() => setOpen((o) => !o)}
-          title="Account"
-          className={`h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer transition-colors ${
-            open ? "bg-[var(--white-muted)]" : "hover:bg-[var(--white-muted)]"
-          }`}
-        >
-          <Avatar initial={displayInitial} ring={open} />
-        </button>
-      )}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title={displayName}
+        aria-label="Account"
+        className={`h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer transition-colors ${
+          open ? "bg-[var(--white-muted)]" : "hover:bg-[var(--white-muted)]"
+        }`}
+      >
+        <Avatar initial={displayInitial} ring={open} />
+      </button>
     </div>
   );
 }
