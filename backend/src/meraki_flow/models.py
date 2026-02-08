@@ -50,7 +50,6 @@ class LocalSpotModel(BaseModel):
     url: str = ""
     beginner_friendly: bool = True
     single_session: bool = True
-    beginner_tips: str = ""
     source: str = "web_search"
 
 

@@ -13,6 +13,7 @@ dependencies = [
     "google-api-python-client>=2.100.0",
     "ddgs>=7.0.0",
     "requests>=2.31.0",
+    "supabase>=2.0.0",
 ]
 
 [project.optional-dependencies]

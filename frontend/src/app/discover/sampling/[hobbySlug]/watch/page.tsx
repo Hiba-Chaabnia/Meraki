@@ -41,6 +41,9 @@ interface Video {
   what_to_watch_for?: string;
 }
 
+// Module-level cache — survives unmount/remount during client-side navigation
+const videosCache = new Map<string, Video[]>();
+
 // Extract YouTube video ID from URL
 function getYouTubeId(url: string): string | null {
   const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
@@ -54,19 +57,29 @@ export default function WatchPage({
 }) {
   const { hobbySlug } = use(params);
   const hobby = getHobby(hobbySlug);
-  const [videos, setVideos] = useState<Video[] | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const cached = videosCache.get(hobbySlug) ?? null;
+  const [videos, setVideos] = useState<Video[] | null>(cached);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(cached?.[0] ?? null);
+  const [loading, setLoading] = useState(!cached);
 
   const searchParams = useSearchParams();
 
   // Poll the backend directly from the browser (no server action needed for GET)
   useEffect(() => {
+    // If we already have cached data, skip fetching
+    if (videosCache.has(hobbySlug)) return;
+
     let cancelled = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     function applyVideos(data: SamplingPreviewResult) {
       if (data.videos && data.videos.length > 0) {
+        videosCache.set(hobbySlug, data.videos);
+        // Store the FULL result so the parent sampling page can use it on back-nav
+        try {
+          sessionStorage.setItem(`sampling-preview-${hobbySlug}`, JSON.stringify(data));
+        } catch { /* sessionStorage unavailable */ }
         setVideos(data.videos);
         setSelectedVideo(data.videos[0]);
       }
@@ -99,6 +112,21 @@ export default function WatchPage({
     }
 
     async function loadVideos() {
+      // 0. Check sessionStorage for data from parent page
+      try {
+        const stored = sessionStorage.getItem(`sampling-preview-${hobbySlug}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.videos && parsed.videos.length > 0) {
+            videosCache.set(hobbySlug, parsed.videos);
+            setVideos(parsed.videos);
+            setSelectedVideo(parsed.videos[0]);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch { /* sessionStorage unavailable */ }
+
       // 1. If jobId is in the URL (passed from parent page), poll it directly
       const jobIdParam = searchParams.get("jobId");
       if (jobIdParam) {
@@ -121,7 +149,26 @@ export default function WatchPage({
         }
       }
 
-      // 2. No jobId or job not found — trigger a new one via server action
+      // 2. Check sessionStorage for a previously-started job ID
+      try {
+        const storedJobId = sessionStorage.getItem(`sampling-job-${hobbySlug}`);
+        if (storedJobId) {
+          const res = await fetch(`${BACKEND_URL}/sampling/preview/${storedJobId}`);
+          if (!cancelled && res.ok) {
+            const data = await res.json();
+            if (data.status === "completed" && data.result) {
+              applyVideos(data.result);
+              return;
+            }
+            if (data.status === "pending" || data.status === "running") {
+              await pollBackend(storedJobId);
+              return;
+            }
+          }
+        }
+      } catch { /* ignore */ }
+
+      // 3. No jobId or job not found — trigger a new one via server action
       const { job_id, error } = await triggerSamplingPreview(hobbySlug);
       if (cancelled) return;
       if (error || !job_id) {
@@ -300,12 +347,25 @@ export default function WatchPage({
                     >
                       <PlayIcon className="w-10 h-10 text-white ml-1" />
                     </div>
-                    <p className="text-gray-500">No curated videos available yet</p>
+                    <p className="text-gray-500 mb-3">
+                      We couldn&apos;t load curated videos right now, but you can search YouTube directly:
+                    </p>
+                    <a
+                      href={`https://www.youtube.com/results?search_query=${encodeURIComponent(hobby.name + " beginner tutorial")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:shadow-lg active:scale-95 mb-3"
+                      style={{ backgroundColor: hobby.color }}
+                    >
+                      Search YouTube for &ldquo;{hobby.name} beginner tutorial&rdquo;
+                      <ExternalLinkIcon className="w-4 h-4" />
+                    </a>
+                    <br />
                     <Link
                       href={`/discover/sampling/${hobbySlug}`}
                       className="text-sm text-gray-400 mt-2 hover:text-gray-600 underline"
                     >
-                      Go back to generate personalized recommendations
+                      Back to sampling options
                     </Link>
                   </>
                 )}

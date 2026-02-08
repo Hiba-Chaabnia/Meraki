@@ -10,7 +10,7 @@ import { getSessions, createSession } from "@/app/actions/sessions";
 import { getUserHobbies } from "@/app/actions/hobbies";
 import { toPracticeSession, toActiveHobby } from "@/lib/transformData";
 import { moodEmojis } from "@/lib/dashboardData";
-import { Plus, Filter, Image as ImageIcon } from "lucide-react";
+import { Plus, Filter } from "lucide-react";
 import type { PracticeSession, ActiveHobby } from "@/lib/dashboardData";
 
 const fadeUp = {
@@ -55,7 +55,6 @@ export default function SessionsPage() {
       userHobbyId: hobby.userHobbyId,
       sessionType: data.type,
       duration: data.duration,
-      mood: data.mood,
       notes: data.notes,
     });
     fetchData();
@@ -151,14 +150,6 @@ export default function SessionsPage() {
                       <p className="text-sm text-gray-700 line-clamp-2">{s.notes}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-xs text-gray-400">{s.duration} min</span>
-                        {s.hasImage && (
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
-                            <ImageIcon className="w-3 h-3" /> Photo
-                          </span>
-                        )}
-                        {s.aiFeedback && (
-                          <span className="text-xs text-blue-400 font-medium">AI Feedback</span>
-                        )}
                       </div>
                     </div>
                   </div>

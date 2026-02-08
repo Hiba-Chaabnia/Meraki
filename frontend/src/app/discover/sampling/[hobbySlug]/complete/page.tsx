@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useEffect, useRef } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { getHobby } from "@/lib/hobbyData";
 import { completeSampling } from "@/app/actions/sampling";
@@ -48,9 +49,9 @@ const features = [
     description: "We\u2019ll create challenges tailored to your skill level and interests.",
   },
   {
-    emoji: "\u{1F4AC}",
-    title: "AI Feedback",
-    description: "Get thoughtful observations on your progress and suggestions for growth.",
+    emoji: "\u{1F4DA}",
+    title: "Curated Resources",
+    description: "Access hand-picked tutorials, guides, and communities for your hobby.",
   },
   {
     emoji: "\u{1F525}",
@@ -66,7 +67,9 @@ export default function SamplingCompletePage({
 }) {
   const { hobbySlug } = use(params);
   const hobby = getHobby(hobbySlug);
+  const router = useRouter();
   const hasRun = useRef(false);
+  const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
     if (hasRun.current) return;
@@ -75,6 +78,21 @@ export default function SamplingCompletePage({
       console.error("Failed to complete sampling:", e)
     );
   }, [hobbySlug]);
+
+  // Auto-redirect countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          router.push("/dashboard");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center px-4 py-12">
@@ -132,6 +150,9 @@ export default function SamplingCompletePage({
 
         {/* CTA */}
         <motion.div variants={fadeUp} className="mt-10 space-y-4">
+          <p className="text-sm text-gray-400">
+            Redirecting to dashboard in {countdown}s...
+          </p>
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98]"

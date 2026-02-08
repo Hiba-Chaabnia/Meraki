@@ -60,7 +60,6 @@ export interface LocalSpot {
   url?: string;
   beginner_friendly: boolean;
   single_session: boolean;
-  beginner_tips: string;
   source: "google_places" | "web_search";
 }
 
@@ -147,6 +146,8 @@ export async function triggerSamplingPreview(hobbySlug: string): Promise<{
       body: JSON.stringify({
         hobby_name: hobbyName,
         quiz_answers: quizAnswers,
+        hobby_slug: hobbySlug,
+        user_id: user?.id ?? "",
       }),
     });
 
@@ -212,6 +213,12 @@ export async function triggerLocalExperiences(
     return { error: "Location is required." };
   }
 
+  // Get user for backend persistence
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   // Convert slug to hobby name
   const hobbyName = hobbySlug
     .split("-")
@@ -229,6 +236,8 @@ export async function triggerLocalExperiences(
       body: JSON.stringify({
         hobby_name: hobbyName,
         location: location.trim(),
+        hobby_slug: hobbySlug,
+        user_id: user?.id ?? "",
       }),
     });
 

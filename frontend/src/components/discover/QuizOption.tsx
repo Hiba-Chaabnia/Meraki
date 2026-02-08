@@ -11,11 +11,10 @@ export function QuizOption({ option, isSelected, theme, onClick }: QuizOptionPro
   return (
     <button
       onClick={onClick}
-      className={`w-full px-4 py-3 rounded-md text-sm font-medium transition-all duration-200 border text-left flex justify-between items-center ${
-        isSelected
+      className={`w-full px-4 py-3 rounded-md text-sm font-medium transition-all duration-200 border text-left flex justify-between items-center border-2 border-orange-500 ${isSelected
           ? "shadow-md scale-[1.02]"
           : "bg-white/80 text-[var(--foreground)] hover:bg-white"
-      }`}
+        }`}
       style={
         isSelected
           ? { backgroundColor: theme.accent, borderColor: theme.accent, color: theme.textOnAccent || "#ffffff" }

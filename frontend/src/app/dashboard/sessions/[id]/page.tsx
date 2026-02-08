@@ -19,27 +19,6 @@ const ClockIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
   </svg>
 );
-const SparklesIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
-    <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" opacity="0.6" />
-  </svg>
-);
-const EyeIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-  </svg>
-);
-const TrendingUpIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
-  </svg>
-);
-const LightbulbIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 18h6M10 22h4M12 2a7 7 0 015 11.9V17H7v-3.1A7 7 0 0112 2z" />
-  </svg>
-);
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -123,60 +102,6 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800 mb-3">Session Notes</h2>
         <p className="text-sm text-gray-600 leading-relaxed">{session.notes || "No notes for this session."}</p>
       </motion.div>
-
-      {session.aiFeedback && (
-        <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-          <div className="px-6 pt-6 pb-2 flex items-center gap-2">
-            <SparklesIcon className="w-5 h-5 text-[var(--secondary)]" />
-            <h2 className="!text-base !font-semibold !tracking-normal !text-gray-800">AI Feedback</h2>
-          </div>
-          <div className="px-6 pb-6 space-y-5">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <EyeIcon className="w-4 h-4 text-blue-400" />
-                <p className="text-sm font-semibold text-gray-700">Observations</p>
-              </div>
-              <ul className="space-y-2">
-                {session.aiFeedback.observations.map((obs, i) => (
-                  <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                    <span className="text-blue-300 mt-1.5 flex-shrink-0">&#8226;</span>{obs}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUpIcon className="w-4 h-4 text-green-500" />
-                <p className="text-sm font-semibold text-gray-700">Growth</p>
-              </div>
-              <ul className="space-y-2">
-                {session.aiFeedback.growth.map((g, i) => (
-                  <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                    <span className="text-green-300 mt-1.5 flex-shrink-0">&#8226;</span>{g}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <LightbulbIcon className="w-4 h-4 text-yellow-500" />
-                <p className="text-sm font-semibold text-gray-700">Suggestions</p>
-              </div>
-              <ul className="space-y-2">
-                {session.aiFeedback.suggestions.map((sug, i) => (
-                  <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                    <span className="text-yellow-300 mt-1.5 flex-shrink-0">&#8226;</span>{sug}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-xl px-5 py-4 text-sm" style={{ backgroundColor: session.hobbyColor + "12" }}>
-              <p className="font-semibold mb-1" style={{ color: session.hobbyColor }}>&#127881; Celebration</p>
-              <p className="text-gray-600">{session.aiFeedback.celebration}</p>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {session.challengeId && (
         <motion.div variants={fadeUp}>

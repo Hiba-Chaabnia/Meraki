@@ -55,10 +55,8 @@ const CheckIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 type FilterType = "All" | "Workshop" | "Studio" | "Class" | "Meetup" | "Drop-in Class";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
+// Module-level cache — survives unmount/remount during client-side navigation
+const localCache = new Map<string, { spots: DynamicLocalSpot[]; tips: LocalExperiencesResult["general_tips"] | null }>();
 
 /* ═══════════════════════════════════════════════════════
    Local spots page — "Find Something Nearby"
@@ -112,14 +110,26 @@ export default function LocalPage({
 
   /* Fetch local experiences from API */
   const fetchLocalExperiences = useCallback(async (loc: string) => {
+    // Check module-level cache first (instant, survives back-nav)
+    const cacheKey = `${hobbySlug}:${loc}`;
+    const cached = localCache.get(cacheKey);
+    if (cached) {
+      setDynamicSpots(cached.spots);
+      setGeneralTips(cached.tips);
+      setLoading(false);
+      loadingRef.current = false;
+      return;
+    }
+
     setLoading(true);
     loadingRef.current = true;
     setApiError(null);
 
     try {
-      // Check DB cache first
+      // Check DB cache
       const dbResult = await getLocalExperienceResult(hobbySlug, loc);
       if (dbResult.data) {
+        localCache.set(cacheKey, { spots: dbResult.data.local_spots, tips: dbResult.data.general_tips });
         setDynamicSpots(dbResult.data.local_spots);
         setGeneralTips(dbResult.data.general_tips);
         setLoading(false);
@@ -148,12 +158,14 @@ export default function LocalPage({
 
         if (status.status === "completed" && status.result) {
           clearInterval(pollInterval);
+          console.log("[Local] Received spots:", status.result.local_spots?.length, "tips:", !!status.result.general_tips);
+          localCache.set(cacheKey, { spots: status.result.local_spots, tips: status.result.general_tips });
           setDynamicSpots(status.result.local_spots);
           setGeneralTips(status.result.general_tips);
           setLoading(false);
           loadingRef.current = false;
           // Persist to DB
-          saveLocalExperienceResult(hobbySlug, loc, status.result).catch(() => {});
+          saveLocalExperienceResult(hobbySlug, loc, status.result).catch((e) => console.error("[Local] DB save failed:", e));
         } else if (status.status === "failed") {
           clearInterval(pollInterval);
           setApiError(status.error || "Search failed");
@@ -498,20 +510,16 @@ export default function LocalPage({
             </div>
 
             {/* Venue cards */}
-            <motion.div
-              initial="hidden"
-              animate="show"
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
-              className="space-y-4"
-            >
+            <div className="space-y-4">
               {filteredSpots.map((spot, index) => (
                 <SpotCard
                   key={spot.name || index}
                   spot={spot}
                   hobby={hobby}
+                  index={index}
                 />
               ))}
-            </motion.div>
+            </div>
 
             {filteredSpots.length === 0 && !loading && (
               <div className="text-center py-12 space-y-4">
@@ -543,13 +551,17 @@ export default function LocalPage({
 function SpotCard({
   spot,
   hobby,
+  index,
 }: {
   spot: DynamicLocalSpot;
   hobby: { color: string; lightColor: string };
+  index: number;
 }) {
   return (
     <motion.div
-      variants={fadeUp}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
       className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-shadow p-6"
     >
       <div className="flex flex-col md:flex-row md:items-start gap-5">
@@ -571,12 +583,6 @@ function SpotCard({
               </span>
             )}
           </div>
-
-          {spot.beginner_tips && (
-            <p className="text-sm text-gray-500 leading-relaxed mb-3 italic">
-              &ldquo;{spot.beginner_tips}&rdquo;
-            </p>
-          )}
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
             {spot.address && (

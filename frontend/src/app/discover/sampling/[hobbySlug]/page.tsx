@@ -148,8 +148,10 @@ export default function SamplingPage({
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     function storeResult(result: SamplingPreviewResult, jobId?: string) {
+      // Always write to caches (even if component is unmounting)
       cacheResult(hobbySlug, result);
       if (jobId) jobIdCache.set(hobbySlug, jobId);
+      // Only update React state if component is still mounted
       if (!cancelled) {
         setPreviewResult(result);
         setPreviewLoading(false);
@@ -161,6 +163,20 @@ export default function SamplingPage({
       if (!cancelled) setPreviewJobId(jobId);
       pollTimer = setInterval(async () => {
         const status = await pollSamplingPreviewStatus(jobId);
+
+        // Write to caches even if unmounting — they survive navigation
+        if ("status" in status && status.status === "completed" && status.result) {
+          if (pollTimer) clearInterval(pollTimer);
+          cacheResult(hobbySlug, status.result);
+          if (jobId) jobIdCache.set(hobbySlug, jobId);
+          saveSamplingResult(hobbySlug, status.result).catch((e) => console.error("[Sampling] DB save failed:", e));
+          if (!cancelled) {
+            setPreviewResult(status.result);
+            setPreviewLoading(false);
+          }
+          return;
+        }
+
         if (cancelled) return;
 
         if (!("status" in status)) {
@@ -170,11 +186,7 @@ export default function SamplingPage({
           return;
         }
 
-        if (status.status === "completed" && status.result) {
-          if (pollTimer) clearInterval(pollTimer);
-          storeResult(status.result, jobId);
-          saveSamplingResult(hobbySlug, status.result).catch(() => {});
-        } else if (status.status === "failed") {
+        if (status.status === "failed") {
           if (pollTimer) clearInterval(pollTimer);
           setPreviewError(status.error || "Preview generation failed");
           setPreviewLoading(false);
@@ -218,7 +230,7 @@ export default function SamplingPage({
           if ("status" in status) {
             if (status.status === "completed" && status.result) {
               storeResult(status.result, existingJobId);
-              saveSamplingResult(hobbySlug, status.result).catch(() => {});
+              saveSamplingResult(hobbySlug, status.result).catch((e) => console.error("[Sampling] DB save failed:", e));
               return;
             } else if (status.status === "pending" || status.status === "running") {
               startPolling(existingJobId);

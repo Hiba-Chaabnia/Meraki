@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { useQuiz } from "@/lib/hooks/useQuiz";
 import type { SectionTheme } from "@/components/discover/sectionTheme";
 import { FlowerShape } from "@/components/ui/FlowerShape";
@@ -71,7 +72,9 @@ export default function QuizPage() {
         }
       }
 
-      if (!cancelled) router.push("/discover/quiz/results?analyzing=true");
+      if (!cancelled) {
+        router.push("/discover/quiz/analyzing");
+      }
     };
 
     save();
@@ -105,6 +108,13 @@ export default function QuizPage() {
 
   return (
     <div className="h-[100dvh] overflow-hidden bg-[var(--background)] flex flex-col">
+      {/* ── Headline ── */}
+      <div className="pt-6 pb-2 text-center z-10">
+        <h1 className="text-2xl md:text-3xl font-bold text-[var(--foreground)]">
+          Discover Your Creative Persona
+        </h1>
+      </div>
+
       {/* ── Stepper ── */}
       <QuizStepper
         sections={quiz.sections}
@@ -122,22 +132,20 @@ export default function QuizPage() {
             <button
               onClick={() => quiz.navigateTo(quiz.activeIndex - 1)}
               disabled={quiz.activeIndex === 0}
-              className={`absolute left-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full border transition-all duration-300 ${
-                quiz.activeIndex > 0
-                  ? "bg-white/80 border-[var(--foreground)]/10 text-[var(--foreground)] hover:bg-white cursor-pointer opacity-100"
-                  : "opacity-0 pointer-events-none"
-              }`}
+              className={`absolute left-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full border transition-all duration-300 ${quiz.activeIndex > 0
+                ? "bg-white/80 border-[var(--foreground)]/10 text-[var(--foreground)] hover:bg-white cursor-pointer opacity-100"
+                : "opacity-0 pointer-events-none"
+                }`}
             >
               <ChevronLeftIcon />
             </button>
             <button
               onClick={() => quiz.navigateTo(quiz.activeIndex + 1)}
               disabled={quiz.activeIndex >= quiz.maxReachedIndex}
-              className={`absolute right-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full border transition-all duration-300 ${
-                quiz.activeIndex < quiz.maxReachedIndex
-                  ? "bg-white/80 border-[var(--foreground)]/10 text-[var(--foreground)] hover:bg-white cursor-pointer opacity-100"
-                  : "opacity-0 pointer-events-none"
-              }`}
+              className={`absolute right-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full border transition-all duration-300 ${quiz.activeIndex < quiz.maxReachedIndex
+                ? "bg-white/80 border-[var(--foreground)]/10 text-[var(--foreground)] hover:bg-white cursor-pointer opacity-100"
+                : "opacity-0 pointer-events-none"
+                }`}
             >
               <ChevronRightIcon />
             </button>
@@ -163,51 +171,21 @@ export default function QuizPage() {
               onSelectSingle={quiz.selectSingle}
               onToggleMulti={quiz.toggleMulti}
               onSetText={quiz.setText}
+              showSubmit={cardIdx === lastIndex && quiz.allComplete}
+              onSubmit={quiz.handleSubmit}
             />
           ))}
         </div>
-
-        {/* Submit button — desktop: positioned to the right of the last card */}
-        {isDesktop && showSubmit && (
-          <div
-            className="absolute top-1/2 -translate-y-1/2 z-40"
-            style={{ left: `calc(50vw + ${cardWidths[lastIndex] / 2}vw + 1vw)` }}
-          >
-            <ScallopedButton
-              bgColor="var(--primary)"
-              textColor="var(--background)"
-              scallopSize="sm"
-              onClick={quiz.handleSubmit}
-            >
-              Finish Quiz
-            </ScallopedButton>
-          </div>
-        )}
       </div>
-
-      {/* Submit button — mobile: centered below carousel */}
-      {!isDesktop && showSubmit && (
-        <div className="flex justify-center py-2 flex-shrink-0">
-          <ScallopedButton
-            bgColor="var(--primary)"
-            textColor="var(--background)"
-            scallopSize="sm"
-            onClick={quiz.handleSubmit}
-          >
-            Finish Quiz
-          </ScallopedButton>
-        </div>
-      )}
 
       {/* ── Reset button — always reserves space to prevent layout shift ── */}
       <div className="flex justify-center py-3 flex-shrink-0">
         <button
           onClick={quiz.handleRestart}
-          className={`group flex items-center gap-2 px-6 py-2 rounded-full border text-xs font-bold uppercase tracking-widest transition-all active:scale-95 ${
-            Object.keys(quiz.answers).length > 0
-              ? "text-[var(--foreground)]/50 hover:text-[var(--foreground)]/70 border-[var(--foreground)]/10 hover:border-[var(--foreground)]/20"
-              : "invisible"
-          }`}
+          className={`group flex items-center gap-2 px-6 py-2 rounded-full border text-xs font-bold uppercase tracking-widest transition-all active:scale-95 ${Object.keys(quiz.answers).length > 0
+            ? "text-[var(--foreground)]/50 hover:text-[var(--foreground)]/70 border-[var(--foreground)]/10 hover:border-[var(--foreground)]/20"
+            : "invisible"
+            }`}
           disabled={Object.keys(quiz.answers).length === 0}
         >
           <span className="group-hover:-rotate-180 transition-transform duration-500">

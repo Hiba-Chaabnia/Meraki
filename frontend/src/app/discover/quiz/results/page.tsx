@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { getHobbyMatches, saveHobbyMatches } from "@/app/actions/quiz";
+import { getHobbyMatches } from "@/app/actions/quiz";
 import {
-  triggerDiscovery,
   pollDiscoveryStatus,
   DiscoveryStatusResponse,
 } from "@/app/actions/discovery";
@@ -35,6 +33,17 @@ interface MatchCard {
   tags: string[];
 }
 
+/* ─── Module-level cache ───
+   Survives component unmount/remount during client-side navigation.
+   Primary guard against showing "No Matches Yet" on back-nav. */
+const matchesCache: { data: MatchCard[] | null } = { data: null };
+
+function cacheMatches(cards: MatchCard[]) {
+  matchesCache.data = cards;
+  try {
+    sessionStorage.setItem("quiz-matches", JSON.stringify(cards));
+  } catch { /* quota exceeded — module cache is primary */ }
+}
 
 function dbMatchToCard(row: HobbyMatchRow): MatchCard {
   const slug = row.hobbies?.slug ?? "";
@@ -50,146 +59,7 @@ function dbMatchToCard(row: HobbyMatchRow): MatchCard {
   };
 }
 
-function AnalyzingPhase({ onComplete }: { onComplete: (matches: MatchCard[]) => void }) {
-  const [status, setStatus] = useState<string>("Starting analysis...");
-  const [error, setError] = useState<string | null>(null);
-  const jobIdRef = useRef<string | null>(null);
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function startDiscovery() {
-      console.log("[Results] Starting discovery...");
-      // Start the discovery job
-      const result = await triggerDiscovery();
-
-      if (!mounted) return;
-
-      if (result.error) {
-        console.error("[Results] Discovery error:", result.error);
-        setError(result.error);
-        return;
-      }
-
-      if (result.job_id) {
-        console.log("[Results] Got job_id:", result.job_id);
-        jobIdRef.current = result.job_id;
-        setStatus("Analyzing your quiz responses...");
-        startPolling(result.job_id);
-      }
-    }
-
-    function startPolling(jobId: string) {
-      console.log("[Results] Starting polling for job:", jobId);
-      pollingRef.current = setInterval(async () => {
-        if (!mounted) return;
-
-        const pollResult = await pollDiscoveryStatus(jobId);
-        console.log("[Results] Poll result:", pollResult);
-
-        if (!("status" in pollResult)) {
-          // This is an error response from the catch block: { error: string }
-          console.error("[Results] Poll error:", pollResult.error);
-          setError(pollResult.error);
-          stopPolling();
-          return;
-        }
-
-        const response = pollResult as DiscoveryStatusResponse;
-
-        switch (response.status) {
-          case "pending":
-            setStatus("Waiting for analysis to start...");
-            break;
-          case "running":
-            setStatus("Finding your perfect hobbies...");
-            break;
-          case "completed":
-            stopPolling();
-            console.log("[Results] Job completed, matches:", response.result?.matches?.length);
-            if (response.result?.matches && response.result.matches.length > 0) {
-              // Save matches to Supabase
-              const matchesToSave = response.result.matches.map((m) => ({
-                hobbySlug: m.hobby_slug,
-                matchPercentage: m.match_percentage,
-                matchTags: m.match_tags,
-                reasoning: m.reasoning,
-              }));
-              console.log("[Results] Saving matches to Supabase...");
-              await saveHobbyMatches(matchesToSave);
-
-              // Convert to card format
-              const cards: MatchCard[] = response.result.matches.map((m) => {
-                const meta = hobbyMeta[m.hobby_slug];
-                return {
-                  slug: m.hobby_slug,
-                  name: meta?.name ?? m.hobby_slug,
-                  tagline: m.reasoning || "A great match for you!",
-                  matchPercent: m.match_percentage,
-                  color: meta?.color ?? "#B8A9E8",
-                  lightColor: meta?.lightColor ?? "#E8E2F7",
-                  tags: m.match_tags ?? [],
-                };
-              });
-              console.log("[Results] Displaying cards:", cards.length);
-              onComplete(cards);
-            } else {
-              console.log("[Results] No matches returned");
-              onComplete([]);
-            }
-            break;
-          case "failed":
-            stopPolling();
-            setError(response.error || "Analysis failed");
-            break;
-        }
-      }, 2000); // Poll every 2 seconds
-    }
-
-    function stopPolling() {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
-      }
-    }
-
-    startDiscovery();
-
-    return () => {
-      mounted = false;
-      stopPolling();
-    };
-  }, [onComplete]);
-
-  return (
-    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center max-w-md space-y-6"
-      >
-        <div className="w-16 h-16 border-4 border-[var(--lavender)] border-t-transparent rounded-full animate-spin mx-auto" />
-        <h1 className="!text-2xl md:!text-3xl">Analyzing Your Profile</h1>
-        <p className="text-gray-500">{status}</p>
-        {error && (
-          <div className="space-y-3">
-            <p className="text-red-400 text-sm">{error}</p>
-            <Link
-              href="/discover/quiz"
-              className="inline-block px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-95"
-              style={{ backgroundColor: "var(--lavender)" }}
-            >
-              Retake the Quiz
-            </Link>
-          </div>
-        )}
-      </motion.div>
-    </div>
-  );
-}
-
-function MatchCard({ match, index }: { match: MatchCard; index: number }) {
+function MatchCardComponent({ match, index }: { match: MatchCard; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -238,45 +108,105 @@ function MatchCard({ match, index }: { match: MatchCard; index: number }) {
   );
 }
 
-function QuizResultsContent() {
-  const searchParams = useSearchParams();
-  const showAnalyzing = searchParams.get("analyzing") === "true";
+export default function QuizResultsPage() {
+  // Sync check: module cache -> sessionStorage
+  const [matches, setMatches] = useState<MatchCard[] | null>(() => {
+    if (matchesCache.data !== null) return matchesCache.data;
+    if (typeof window === "undefined") return null; // SSR — skip sessionStorage
+    try {
+      const stored = sessionStorage.getItem("quiz-matches");
+      if (stored) {
+        const cards: MatchCard[] = JSON.parse(stored);
+        if (cards.length > 0) {
+          matchesCache.data = cards; // backfill module cache
+          return cards;
+        }
+      }
+    } catch (e) { console.warn("[Results] sessionStorage parse error:", e); }
+    return null;
+  });
 
-  const [phase, setPhase] = useState<"analyzing" | "results">(
-    showAnalyzing ? "analyzing" : "results"
-  );
-  const [matches, setMatches] = useState<MatchCard[] | null>(null);
-  const [loading, setLoading] = useState(!showAnalyzing);
+  const [loading, setLoading] = useState(matchesCache.data === null);
 
-  const handleAnalyzingComplete = useCallback((newMatches: MatchCard[]) => {
-    setMatches(newMatches);
-    setPhase("results");
-  }, []);
-
+  // Async fallback: hydrate from sessionStorage on client, then fall back to DB
   useEffect(() => {
-    if (phase === "results" && !showAnalyzing) {
-      // Load existing matches from database
-      getHobbyMatches()
-        .then((result) => {
-          if (result.data && result.data.length > 0) {
-            setMatches(
-              (result.data as unknown as HobbyMatchRow[]).map(dbMatchToCard)
-            );
-          } else {
-            setMatches([]);
+    // On client mount, try sessionStorage first (SSR couldn't access it)
+    if (matchesCache.data === null) {
+      try {
+        const stored = sessionStorage.getItem("quiz-matches");
+        if (stored) {
+          const cards: MatchCard[] = JSON.parse(stored);
+          if (cards.length > 0) {
+            matchesCache.data = cards;
+            setMatches(cards);
+            setLoading(false);
+            return;
           }
-          setLoading(false);
-        })
-        .catch(() => {
-          setMatches([]);
-          setLoading(false);
-        });
+        }
+      } catch { /* sessionStorage unavailable */ }
     }
-  }, [phase, showAnalyzing]);
 
-  if (phase === "analyzing") {
-    return <AnalyzingPhase onComplete={handleAnalyzingComplete} />;
-  }
+    if (matchesCache.data !== null) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadAsync() {
+      // 1. Check for a completed discovery job
+      try {
+        const storedJobId = sessionStorage.getItem("discovery-job-id");
+        if (storedJobId) {
+          const pollResult = await pollDiscoveryStatus(storedJobId);
+          if (cancelled) return;
+          if ("status" in pollResult) {
+            const response = pollResult as DiscoveryStatusResponse;
+            if (response.status === "completed" && response.result?.matches && response.result.matches.length > 0) {
+              const cards = response.result.matches.map((m) => {
+                const meta = hobbyMeta[m.hobby_slug];
+                return {
+                  slug: m.hobby_slug,
+                  name: meta?.name ?? m.hobby_slug,
+                  tagline: m.reasoning || "A great match for you!",
+                  matchPercent: m.match_percentage,
+                  color: meta?.color ?? "#B8A9E8",
+                  lightColor: meta?.lightColor ?? "#E8E2F7",
+                  tags: m.match_tags ?? [],
+                };
+              });
+              cacheMatches(cards);
+              if (!cancelled) { setMatches(cards); setLoading(false); }
+              return;
+            }
+          }
+        }
+      } catch (e) { console.warn("[Results] Job poll failed:", e); }
+
+      if (cancelled) return;
+
+      // 2. Last resort: database
+      try {
+        const result = await getHobbyMatches();
+        if (cancelled) return;
+        if (result.data && result.data.length > 0) {
+          const cards = (result.data as unknown as HobbyMatchRow[]).map(dbMatchToCard);
+          cacheMatches(cards);
+          setMatches(cards);
+        } else {
+          console.warn("[Results] DB returned no matches. error:", result.error);
+          setMatches([]);
+        }
+      } catch (e) {
+        console.error("[Results] Failed to load matches from DB:", e);
+        setMatches([]);
+      }
+      if (!cancelled) setLoading(false);
+    }
+
+    loadAsync();
+    return () => { cancelled = true; };
+  }, []);
 
   if (loading) {
     return (
@@ -335,7 +265,7 @@ function QuizResultsContent() {
         {/* Match cards */}
         <div className="space-y-5">
           {matches.map((match, index) => (
-            <MatchCard key={match.slug} match={match} index={index} />
+            <MatchCardComponent key={match.slug} match={match} index={index} />
           ))}
         </div>
 
@@ -359,19 +289,5 @@ function QuizResultsContent() {
         </motion.div>
       </div>
     </div>
-  );
-}
-
-export default function QuizResultsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-[var(--lavender)] border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <QuizResultsContent />
-    </Suspense>
   );
 }

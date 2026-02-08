@@ -3,9 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { EmotionalCheckIn } from "./EmotionalCheckIn";
-import { ImageUpload } from "./ImageUpload";
-import type { Mood, ActiveHobby, Challenge } from "@/lib/dashboardData";
+import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
 
 interface SessionLoggerModalProps {
   isOpen: boolean;
@@ -19,9 +17,7 @@ export interface SessionFormData {
   type: "practice" | "thought";
   hobbySlug: string;
   duration: number;
-  mood: Mood | null;
   notes: string;
-  image: File | null;
 }
 
 export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeChallenges }: SessionLoggerModalProps) {
@@ -29,10 +25,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
   const [sessionType, setSessionType] = useState<"practice" | "thought">("practice");
   const [hobbySlug, setHobbySlug] = useState(hobbies[0]?.slug ?? "");
   const [duration, setDuration] = useState(30);
-  const [mood, setMood] = useState<Mood | null>(null);
   const [notes, setNotes] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const activeChallenge = activeChallenges?.find((c) => c.status === "active");
 
@@ -41,14 +34,11 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
     setSessionType("practice");
     setHobbySlug(hobbies[0]?.slug ?? "");
     setDuration(30);
-    setMood(null);
     setNotes("");
-    setImage(null);
-    setImagePreview(null);
   }, [hobbies]);
 
   const handleSave = () => {
-    onSave({ type: sessionType, hobbySlug, duration: sessionType === "thought" ? 0 : duration, mood, notes, image });
+    onSave({ type: sessionType, hobbySlug, duration: sessionType === "thought" ? 0 : duration, notes });
     setPhase("saved");
   };
 
@@ -112,7 +102,7 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                   <p className="text-sm text-gray-500 mb-6">
                     {sessionType === "thought"
                       ? "Showing up mentally counts. Your streak lives on!"
-                      : "Your AI feedback will appear on your session page."}
+                      : "Keep up the great work!"}
                   </p>
 
                   {activeChallenge && sessionType === "practice" && (
@@ -246,9 +236,6 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                             <span>3 hrs</span>
                           </div>
                         </div>
-
-                        {/* Mood */}
-                        <EmotionalCheckIn selected={mood} onSelect={setMood} />
                       </>
                     )}
 
@@ -270,26 +257,6 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--secondary)] focus:border-transparent resize-none"
                       />
                     </div>
-
-                    {/* Image upload — practice only */}
-                    {sessionType === "practice" && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600 mb-1.5 block">
-                          Photo <span className="text-gray-400 font-normal">(optional)</span>
-                        </label>
-                        <ImageUpload
-                          preview={imagePreview}
-                          onImageSelected={(file, preview) => {
-                            setImage(file);
-                            setImagePreview(preview);
-                          }}
-                          onClear={() => {
-                            setImage(null);
-                            setImagePreview(null);
-                          }}
-                        />
-                      </div>
-                    )}
 
                     {/* Save button */}
                     <button

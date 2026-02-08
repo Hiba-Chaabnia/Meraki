@@ -68,7 +68,7 @@ export const questions: QuizQuestion[] = [
   {
     id: 1,
     sectionId: "time",
-    text: "How much uninterrupted creative time do you have each week?",
+    text: "Available weekly creative time?",
     type: "single",
     options: [
       "Less than 1 hour",

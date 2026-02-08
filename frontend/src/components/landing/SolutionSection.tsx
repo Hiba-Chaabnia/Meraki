@@ -9,39 +9,39 @@ import HeroIconPattern from "@/components/HeroIconPattern";
 const steps = [
   {
     id: "match",
-    color: "#5396F4",
+    color: "var(--primary)",
     icon: "✨",
     title: "A fit that feels right",
     description:
-      "We match you with a craft that fits your energy and your day, creating a dedicated space for you to breathe.",
+      "We match you with a craft<br/>that fits your energy and your day,<br/>creating a dedicated space for you to breathe.",
   },
   {
     id: "entry",
-    color: "#CFE251",
+    color: "var(--primary)",
     icon: "🌱",
     title: "The beauty of small starts",
     description:
-      "Manageable first steps designed so you can skip the overwhelm and focus on the simple wonder of creating.",
+      "Manageable first steps designed so<br/>you can skip the overwhelm and<br/>focus on the simple wonder of creating.",
   },
   {
     id: "habit",
-    color: "#FFD64D",
+    color: "var(--primary)",
     icon: "🧤",
     title: "A gentle nudge",
     description:
-      "Soft reminders to return to your craft and celebrating every small moment you choose to show up.",
+      "Soft reminders to return to your craft<br/>and celebrating every small moment<br/>you choose to show up.",
   },
   {
     id: "growth",
-    color: "#FF9149",
+    color: "var(--primary)",
     icon: "☀️",
     title: "Bloom as you go",
     description:
-      "There are no finish lines here. Discover new depths in your craft only when you feel ready for more.",
+      "There are no finish lines here.<br/>Discover new depths in your craft<br/>only when you feel ready for more.",
   },
   {
     id: "cta",
-    color: "#292929",
+    color: "var(--primary)",
     icon: "❤️",
     title: "Ready to start your creative journey?",
     description:
@@ -73,21 +73,20 @@ export default function SolutionSection() {
               <HeroIconPattern useMask={false} iconSet="secondary" iconOpacity={0.5} />
 
               {/* Left Column (Stationary) */}
-              <div className="relative z-10 w-full md:w-1/2 flex flex-col justify-center px-10 md:px-16 lg:px-24 py-16 md:py-0">
-                <div className="flex justify-start mb-10">
-                  <SectionBadge label="The Meraki Way" />
+              <div className="relative z-10 w-full shrink-0 md:shrink md:w-7/12 flex flex-col justify-center px-6 py-8 md:px-16 md:py-0">
+                <div className="flex justify-center mb-6 md:mb-10 ">
+                  <SectionBadge label="The Meraki Way" bgColor="var(--primary-lighter)" color="var(--primary)" />
                 </div>
-                <h2 className="max-w-md mb-6">
-                  A kinder way to find <em>your</em> creative calling
+                <h2 className="mb-6 md:mb-10 text-center">
+                  A <em>kinder way</em> to find<br/>your <em>creative calling</em><br/>— and <em>stick to it</em>
                 </h2>
-                <p className="text-xl font-semibold leading-snug max-w-md" style={{ color: "var(--foreground)" }}>
-                  Creativity isn’t a race. We’re here to make sure your creative
-                  path is always encouraging.
+                <p className="text-lg md:text-xl font-semibold leading-snug text-center" style={{ color: "var(--foreground)" }}>
+                  We gently helps you <br/>try, grow, and commit to what feels right <br/>with a calm, guided path of small steps<br/>you’ll actually want to return to.
                 </p>
               </div>
 
               {/* Right Column (Cards Stacking via Scroll) */}
-              <div className="w-full md:w-1/2 h-full relative p-8 md:p-16 flex items-center justify-center border border-blue-500">
+              <div className="w-full flex-1 md:w-5/12 md:h-full relative p-4 md:p-16 flex items-center justify-center">
                 <StickyCardStack
                   steps={steps}
                   scrollYProgress={scrollYProgress}

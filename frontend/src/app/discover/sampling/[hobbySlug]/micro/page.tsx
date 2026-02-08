@@ -41,6 +41,9 @@ interface MicroActivity {
   why_it_works: string;
 }
 
+// Module-level cache — survives unmount/remount during client-side navigation
+const activityCache = new Map<string, MicroActivity>();
+
 /* Default micro activities by hobby - fallback if API doesn't return one */
 const defaultActivities: Record<string, MicroActivity> = {
   pottery: {
@@ -90,26 +93,37 @@ export default function MicroPage({
   const hobby = getHobby(hobbySlug);
   const [started, setStarted] = useState(false);
   const [completed, setCompleted] = useState(false);
+
+  const cached = activityCache.get(hobbySlug);
   const [activity, setActivity] = useState<MicroActivity>(
-    defaultActivities[hobbySlug] || defaultActivities.default
+    cached || defaultActivities[hobbySlug] || defaultActivities.default
   );
-  const [isGenerated, setIsGenerated] = useState(false);
+  const [isGenerated, setIsGenerated] = useState(!!cached);
 
   const searchParams = useSearchParams();
 
-  // Load activity: check URL jobId param, poll backend directly, fall back to default
+  // Load activity: check cache → sessionStorage → URL jobId → poll backend → default
   useEffect(() => {
+    // If we already have a cached generated activity, skip fetching
+    if (activityCache.has(hobbySlug)) return;
+
     let cancelled = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     function applyActivity(data: SamplingPreviewResult) {
       if (data.micro_activity) {
-        setActivity({
+        const act: MicroActivity = {
           title: data.micro_activity.title,
           instruction: data.micro_activity.instruction,
           duration: data.micro_activity.duration,
           why_it_works: data.micro_activity.why_it_works,
-        });
+        };
+        activityCache.set(hobbySlug, act);
+        // Store the FULL result so the parent sampling page can use it on back-nav
+        try {
+          sessionStorage.setItem(`sampling-preview-${hobbySlug}`, JSON.stringify(data));
+        } catch { /* sessionStorage unavailable */ }
+        setActivity(act);
         setIsGenerated(true);
       }
     }
@@ -137,6 +151,26 @@ export default function MicroPage({
     }
 
     async function loadActivity() {
+      // 0. Check sessionStorage for data from parent page
+      try {
+        const stored = sessionStorage.getItem(`sampling-preview-${hobbySlug}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.micro_activity) {
+            const act: MicroActivity = {
+              title: parsed.micro_activity.title,
+              instruction: parsed.micro_activity.instruction,
+              duration: parsed.micro_activity.duration,
+              why_it_works: parsed.micro_activity.why_it_works,
+            };
+            activityCache.set(hobbySlug, act);
+            setActivity(act);
+            setIsGenerated(true);
+            return;
+          }
+        }
+      } catch { /* sessionStorage unavailable */ }
+
       // 1. If jobId is in the URL (passed from parent page), poll it directly
       const jobIdParam = searchParams.get("jobId");
       if (jobIdParam) {
@@ -159,7 +193,26 @@ export default function MicroPage({
         }
       }
 
-      // 2. No jobId — trigger a new job via server action
+      // 2. Check sessionStorage for a previously-started job ID
+      try {
+        const storedJobId = sessionStorage.getItem(`sampling-job-${hobbySlug}`);
+        if (storedJobId) {
+          const res = await fetch(`${BACKEND_URL}/sampling/preview/${storedJobId}`);
+          if (!cancelled && res.ok) {
+            const data = await res.json();
+            if (data.status === "completed" && data.result) {
+              applyActivity(data.result);
+              return;
+            }
+            if (data.status === "pending" || data.status === "running") {
+              await pollBackend(storedJobId);
+              return;
+            }
+          }
+        }
+      } catch { /* ignore */ }
+
+      // 3. No jobId — trigger a new job via server action
       const { job_id, error } = await triggerSamplingPreview(hobbySlug);
       if (cancelled) return;
       if (error || !job_id) {

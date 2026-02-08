@@ -23,7 +23,7 @@ export function QuizStepper({
   onNavigate,
 }: QuizStepperProps) {
   return (
-    <div className="flex justify-center items-center gap-2 pt-8 pb-4 px-4">
+    <div className="flex justify-center items-center gap-2 pt-8 pb-4 px-4 border-2 border-red-500">
       {sections.map((section, idx) => {
         const isCompleted = completedSections[idx];
         const canNav = idx <= maxReachedIndex;
@@ -48,9 +48,8 @@ export function QuizStepper({
             key={section.id}
             onClick={() => onNavigate(idx)}
             disabled={!canNav}
-            className={`outline-none transition-all duration-300 ${
-              canNav ? "hover:scale-110 cursor-pointer" : "cursor-not-allowed opacity-50"
-            }`}
+            className={`outline-none transition-all duration-300 ${canNav ? "hover:scale-110 cursor-pointer" : "cursor-not-allowed opacity-50"
+              }`}
           >
             <FlowerShape
               color={color}

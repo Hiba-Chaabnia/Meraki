@@ -9,7 +9,6 @@ export async function createSession(input: {
   duration: number;
   mood?: "loved" | "good" | "okay" | "frustrated" | "discouraged" | null;
   notes?: string;
-  imageUrl?: string | null;
 }) {
   const supabase = await createClient();
   const {
@@ -27,7 +26,6 @@ export async function createSession(input: {
       duration: input.duration,
       mood: input.mood ?? null,
       notes: input.notes ?? "",
-      image_url: input.imageUrl ?? null,
     })
     .select()
     .single();
@@ -47,7 +45,6 @@ export async function getSessions() {
     .from("practice_sessions")
     .select(
       `*,
-       ai_feedback(*),
        user_hobbies!inner(*, hobbies(*))`,
     )
     .eq("user_id", user.id)
@@ -68,7 +65,6 @@ export async function getSessionById(id: string) {
     .from("practice_sessions")
     .select(
       `*,
-       ai_feedback(*),
        user_hobbies!inner(*, hobbies(*)),
        user_challenges(*, challenges(*))`,
     )

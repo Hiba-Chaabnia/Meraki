@@ -76,7 +76,11 @@ class GooglePlacesTool(BaseTool):
             seen_place_ids = set()
 
             for query in search_queries:
-                places = self._search_places(api_key, query, max_results)
+                try:
+                    places = self._search_places(api_key, query, max_results)
+                except Exception as e:
+                    print(f"[GooglePlaces] Query failed (skipping): {query} — {e}")
+                    continue
                 for place in places:
                     if place["place_id"] not in seen_place_ids:
                         seen_place_ids.add(place["place_id"])
@@ -86,7 +90,7 @@ class GooglePlacesTool(BaseTool):
                     break
 
             # Sort by rating (highest first), then by number of reviews
-            all_places.sort(key=lambda x: (x.get("rating", 0), x.get("user_ratings_total", 0)), reverse=True)
+            all_places.sort(key=lambda x: (x.get("rating") or 0, x.get("user_ratings_total") or 0), reverse=True)
 
             # Take top results
             results = all_places[:max_results]
@@ -113,7 +117,7 @@ class GooglePlacesTool(BaseTool):
             "type": "establishment",
         }
 
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params, timeout=30)
         response.raise_for_status()
         data = response.json()
 

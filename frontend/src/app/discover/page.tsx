@@ -1,95 +1,75 @@
 "use client";
 
 import Link from "next/link";
-import { motion, type Variants } from "framer-motion";
-import { FlowerShape } from "@/components/ui/FlowerShape";
-import { ScallopedButton } from "@/components/ui/ScallopedButton";
+import { motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+import HeroIconPattern from "@/components/HeroIconPattern";
+import { fadeUp, stagger } from "@/components/landing/animations";
 
-const stagger: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.15 } },
-};
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
 
 export default function DiscoverPage() {
   return (
-    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4 py-16">
+    <motion.section
+      variants={stagger}
+      initial="hidden"
+      animate="show"
+      className="relative w-full h-screen p-3 md:p-2 sm:p-1 z-10"
+    >
       <motion.div
-        className="max-w-2xl w-full flex flex-col items-center gap-8"
         variants={stagger}
         initial="hidden"
         animate="show"
+        className="relative w-full h-full flex flex-col scallop-xl scallop-mask-y bg-[var(--primary)] text-center items-center justify-between pt-28 md:pt-32 pb-14 md:pb-16"
       >
-        {/* Banner pill */}
-        <motion.div variants={fadeUp} className="flex justify-center">
-          <div
-            className="inline-flex items-center gap-3 px-5 py-2 rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle, var(--primary), var(--secondary-lighter))",
-            }}
+        {/* Icon wallpaper pattern */}
+        <HeroIconPattern useMask={false} iconSet="primary" />
+
+
+
+        {/* Content group */}
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
+          <motion.h1
+            variants={fadeUp}
+            className="!text-5xl md:!text-7xl max-w-3xl mx-auto mb-6 hero-shine"
           >
-            <FlowerShape
-              size={20}
-              color="var(--background)"
-              spin
-              spinDuration={4}
-              spinDirection="counterclockwise"
-            />
-            <span className="uppercase text-sm font-black tracking-widest text-[var(--background)]">
-              Discover
-            </span>
-            <FlowerShape
-              size={20}
-              color="var(--background)"
-              spin
-              spinDuration={4}
-              spinDirection="clockwise"
-            />
-          </div>
-        </motion.div>
+            Let&apos;s find your creative match
+          </motion.h1>
 
-        {/* Headline */}
-        <motion.div variants={fadeUp} className="text-center">
-          <h1>Let&apos;s find your creative match</h1>
-        </motion.div>
+          <motion.p
+            variants={fadeUp}
+            className="text-lg md:text-xl text-white/75 max-w-2xl mx-auto mb-10 leading-relaxed"
+          >
+            A quick and simple quiz to match you with hobbies that fit your
+            personality, schedule, and budget.
+          </motion.p>
 
-        {/* Subtext */}
-        <motion.p
-          variants={fadeUp}
-          className="text-center text-lg md:text-xl text-[var(--foreground)]/70 max-w-lg"
-        >
-          A quick, playful quiz to match you with hobbies that fit your
-          personality, schedule, and budget.
-        </motion.p>
-
-        {/* CTA Button */}
-        <motion.div variants={fadeUp}>
-          <Link href="/discover/quiz">
-            <ScallopedButton
-              bgColor="var(--primary)"
-              textColor="var(--background)"
-              scallopSize="sm"
+          {/* CTA Button */}
+          <motion.div variants={fadeUp}>
+            <motion.div
+              animate={{ rotate: [0, -3, 3, -2, 0] }}
+              transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 3 }}
+              whileHover={{ rotate: 0, scale: 1.05 }}
             >
-              Take the Quiz
-            </ScallopedButton>
-          </Link>
-        </motion.div>
+              <Link
+                href="/discover/quiz"
+                className="inline-block px-8 py-4 rounded-xl font-semibold text-[var(--foreground)] bg-[var(--secondary)] transition-shadow hover:shadow-lg text-base no-underline"
+              >
+                Take the Quiz
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
 
         {/* Skip link */}
-        <motion.div variants={fadeUp}>
+        <motion.div variants={fadeUp} className="relative z-10">
           <Link
             href="/dashboard"
-            className="text-sm text-[var(--foreground)]/40 hover:text-[var(--foreground)]/60 transition-colors"
+            className="text-sm text-[var(--foreground)]/75 hover:text-[var(--foreground)] transition-colors"
           >
-            Skip to Dashboard &rarr;
+            Skip to Dashboard
           </Link>
         </motion.div>
       </motion.div>
-    </div>
+    </motion.section>
   );
 }

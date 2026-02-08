@@ -4,13 +4,16 @@ find_local_experiences_task:
     {location}. Use both the google_places_search tool and web_search tool to
     find a variety of options.
 
-    Search for:
-    1. Use google_places_search for: "{hobby_name} class", "{hobby_name} studio",
-       "{hobby_name} workshop" near {location}
-    2. Use web_search for: "{hobby_name} meetup {location}", "{hobby_name} workshop {location}",
-       "{hobby_name} beginner class {location}"
+    IMPORTANT — call each tool only ONCE:
+    1. Call google_places_search ONCE with hobby="{hobby_name}" and location="{location}".
+       The tool internally searches for classes, workshops, studios, and lessons.
+    2. Call web_search ONCE with a query like "{hobby_name} beginner workshop meetup {location}".
+       The tool returns a diverse set of results from across the web.
 
-    Focus on:
+    Do NOT call either tool multiple times with different queries — each tool
+    already handles query variation internally.
+
+    From the combined results, select the best options and focus on:
     - Single-session experiences only (no multi-week commitments)
     - Beginner-friendly environments where first-timers are welcome
     - Free community events, meetups, or trial classes
@@ -21,7 +24,7 @@ find_local_experiences_task:
     - Is it a single session or ongoing commitment?
     - What's the approximate cost?
 
-    Also prepare beginner tips for each type of venue: what to expect, what to
+    Also prepare general beginner tips for this hobby: what to expect, what to
     wear, what to bring, and how to not feel awkward as a first-timer.
   expected_output: >
     Return a JSON object with the following structure:
@@ -37,7 +40,6 @@ find_local_experiences_task:
           "url": "Website or event URL",
           "beginner_friendly": true,
           "single_session": true,
-          "beginner_tips": "What to wear, bring, expect as a first-timer",
           "source": "google_places" | "web_search"
         }
       ],

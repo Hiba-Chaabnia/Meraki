@@ -49,14 +49,7 @@ export interface PracticeSession {
   duration: number;
   mood: Mood;
   notes: string;
-  hasImage: boolean;
   challengeId: string | null;
-  aiFeedback: {
-    observations: string[];
-    growth: string[];
-    suggestions: string[];
-    celebration: string;
-  } | null;
 }
 
 /* ─── Challenges ─── */
@@ -102,33 +95,6 @@ export interface Milestone {
   earned: boolean;
   earnedDate: string | null;
   icon: string;
-}
-
-/* ─── Motivation nudge messages ─── */
-export interface NudgeMessage {
-  type: "streak" | "comeback" | "challenge" | "encouragement";
-  message: string;
-  action?: { label: string; href: string };
-}
-
-export function getNudge(stats: UserStats): NudgeMessage {
-  if (stats.currentStreak >= 7) {
-    return {
-      type: "streak",
-      message: `${stats.currentStreak} days and counting! You\u2019re building something real.`,
-    };
-  }
-  if (stats.currentStreak >= 3) {
-    return {
-      type: "encouragement",
-      message: "Every session is a win. Let\u2019s keep this momentum going!",
-    };
-  }
-  return {
-    type: "encouragement",
-    message: "Ready to make something awesome today? Your creative space is waiting!",
-    action: { label: "Log Practice", href: "/dashboard/sessions" },
-  };
 }
 
 /* ─── Greeting based on time of day ─── */

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Home, PenLine, Medal, BarChart3, Heart, User, Settings, Compass, Menu, LogOut } from "lucide-react";
+import { Home, PenLine, Medal, BarChart3, User, Settings, Compass, Menu, LogOut } from "lucide-react";
 import { useUser } from "@/lib/hooks/useUser";
 
 const navItems = [
@@ -12,7 +12,6 @@ const navItems = [
   { href: "/dashboard/sessions", label: "Sessions", Icon: PenLine },
   { href: "/dashboard/challenges", label: "Challenges", Icon: Medal },
   { href: "/dashboard/progress", label: "Progress", Icon: BarChart3 },
-  { href: "/dashboard/motivation", label: "Motivation", Icon: Heart },
 ];
 
 const bottomItems = [

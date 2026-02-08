@@ -35,7 +35,6 @@ export function toActiveHobby(row: any): ActiveHobby {
 export function toPracticeSession(row: any): PracticeSession {
   const userHobby = row.user_hobbies ?? {};
   const hobby = userHobby.hobbies ?? {};
-  const fb = Array.isArray(row.ai_feedback) ? row.ai_feedback[0] : row.ai_feedback;
 
   return {
     id: row.id,
@@ -46,16 +45,7 @@ export function toPracticeSession(row: any): PracticeSession {
     duration: row.duration ?? 0,
     mood: (row.mood ?? "okay") as Mood,
     notes: row.notes ?? "",
-    hasImage: !!row.image_url,
     challengeId: row.user_challenge_id ?? null,
-    aiFeedback: fb
-      ? {
-          observations: fb.observations ?? [],
-          growth: fb.growth ?? [],
-          suggestions: fb.suggestions ?? [],
-          celebration: fb.celebration ?? "",
-        }
-      : null,
   };
 }
 

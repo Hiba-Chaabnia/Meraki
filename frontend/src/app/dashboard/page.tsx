@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { StreakDisplay, ChallengeCard, MotivationNudge, SessionLoggerModal, StuckHelper } from "@/components/dashboard";
+import { StreakDisplay, ChallengeCard, SessionLoggerModal } from "@/components/dashboard";
 import type { SessionFormData } from "@/components/dashboard";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { useUser } from "@/lib/hooks/useUser";
@@ -16,7 +16,6 @@ import { toUserStats, toActiveHobby, toPracticeSession, toChallenge } from "@/li
 import {
   moodEmojis,
   getGreeting,
-  getNudge,
 } from "@/lib/dashboardData";
 import { Plus, ArrowRight, Flame } from "lucide-react";
 import type { UserStats, ActiveHobby, PracticeSession, Challenge, StreakDay } from "@/lib/dashboardData";
@@ -67,7 +66,6 @@ export default function DashboardPage() {
   if (isLoading) return <PageSkeleton />;
 
   const displayStats = stats ?? { currentStreak: 0, longestStreak: 0, totalSessions: 0, totalHours: 0, challengesCompleted: 0, hobbiesExplored: 0, daysSinceJoining: 0 };
-  const nudge = getNudge(displayStats);
   const recentSessions = sessions.slice(0, 3);
   const activeChallenges = challenges.filter((c) => c.status === "active" || c.status === "upcoming").slice(0, 2);
   const displayName = profile?.full_name || "Creative";
@@ -79,7 +77,6 @@ export default function DashboardPage() {
       userHobbyId: hobby.userHobbyId,
       sessionType: data.type,
       duration: data.duration,
-      mood: data.mood,
       notes: data.notes,
     });
     fetchData();
@@ -118,16 +115,6 @@ export default function DashboardPage() {
             <Plus className="w-4 h-4" />
             Log Practice
           </button>
-        </motion.div>
-
-        {/* Nudge */}
-        <motion.div variants={fadeUp} className="mb-8">
-          <MotivationNudge nudge={nudge} />
-        </motion.div>
-
-        {/* Stuck Helper */}
-        <motion.div variants={fadeUp} className="mb-8">
-          <StuckHelper sessions={sessions} hobbies={hobbies} />
         </motion.div>
 
         {/* Stats row */}

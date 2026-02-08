@@ -12,18 +12,16 @@ Endpoints:
 """
 
 import json
+import os
 import re
-import uuid
 import warnings
-from datetime import datetime
-from enum import Enum
 from threading import Thread
 from typing import Any
 
 warnings.filterwarnings("ignore", category=ResourceWarning)
 
 import uvicorn
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -31,13 +29,16 @@ from meraki_flow.crews.discovery_crew.discovery_crew import DiscoveryCrew
 from meraki_flow.crews.sampling_preview_crew.sampling_preview_crew import SamplingPreviewCrew
 from meraki_flow.crews.local_experiences_crew.local_experiences_crew import LocalExperiencesCrew
 from meraki_flow.models import SamplingRecommendation, MicroActivity, CuratedVideos
-
-
-class JobStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
+from meraki_flow.db import (
+    create_job,
+    get_job,
+    update_job_status,
+    update_job_result,
+    update_job_error,
+    save_sampling_result,
+    save_local_experience_result,
+    save_hobby_matches,
+)
 
 
 class DiscoveryRequest(BaseModel):
@@ -69,31 +70,19 @@ class DiscoveryRequest(BaseModel):
 class SamplingPreviewRequest(BaseModel):
     hobby_name: str
     quiz_answers: str = ""  # Formatted string of relevant quiz answers
+    hobby_slug: str = ""
+    user_id: str = ""
 
 
 class LocalExperiencesRequest(BaseModel):
     hobby_name: str
     location: str
+    hobby_slug: str = ""
+    user_id: str = ""
 
 
 class JobResponse(BaseModel):
     job_id: str
-
-
-class Job(BaseModel):
-    id: str
-    user_id: str
-    job_type: str = "discovery"  # "discovery", "sampling_preview", "local_experiences"
-    status: JobStatus
-    request_data: dict[str, Any]
-    result: dict[str, Any] | None = None
-    error: str | None = None
-    created_at: datetime
-    updated_at: datetime
-
-
-# In-memory job store (for production, use Redis or a database)
-job_store: dict[str, Job] = {}
 
 
 app = FastAPI(
@@ -102,10 +91,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS
+# Configure CORS — configurable via CORS_ORIGINS env var
+cors_origins = os.environ.get(
+    "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+).split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[o.strip() for o in cors_origins],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -183,46 +175,20 @@ def parse_task_output_json(raw_output: str) -> dict[str, Any] | None:
     return None
 
 
-def parse_local_output(raw_output: str) -> dict[str, Any]:
-    """Parse the local experiences crew's raw output to extract JSON results."""
-    # Try to find the main JSON structure
-    patterns = [
-        r'\{[\s\S]*"local_spots"[\s\S]*\}',
-        r'\{[\s\S]*"general_tips"[\s\S]*\}',
-    ]
-
-    for pattern in patterns:
-        matches = re.findall(pattern, raw_output)
-        if matches:
-            for match in reversed(matches):
-                try:
-                    return json.loads(match)
-                except json.JSONDecodeError:
-                    continue
-
-    # Fallback
-    return {
-        "local_spots": [],
-        "general_tips": {},
-        "raw_output": raw_output,
-    }
-
-
 def run_discovery_job(job_id: str) -> None:
     """Run the discovery crew in a background thread."""
     import traceback
 
-    job = job_store.get(job_id)
+    job = get_job(job_id)
     if not job:
         return
 
     try:
         # Update status to running
-        job.status = JobStatus.RUNNING
-        job.updated_at = datetime.now()
+        update_job_status(job_id, "running")
 
         # Build inputs matching all task placeholders
-        request_data = job.request_data
+        request_data = job["request_data"]
         inputs = {
             "q1_time_available": request_data.get("q1", ""),
             "q2_practice_timing": request_data.get("q2", ""),
@@ -258,18 +224,23 @@ def run_discovery_job(job_id: str) -> None:
         # Parse JSON output
         parsed = parse_crew_output(result.raw)
 
-        job.result = parsed
-        job.status = JobStatus.COMPLETED
-        job.updated_at = datetime.now()
+        update_job_result(job_id, parsed)
+
+        # Save hobby matches if user_id is available
+        user_id = job.get("user_id", "")
+        if user_id and parsed.get("matches"):
+            try:
+                save_hobby_matches(user_id, parsed["matches"])
+                print(f"[Discovery Job {job_id}] Saved {len(parsed['matches'])} hobby matches")
+            except Exception as e:
+                print(f"[Discovery Job {job_id}] Failed to save hobby matches: {e}")
 
         print(f"[Discovery Job {job_id}] Job completed successfully")
 
     except Exception as e:
         error_details = f"{str(e)}\n{traceback.format_exc()}"
         print(f"[Discovery Job {job_id}] FAILED: {error_details}")
-        job.status = JobStatus.FAILED
-        job.error = str(e)
-        job.updated_at = datetime.now()
+        update_job_error(job_id, str(e))
 
 
 def classify_task_json(task_json: dict[str, Any]) -> str | None:
@@ -290,15 +261,14 @@ def run_sampling_preview_job(job_id: str) -> None:
     """Run the sampling preview crew in a background thread."""
     import traceback
 
-    job = job_store.get(job_id)
+    job = get_job(job_id)
     if not job:
         return
 
     try:
-        job.status = JobStatus.RUNNING
-        job.updated_at = datetime.now()
+        update_job_status(job_id, "running")
 
-        request_data = job.request_data
+        request_data = job["request_data"]
         inputs = {
             "hobby_name": request_data.get("hobby_name", ""),
             "quiz_answers": request_data.get("quiz_answers", ""),
@@ -347,33 +317,38 @@ def run_sampling_preview_job(job_id: str) -> None:
               f"micro_activity={'yes' if parsed['micro_activity'] else 'no'}, "
               f"videos={len(parsed['videos']) if isinstance(parsed.get('videos'), list) else 'none'}")
 
-        job.result = parsed
-        job.status = JobStatus.COMPLETED
-        job.updated_at = datetime.now()
+        update_job_result(job_id, parsed)
+
+        # Save sampling result if user_id and hobby_slug are available
+        user_id = request_data.get("user_id", "")
+        hobby_slug = request_data.get("hobby_slug", "")
+        if user_id and hobby_slug:
+            try:
+                save_sampling_result(user_id, hobby_slug, parsed)
+                print(f"[Sampling Preview Job {job_id}] Saved sampling result for {hobby_slug}")
+            except Exception as e:
+                print(f"[Sampling Preview Job {job_id}] Failed to save sampling result: {e}")
 
         print(f"[Sampling Preview Job {job_id}] Job completed successfully")
 
     except Exception as e:
         error_details = f"{str(e)}\n{traceback.format_exc()}"
         print(f"[Sampling Preview Job {job_id}] FAILED: {error_details}")
-        job.status = JobStatus.FAILED
-        job.error = str(e)
-        job.updated_at = datetime.now()
+        update_job_error(job_id, str(e))
 
 
 def run_local_experiences_job(job_id: str) -> None:
     """Run the local experiences crew in a background thread."""
     import traceback
 
-    job = job_store.get(job_id)
+    job = get_job(job_id)
     if not job:
         return
 
     try:
-        job.status = JobStatus.RUNNING
-        job.updated_at = datetime.now()
+        update_job_status(job_id, "running")
 
-        request_data = job.request_data
+        request_data = job["request_data"]
         inputs = {
             "hobby_name": request_data.get("hobby_name", ""),
             "location": request_data.get("location", ""),
@@ -399,42 +374,35 @@ def run_local_experiences_job(job_id: str) -> None:
               f"spots={len(parsed.get('local_spots', []))}, "
               f"tips={'yes' if parsed.get('general_tips') else 'no'}")
 
-        job.result = parsed
-        job.status = JobStatus.COMPLETED
-        job.updated_at = datetime.now()
+        update_job_result(job_id, parsed)
+
+        # Save local experience result if user_id and hobby_slug are available
+        user_id = request_data.get("user_id", "")
+        hobby_slug = request_data.get("hobby_slug", "")
+        if user_id and hobby_slug:
+            try:
+                save_local_experience_result(user_id, hobby_slug, inputs["location"], parsed)
+                print(f"[Local Experiences Job {job_id}] Saved result for {hobby_slug} in {inputs['location']}")
+            except Exception as e:
+                print(f"[Local Experiences Job {job_id}] Failed to save result: {e}")
 
         print(f"[Local Experiences Job {job_id}] Job completed successfully")
 
     except Exception as e:
         error_details = f"{str(e)}\n{traceback.format_exc()}"
         print(f"[Local Experiences Job {job_id}] FAILED: {error_details}")
-        job.status = JobStatus.FAILED
-        job.error = str(e)
-        job.updated_at = datetime.now()
+        update_job_error(job_id, str(e))
 
 
 # ─── Discovery Endpoints ───
 
 @app.post("/discovery", response_model=JobResponse)
-async def start_discovery(request: DiscoveryRequest, background_tasks: BackgroundTasks):
+async def start_discovery(request: DiscoveryRequest):
     """Start a new discovery job with all quiz answers."""
-    job_id = str(uuid.uuid4())
-    now = datetime.now()
-
-    # Store request data
     request_data = request.model_dump()
     user_id = request_data.pop("user_id")
 
-    job = Job(
-        id=job_id,
-        user_id=user_id,
-        job_type="discovery",
-        status=JobStatus.PENDING,
-        request_data=request_data,
-        created_at=now,
-        updated_at=now,
-    )
-    job_store[job_id] = job
+    job_id = create_job("discovery", request_data, user_id)
 
     # Run in background thread (CrewAI isn't fully async-compatible)
     thread = Thread(target=run_discovery_job, args=(job_id,))
@@ -446,17 +414,17 @@ async def start_discovery(request: DiscoveryRequest, background_tasks: Backgroun
 @app.get("/discovery/{job_id}")
 async def get_discovery_status(job_id: str):
     """Get the status and result of a discovery job."""
-    job = job_store.get(job_id)
+    job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
     return {
-        "job_id": job.id,
-        "status": job.status,
-        "result": job.result,
-        "error": job.error,
-        "created_at": job.created_at.isoformat(),
-        "updated_at": job.updated_at.isoformat(),
+        "job_id": job["id"],
+        "status": job["status"],
+        "result": job["result"],
+        "error": job["error"],
+        "created_at": job["created_at"],
+        "updated_at": job["updated_at"],
     }
 
 
@@ -465,19 +433,10 @@ async def get_discovery_status(job_id: str):
 @app.post("/sampling/preview", response_model=JobResponse)
 async def start_sampling_preview(request: SamplingPreviewRequest):
     """Start a new sampling preview job."""
-    job_id = str(uuid.uuid4())
-    now = datetime.now()
+    request_data = request.model_dump()
+    user_id = request_data.get("user_id", "")
 
-    job = Job(
-        id=job_id,
-        user_id="",  # Not required for sampling
-        job_type="sampling_preview",
-        status=JobStatus.PENDING,
-        request_data=request.model_dump(),
-        created_at=now,
-        updated_at=now,
-    )
-    job_store[job_id] = job
+    job_id = create_job("sampling_preview", request_data, user_id)
 
     thread = Thread(target=run_sampling_preview_job, args=(job_id,))
     thread.start()
@@ -488,17 +447,17 @@ async def start_sampling_preview(request: SamplingPreviewRequest):
 @app.get("/sampling/preview/{job_id}")
 async def get_sampling_preview_status(job_id: str):
     """Get the status and result of a sampling preview job."""
-    job = job_store.get(job_id)
+    job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
     return {
-        "job_id": job.id,
-        "status": job.status,
-        "result": job.result,
-        "error": job.error,
-        "created_at": job.created_at.isoformat(),
-        "updated_at": job.updated_at.isoformat(),
+        "job_id": job["id"],
+        "status": job["status"],
+        "result": job["result"],
+        "error": job["error"],
+        "created_at": job["created_at"],
+        "updated_at": job["updated_at"],
     }
 
 
@@ -507,19 +466,10 @@ async def get_sampling_preview_status(job_id: str):
 @app.post("/sampling/local", response_model=JobResponse)
 async def start_local_experiences(request: LocalExperiencesRequest):
     """Start a new local experiences job."""
-    job_id = str(uuid.uuid4())
-    now = datetime.now()
+    request_data = request.model_dump()
+    user_id = request_data.get("user_id", "")
 
-    job = Job(
-        id=job_id,
-        user_id="",  # Not required for local search
-        job_type="local_experiences",
-        status=JobStatus.PENDING,
-        request_data=request.model_dump(),
-        created_at=now,
-        updated_at=now,
-    )
-    job_store[job_id] = job
+    job_id = create_job("local_experiences", request_data, user_id)
 
     thread = Thread(target=run_local_experiences_job, args=(job_id,))
     thread.start()
@@ -530,17 +480,17 @@ async def start_local_experiences(request: LocalExperiencesRequest):
 @app.get("/sampling/local/{job_id}")
 async def get_local_experiences_status(job_id: str):
     """Get the status and result of a local experiences job."""
-    job = job_store.get(job_id)
+    job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
     return {
-        "job_id": job.id,
-        "status": job.status,
-        "result": job.result,
-        "error": job.error,
-        "created_at": job.created_at.isoformat(),
-        "updated_at": job.updated_at.isoformat(),
+        "job_id": job["id"],
+        "status": job["status"],
+        "result": job["result"],
+        "error": job["error"],
+        "created_at": job["created_at"],
+        "updated_at": job["updated_at"],
     }
 
 

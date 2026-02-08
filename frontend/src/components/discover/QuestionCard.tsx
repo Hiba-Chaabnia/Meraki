@@ -22,8 +22,13 @@ export function QuestionCard({
   onToggleMulti,
   onSetText,
 }: QuestionCardProps) {
+  // Calculated height: Header (4.5rem) + Max Options (6) * Option Height (~3.5rem each with gap) = ~25.5rem
+  // Adding a buffer to 26rem to ensure consistency.
   return (
-    <div className="w-full flex flex-col items-start gap-1">
+    <div
+      className="w-full flex flex-col items-start gap-1 border-2 border-purple-500"
+      style={{ minHeight: "26rem" }}
+    >
       <QuizQuestionHeader
         index={index}
         text={q.text}
