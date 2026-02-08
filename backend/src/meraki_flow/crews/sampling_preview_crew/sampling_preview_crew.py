@@ -8,60 +8,31 @@ This crew runs when a user lands on the sampling page and generates:
 """
 
 from crewai import Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_kickoff
+from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
 
 from meraki_flow.tools.youtube_search import YouTubeSearchTool
 from meraki_flow.models import SamplingRecommendation, MicroActivity, CuratedVideos
 
-try:
-    from opik import opik_context
-    OPIK_AVAILABLE = True
-except ImportError:
-    OPIK_AVAILABLE = False
-
+from meraki_flow.opik_metrics import SamplingCompletenessMetric
+from meraki_flow.opik_tracing import opik_traced
 
 @CrewBase
+@opik_traced(
+    name="sampling_preview",
+    metric=SamplingCompletenessMetric,
+    metadata=lambda i: {
+        "input_keys": list(i.keys()),
+        "hobby_name": i.get("hobby_name", ""),
+        "has_quiz_answers": bool(i.get("quiz_answers")),
+    },
+)
 class SamplingPreviewCrew:
     """Sampling Preview Crew - Creates immediate preview content for hobby sampling."""
 
     agents: List[BaseAgent]
     tasks: List[Task]
-
-    @before_kickoff
-    def log_inputs(self, inputs: dict):
-        """Log input metadata to Opik before crew execution."""
-        if OPIK_AVAILABLE:
-            try:
-                opik_context.update_current_trace(
-                    metadata={
-                        "crew": "sampling_preview",
-                        "input_keys": list(inputs.keys()) if inputs else [],
-                        "hobby_name": inputs.get("hobby_name", "") if inputs else "",
-                        "has_quiz_answers": bool(inputs.get("quiz_answers")) if inputs else False,
-                    },
-                    tags=["sampling-preview-crew"]
-                )
-            except Exception:
-                pass  # Opik tracing not active, skip
-        return inputs
-
-    @after_kickoff
-    def log_outputs(self, output):
-        """Log output metadata and scoring to Opik after crew execution."""
-        if OPIK_AVAILABLE:
-            try:
-                raw = output.raw if hasattr(output, 'raw') else str(output)
-                from meraki_flow.opik_metrics import SamplingCompletenessMetric
-                result = SamplingCompletenessMetric().score(output=raw)
-                opik_context.update_current_trace(
-                    metadata={"crew_completed": "sampling_preview", "result_type": type(output).__name__},
-                    feedback_scores=[{"name": result.name, "value": result.value, "reason": result.reason}],
-                )
-            except Exception as e:
-                print(f"[Opik] sampling_preview scoring failed (non-fatal): {e}")
-        return output
 
     @agent
     def sampling_preview_agent(self) -> Agent:

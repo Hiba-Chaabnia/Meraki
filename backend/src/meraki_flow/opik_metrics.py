@@ -80,42 +80,6 @@ class ChallengeCalibrationMetric(base_metric.BaseMetric):
         )
 
 
-class NudgeUrgencyCalibrationMetric(base_metric.BaseMetric):
-    """
-    Scores MotivationNudge urgency against actual engagement signals.
-    Maps to: nudge_type/urgency, days_since_last_session
-    """
-
-    def __init__(self, name: str = "nudge_urgency_calibration"):
-        super().__init__(name=name)
-
-    def score(
-        self,
-        urgency: str,
-        days_since_last_session: int,
-        **kwargs,
-    ) -> score_result.ScoreResult:
-        if days_since_last_session <= 3:
-            expected = "gentle"
-        elif days_since_last_session <= 7:
-            expected = "check_in"
-        else:
-            expected = "re_engage"
-
-        urgency_order = ["gentle", "check_in", "re_engage"]
-        actual_idx = urgency_order.index(urgency) if urgency in urgency_order else 1
-        expected_idx = urgency_order.index(expected)
-
-        gap = abs(actual_idx - expected_idx)
-        score_val = 1.0 - gap * 0.4
-
-        return score_result.ScoreResult(
-            value=max(0.0, score_val),
-            name=self.name,
-            reason=f"Urgency '{urgency}' for {days_since_last_session} days gap (expected '{expected}')",
-        )
-
-
 class RoadmapCompletenessMetric(base_metric.BaseMetric):
     """
     Scores GeneratedRoadmap structural quality.

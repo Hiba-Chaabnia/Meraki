@@ -1,16 +1,13 @@
 from crewai import Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_kickoff
+from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
 
-try:
-    from opik import opik_context
-    OPIK_AVAILABLE = True
-except ImportError:
-    OPIK_AVAILABLE = False
-
+from meraki_flow.opik_metrics import HobbyMatchDiversityMetric
+from meraki_flow.opik_tracing import opik_traced
 
 @CrewBase
+@opik_traced(name="discovery", metric=HobbyMatchDiversityMetric)
 class DiscoveryCrew:
     """Discovery Crew - Matches users to hobbies based on profile and constraints"""
 
@@ -23,38 +20,6 @@ class DiscoveryCrew:
     #     builder.task_callback = make_progress_callback(job_id)
     #     builder.crew().kickoff(inputs=inputs)
     task_callback = None
-
-    @before_kickoff
-    def log_inputs(self, inputs: dict):
-        """Log input metadata to Opik before crew execution."""
-        if OPIK_AVAILABLE:
-            try:
-                opik_context.update_current_trace(
-                    metadata={
-                        "crew": "discovery",
-                        "input_keys": list(inputs.keys()) if inputs else [],
-                    },
-                    tags=["discovery-crew"]
-                )
-            except Exception:
-                pass  # Opik tracing not active, skip
-        return inputs
-
-    @after_kickoff
-    def log_outputs(self, output):
-        """Log output metadata and scoring to Opik after crew execution."""
-        if OPIK_AVAILABLE:
-            try:
-                raw = output.raw if hasattr(output, 'raw') else str(output)
-                from meraki_flow.opik_metrics import HobbyMatchDiversityMetric
-                result = HobbyMatchDiversityMetric().score(output=raw)
-                opik_context.update_current_trace(
-                    metadata={"crew_completed": "discovery", "result_type": type(output).__name__},
-                    feedback_scores=[{"name": result.name, "value": result.value, "reason": result.reason}],
-                )
-            except Exception as e:
-                print(f"[Opik] discovery scoring failed (non-fatal): {e}")
-        return output
 
     @agent
     def discovery_agent(self) -> Agent:
