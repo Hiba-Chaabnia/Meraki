@@ -1,13 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Challenge, ChallengeStatus } from "@/lib/dashboardData";
 import { difficultyConfig } from "@/lib/dashboardData";
 
 const statusStyles: Record<ChallengeStatus, { bg: string; text: string; label: string }> = {
   active: { bg: "bg-blue-50", text: "text-blue-600", label: "In Progress" },
-  upcoming: { bg: "bg-gray-50", text: "text-gray-500", label: "Up Next" },
   completed: { bg: "bg-green-50", text: "text-green-600", label: "Completed" },
   skipped: { bg: "bg-gray-50", text: "text-gray-400", label: "Skipped" },
 };
@@ -15,19 +13,26 @@ const statusStyles: Record<ChallengeStatus, { bg: string; text: string; label: s
 interface ChallengeCardProps {
   challenge: Challenge;
   compact?: boolean;
+  /** Opens the challenge. Omitted renders the card inert (previews). */
+  onOpen?: (challenge: Challenge) => void;
 }
 
-export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps) {
+export function ChallengeCard({ challenge, compact = false, onOpen }: ChallengeCardProps) {
   const diff = difficultyConfig[challenge.difficulty];
   const status = statusStyles[challenge.status];
 
   return (
-    <Link href={`/dashboard/challenges/${challenge.id}`}>
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={{ type: "spring", stiffness: 400 }}
-        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow cursor-pointer"
-      >
+    <motion.div
+      whileHover={onOpen ? { y: -2 } : undefined}
+      transition={{ type: "spring", stiffness: 400 }}
+      onClick={onOpen ? () => onOpen(challenge) : undefined}
+      role={onOpen ? "button" : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      onKeyDown={onOpen ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(challenge); } } : undefined}
+      className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 transition-shadow ${
+        onOpen ? "cursor-pointer hover:shadow-md" : ""
+      }`}
+    >
         {/* Top row: hobby badge + status */}
         <div className="flex items-center justify-between mb-3">
           <span className="badge bg-gray-100 text-gray-700 font-bold">
@@ -71,7 +76,6 @@ export function ChallengeCard({ challenge, compact = false }: ChallengeCardProps
             {challenge.estimatedTime}
           </span>
         </div>
-      </motion.div>
-    </Link>
+    </motion.div>
   );
 }
