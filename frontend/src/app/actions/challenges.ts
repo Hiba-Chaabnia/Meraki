@@ -3,6 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { requireAuth } from "@/lib/supabase/requireAuth";
+import { SKIP_COOLDOWN_HOURS } from "@/lib/challengeLimits";
 import { formatSlug } from "@/lib/hobbyData";
 import { SERVER_API_URL } from "@/lib/config";
 import { getPracticeContext } from "@/lib/practiceContext";
@@ -84,7 +85,7 @@ export async function completeChallenge(userChallengeId: string) {
  * the crew "DO NOT repeat similar patterns" for skipped challenges, which is
  * only useful if a skip cost the user something.
  */
-const SKIP_COOLDOWN_HOURS = 24;
+
 
 /** Rows for one hobby, resolved through the join since hobby_slug lives on `challenges`. */
 async function hobbyChallenges(

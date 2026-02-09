@@ -116,6 +116,7 @@ export function toChallenge(row: UserChallengeWithChallenge): Challenge {
     status: row.status,
     startedDate: row.started_at ?? null,
     completedDate: row.completed_at ?? null,
+    skippedDate: row.skipped_at ?? null,
     tips: ch.tips ?? [],
     whatYoullLearn: ch.what_youll_learn ?? [],
   };

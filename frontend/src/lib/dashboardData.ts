@@ -73,6 +73,8 @@ export interface Challenge {
   status: ChallengeStatus;
   startedDate: string | null;
   completedDate: string | null;
+  /** When it was swapped away. Drives the client-side cooldown on Swap. */
+  skippedDate: string | null;
   tips: string[];
   whatYoullLearn: string[];
 }

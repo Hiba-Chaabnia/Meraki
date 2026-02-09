@@ -15,17 +15,28 @@ export interface SwapChallengeButtonProps {
   error?: string | null;
   /** Dismisses `error`. Omitted leaves the popover until the next attempt. */
   onDismissError?: () => void;
+  /** Hours until the next swap is allowed. 0 means it is available now. */
+  cooldownHours?: number;
 }
 
 /**
  * Reject the active challenge and generate a replacement.
  *
- * The cooldown is enforced server-side — the client only learns it is spent by
- * attempting, so the popover is driven by the refusal rather than by a counter.
- * A count here would go stale the moment a swap happened in another tab.
+ * The cooldown is enforced server-side and *also* read on the client, from the
+ * skip dates already on the page. The button greys out rather than spending a
+ * click to be told no. The server stays the authority — a swap in another tab
+ * leaves this copy stale, which is why pressing it still reports the refusal
+ * in the popover rather than assuming the greying is complete.
  */
-export function SwapChallengeButton({ onSwap, busy = false, error, onDismissError }: SwapChallengeButtonProps) {
+export function SwapChallengeButton({
+  onSwap,
+  busy = false,
+  error,
+  onDismissError,
+  cooldownHours = 0,
+}: SwapChallengeButtonProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const spent = cooldownHours > 0;
 
   useEffect(() => {
     if (!error || !onDismissError) return;
@@ -49,12 +60,13 @@ export function SwapChallengeButton({ onSwap, busy = false, error, onDismissErro
     <div ref={ref} className="relative flex-shrink-0">
       <button
         onClick={onSwap}
-        disabled={busy}
+        disabled={busy || spent}
+        title={spent ? `Another swap in ${cooldownHours}h` : undefined}
         aria-describedby={error ? "swap-refused" : undefined}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition-colors hover:border-gray-300 hover:text-gray-800 disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition-colors enabled:cursor-pointer enabled:hover:border-gray-300 enabled:hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <RefreshCw className={`h-4 w-4 ${busy ? "animate-spin" : ""}`} />
-        {busy ? "Finding another…" : "Swap challenge"}
+        {busy ? "Finding another…" : spent ? `Swap in ${cooldownHours}h` : "Swap challenge"}
       </button>
 
       {error && (
