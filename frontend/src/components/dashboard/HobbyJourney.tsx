@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, Play, Map, Tv, MapPin, Zap } from "lucide-react";
@@ -12,6 +12,7 @@ import { RoadmapDetail } from "./RoadmapDetail";
 import type { ActiveHobby, PracticeSession, Challenge, Roadmap } from "@/lib/dashboardData";
 import type { HobbyTheme } from "@/lib/dashboardHome";
 import type { PracticeFeedback } from "@/app/actions/feedback";
+import { swapCooldownLeft } from "@/lib/challengeLimits";
 import { fadeUp, staggerContainer } from "@/components/ui/animations";
 
 const stagger = staggerContainer(0.08);
@@ -83,8 +84,9 @@ export interface HobbyJourneyProps {
   onAdvancePhase?: () => void;
   onToggleGoal?: (userRoadmapId: string, goalKey: string) => void;
 
-  /** The danger zone, which only the real page can wire to its mutations. */
-  dangerZone?: ReactNode;
+  /** Rename / pause / delete, which only the real page can wire to its
+   *  mutations. Sits in the banner opposite the status chip. */
+  actions?: ReactNode;
 }
 
 /**
@@ -132,14 +134,35 @@ export function HobbyJourney({
   advanceError,
   onAdvancePhase,
   onToggleGoal,
-  dangerZone,
+  actions,
 }: HobbyJourneyProps) {
   const META = THEME[theme];
+
+  /* The browser resolves `#roadmap` at navigation time, when this page is still
+     a `PageSkeleton` — the target does not exist yet, so the hash silently does
+     nothing and you land at the top. This runs the jump once the real content
+     is mounted, which is the first moment there is anything to jump to.
+
+     `requestAnimationFrame` waits for the layout that mount triggers; reading
+     the position in the same tick measures the frame before it. */
+  useEffect(() => {
+    if (window.location.hash !== "#roadmap") return;
+
+    const frame = requestAnimationFrame(() => {
+      document.getElementById("roadmap")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   const activeChallenges = challenges.filter((c) => c.status === "active");
   const completedChallenges = challenges.filter((c) => c.status === "completed");
   const skippedChallenges = challenges.filter((c) => c.status === "skipped");
   // Completed first: finishing one is the part worth seeing.
   const pastChallenges = [...completedChallenges, ...skippedChallenges];
+
+  /* Read from the skips already on the page rather than fetched: the cooldown
+     is per hobby, and every one of this hobby's challenges is right here. */
+  const swapCooldownHours = swapCooldownLeft(skippedChallenges.map((c) => c.skippedDate));
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="w-full px-4 py-8 md:px-8 md:py-12">
@@ -153,14 +176,21 @@ export function HobbyJourney({
       {/* Hobby banner */}
       <motion.div
         variants={fadeUp}
-        className="rounded-3xl overflow-hidden mb-8 border shadow-sm transition-colors duration-300"
+        className="rounded-3xl mb-8 border shadow-sm transition-colors duration-300"
         style={{ backgroundColor: META.lightColor, borderColor: META.borderColor }}
       >
         <div className="px-6 py-8 md:px-10 md:py-10 relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div
-            className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-20 pointer-events-none"
-            style={{ backgroundColor: META.color }}
-          />
+          {/* The clip belongs to the decoration, not the banner: `overflow-hidden`
+              on the card cropped the ⋯ menu, which opens past its lower edge. */}
+          <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+            <div
+              className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-20"
+              style={{ backgroundColor: META.color }}
+            />
+          </div>
+          {/* Opposite the status chip, which is the thing pause flips. */}
+          {actions && <div className="absolute right-5 top-5 z-20 md:right-6 md:top-6">{actions}</div>}
+
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 backdrop-blur-sm text-xs font-semibold mb-3 border border-gray-200/50 text-gray-700">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: META.color }} />
@@ -217,6 +247,7 @@ export function HobbyJourney({
                       onSwap={onSwapChallenge}
                       swapError={swapError}
                       onDismissSwapError={onDismissSwapError}
+                      swapCooldownHours={swapCooldownHours}
                     />
                   ) : (
                     <ChallengeCard key={c.id} challenge={c} onOpen={onOpenChallenge} />
@@ -230,16 +261,19 @@ export function HobbyJourney({
                 {challengeError && (
                   <p className="mb-3 text-sm text-red-600">{challengeError}</p>
                 )}
+                {/* `self-center`: the parent is a flex *column*, so a button
+                    left to its own devices stretches to the card's full width
+                    on the cross axis, however `inline-flex` it says it is. */}
                 <button
                   onClick={onGenerateChallenge}
                   disabled={generatingChallenge}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
+                  className="self-center inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: META.color }}
                 >
                   {generatingChallenge ? (
                     <><div className="animate-spin w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />Generating...</>
                   ) : (
-                    <><Plus className="w-3.5 h-3.5" />Generate a Challenge</>
+                    "Generate a Challenge"
                   )}
                 </button>
               </div>
@@ -250,15 +284,19 @@ export function HobbyJourney({
               same question — what has this hobby already thrown at me — and
               the swapped ones are kept because their titles feed the crew's
               "do not repeat" prompt. */}
-          {pastChallenges.length > 0 && (
-            <motion.div variants={fadeUp} className="flex flex-col lg:col-span-5">
-              <ChallengeArchive challenges={pastChallenges} onOpen={onOpenChallenge} />
-            </motion.div>
-          )}
+          {/* Always rendered, empty included: the row is a pair, and dropping
+              the archive let the challenge panel sprawl to full width and back
+              again as the first challenge was finished. */}
+          <motion.div variants={fadeUp} className="flex flex-col lg:col-span-5">
+            <ChallengeArchive challenges={pastChallenges} onOpen={onOpenChallenge} />
+          </motion.div>
         </div>
 
-        {/* ─── Row 2: the whole path ─── */}
-        <motion.div variants={fadeUp}>
+        {/* ─── Row 2: the whole path ───
+            `id` is the target of the dashboard card's checklist rows, which
+            link here rather than ticking in place. `scroll-mt` clears the
+            sticky header the anchor would otherwise land behind. */}
+        <motion.div variants={fadeUp} id="roadmap" className="scroll-mt-20">
           <h2 className="card-heading mb-4">Learning Roadmap</h2>
           {roadmap && onAdvancePhase ? (
             /* The whole path, open. It was a summary that opened a modal
@@ -346,7 +384,6 @@ export function HobbyJourney({
 
       {/* Rename / pause / delete. Last on the page on purpose — you scroll
           past everything the hobby is before you get to unmaking it. */}
-      {dangerZone && <motion.div variants={fadeUp} className="mt-8">{dangerZone}</motion.div>}
     </motion.div>
   );
 }

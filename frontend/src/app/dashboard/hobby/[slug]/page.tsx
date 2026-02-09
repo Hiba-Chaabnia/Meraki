@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   SessionLoggerModal,
   LogPracticeFAB,
-  HobbyDangerZone,
+  HobbyActionsMenu,
   HobbyJourney,
   ChallengeModal,
 } from "@/components/dashboard";
@@ -131,9 +131,9 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         advanceError={page.advanceError}
         onAdvancePhase={page.advancePhase}
         onToggleGoal={page.toggleGoal}
-        dangerZone={
+        actions={
           page.hobby ? (
-            <HobbyDangerZone
+            <HobbyActionsMenu
               userHobbyId={page.hobby.userHobbyId}
               name={page.name}
               defaultName={page.defaultName}

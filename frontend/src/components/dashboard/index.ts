@@ -24,7 +24,7 @@ export {
   RetakeQuizCard,
   CHALLENGE_WALLPAPER,
 } from "./DashboardCards";
-export type { Wallpaper } from "./DashboardCards";
+export type { Wallpaper, ChallengeOffer } from "./DashboardCards";
 export { LogPracticeFAB } from "./LogPracticeFAB";
 export { ChallengeCard } from "./ChallengeCard";
 export { ChallengeModal } from "./ChallengeModal";
@@ -37,4 +37,4 @@ export { SessionLoggerModal } from "./SessionLoggerModal";
 export type { SessionFormData } from "./SessionLoggerModal";
 export { AddHobbyModal } from "./AddHobbyModal";
 export { RenameHobbyModal } from "./RenameHobbyModal";
-export { HobbyDangerZone } from "./HobbyDangerZone";
+export { HobbyActionsMenu } from "./HobbyActionsMenu";

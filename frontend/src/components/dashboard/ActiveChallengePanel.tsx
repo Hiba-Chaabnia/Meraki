@@ -16,6 +16,8 @@ export interface ActiveChallengePanelProps {
   /** A refused swap, including the daily-limit refusal. */
   swapError?: string | null;
   onDismissSwapError?: () => void;
+  /** Hours until the next swap is allowed, from the hobby's own skip dates. */
+  swapCooldownHours?: number;
 }
 
 /**
@@ -36,11 +38,15 @@ export function ActiveChallengePanel({
   onSwap,
   swapError,
   onDismissSwapError,
+  swapCooldownHours = 0,
 }: ActiveChallengePanelProps) {
   const diff = difficultyConfig[c.difficulty];
 
+  /* No max-width: the panel is sized by its 7/12 column. A `max-w-2xl` here
+     left ~190px of dead canvas between it and the archive, which read as the
+     two blocks being unrelated rather than a pair. */
   return (
-    <div className="relative flex h-full w-full max-w-2xl flex-col rounded-2xl bg-white shadow-xl">
+    <div className="relative flex h-full w-full flex-col rounded-2xl bg-white shadow-xl">
       <div className="flex flex-1 flex-col p-6 md:p-8">
         {/* The section label and the swap live on the card, not above it — the
             card is the section. */}
@@ -52,6 +58,7 @@ export function ActiveChallengePanel({
               busy={busy}
               error={swapError}
               onDismissError={onDismissSwapError}
+              cooldownHours={swapCooldownHours}
             />
           )}
         </div>

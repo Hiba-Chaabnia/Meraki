@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
+import { FlowerShape } from "@/components/ui/FlowerShape";
 import type { Challenge } from "@/lib/dashboardData";
 
 type ArchiveFilter = "all" | "completed" | "skipped";
@@ -54,24 +55,44 @@ export function ChallengeArchive({
     });
   }, [challenges, filter, query]);
 
+  const empty = challenges.length === 0;
+
   return (
     <div className="flex h-full flex-col">
-      {/* The section label lives outside the card, as it does on every other
-          block on the page — so the white surfaces all start at the same y. */}
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="card-heading flex items-center gap-2">
-          Challenge Archive
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
-            {challenges.length} total
-          </span>
-        </h2>
-        <span className="caption flex-shrink-0">
-          {completedCount} completed
-          {skippedCount > 0 && ` · ${skippedCount} swapped out`}
-        </span>
-      </div>
-
       <div className="flex flex-1 flex-col gap-4 rounded-3xl border border-gray-200/90 bg-white p-5 shadow-sm">
+        {/* Inside the card, matching the challenge panel's own header row: the
+            two sit side by side, so a label floating above one of them and not
+            the other made the pair look misaligned rather than deliberate. */}
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
+          <h2 className="card-heading flex items-center gap-2">
+            Challenge Archive
+            {!empty && (
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
+                {challenges.length} total
+              </span>
+            )}
+          </h2>
+          {!empty && (
+            <span className="caption flex-shrink-0">
+              {completedCount} completed
+              {skippedCount > 0 && ` · ${skippedCount} swapped out`}
+            </span>
+          )}
+        </div>
+
+        {/* Nothing to search or filter through yet, so neither control shows —
+            a search box over an empty set is furniture. */}
+        {empty ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
+            <FlowerShape size={34} color="var(--white-dim)" />
+            <p className="text-xs font-semibold text-gray-500">Nothing archived yet</p>
+            <p className="max-w-[34ch] text-[11.5px] leading-[1.55] text-gray-400">
+              Challenges you finish — and the ones you swap away — collect here, so you can look
+              back at what this hobby has already asked of you.
+            </p>
+          </div>
+        ) : (
+          <>
         <div className="space-y-2.5">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -114,8 +135,10 @@ export function ChallengeArchive({
           <p className="min-h-[160px] flex-1 py-6 text-center text-xs text-gray-400">
             {query.trim()
               ? `Nothing matching “${query.trim()}”.`
-              : "Nothing here yet."}
+              : "Nothing under this filter."}
           </p>
+        )}
+          </>
         )}
       </div>
     </div>
