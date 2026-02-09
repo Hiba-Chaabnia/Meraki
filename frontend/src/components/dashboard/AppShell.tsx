@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Compass } from "lucide-react";
 import { useUser } from "@/lib/hooks/useUser";
+import { displayName } from "@/lib/displayName";
 import { UserChip } from "./UserChip";
 
 /**
@@ -24,11 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, profile, signOut } = useUser();
 
-  const displayName =
-    profile?.full_name ||
-    user?.user_metadata?.full_name ||
-    user?.email?.split("@")[0] ||
-    "—";
+  const name = displayName(user, profile) || "—";
 
   const handleSignOut = async () => {
     await signOut();
@@ -60,8 +57,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
             <div className="w-8 md:w-auto">
               <UserChip
-                displayName={displayName}
-                displayInitial={displayName.charAt(0).toUpperCase()}
+                displayName={name}
+                displayInitial={name.charAt(0).toUpperCase()}
                 onSignOut={handleSignOut}
               />
             </div>
