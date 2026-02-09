@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { roadmapGoalKey } from "@/lib/dashboardData";
 import type { Roadmap, RoadmapPhase } from "@/lib/dashboardData";
@@ -64,7 +64,6 @@ export function RoadmapDetail({
   themeColor,
   inline = false,
 }: RoadmapDetailProps) {
-  const [confirmAdvance, setConfirmAdvance] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const done = new Set(roadmap.completedGoals);
   const accent = themeColor ?? NEUTRAL;
@@ -72,12 +71,23 @@ export function RoadmapDetail({
   const isLastPhase = roadmap.currentPhase >= roadmap.totalPhases - 1;
   const percent = ((roadmap.currentPhase + 1) / roadmap.totalPhases) * 100;
 
-  /* `block: "nearest"` keeps this from dragging the whole page up on mount —
-     only the carousel scrolls. */
+  /* Scrolls the carousel and nothing else.
+
+     `scrollIntoView({ block: "nearest" })` was meant to do this, but "nearest"
+     still scrolls every scrollable ancestor when the target is off-screen — so
+     mounting the page threw the window down to the roadmap, whichever part of
+     a dashboard card you had clicked. Moving `scrollLeft` by the measured
+     delta cannot touch the page. */
   const focusActive = () => {
-    scroller.current
-      ?.querySelector('[data-current="true"]')
-      ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    const box = scroller.current;
+    const card = box?.querySelector('[data-current="true"]');
+    if (!box || !card) return;
+
+    const boxRect = box.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const delta = cardRect.left - boxRect.left - (boxRect.width - cardRect.width) / 2;
+
+    box.scrollBy({ left: delta, behavior: "smooth" });
   };
 
   useEffect(focusActive, [roadmap.currentPhase]);
@@ -85,10 +95,6 @@ export function RoadmapDetail({
   const scrollStep = (direction: 1 | -1) =>
     scroller.current?.scrollBy({ left: direction * SCROLL_STEP, behavior: "smooth" });
 
-  const handleConfirm = () => {
-    setConfirmAdvance(false);
-    onAdvance();
-  };
 
   return (
     <div className={inline ? "rounded-3xl border border-gray-200/90 bg-white p-5 shadow-sm md:p-7" : "p-6 md:p-8"}>
@@ -165,14 +171,10 @@ export function RoadmapDetail({
             isComplete={idx < roadmap.currentPhase}
             isCurrent={idx === roadmap.currentPhase}
             isLastPhase={isLastPhase}
-            nextTitle={roadmap.phases[idx + 1]?.title}
             completedGoals={done}
             accent={accent}
             advancing={advancing}
-            confirming={confirmAdvance && idx === roadmap.currentPhase}
-            onStartConfirm={() => setConfirmAdvance(true)}
-            onCancelConfirm={() => setConfirmAdvance(false)}
-            onConfirm={handleConfirm}
+            onAdvance={onAdvance}
             onToggleGoal={
               onToggleGoal && roadmap.userRoadmapId
                 ? (key) => onToggleGoal(roadmap.userRoadmapId, key)
@@ -190,14 +192,11 @@ interface PhaseCardProps {
   isComplete: boolean;
   isCurrent: boolean;
   isLastPhase: boolean;
-  nextTitle?: string;
   completedGoals: Set<string>;
   accent: string;
   advancing: boolean;
-  confirming: boolean;
-  onStartConfirm: () => void;
-  onCancelConfirm: () => void;
-  onConfirm: () => void;
+  /** Runs the advance. Fired by the tick that completes the phase. */
+  onAdvance: () => void;
   onToggleGoal?: (goalKey: string) => void;
 }
 
@@ -206,20 +205,50 @@ function PhaseCard({
   isComplete,
   isCurrent,
   isLastPhase,
-  nextTitle,
   completedGoals,
   accent,
   advancing,
-  confirming,
-  onStartConfirm,
-  onCancelConfirm,
-  onConfirm,
+  onAdvance,
   onToggleGoal,
 }: PhaseCardProps) {
   const ticked = phase.goals.filter((_, i) =>
     completedGoals.has(roadmapGoalKey(phase.phase_number, i)),
   ).length;
   const goalPercent = phase.goals.length > 0 ? Math.round((ticked / phase.goals.length) * 100) : 0;
+
+  /* The checklist *is* the advance. Completing a phase used to be a separate
+     button plus a confirm step, which asked you to state twice what the last
+     tick had already said — and left "Complete phase" live from the moment a
+     phase became current, so a phase could be completed with nothing ticked
+     and the progress bar above it was decorative.
+
+     Ticking the final goal now moves you on. The trade is that the confirm step
+     was the only thing standing between a misclick and an advance, since there
+     is no revert action: see the fallback below, which is the way back to a
+     phase whose goals get unticked. */
+  const goalsLeft = phase.goals.length - ticked;
+  const canAdvance = goalsLeft === 0;
+
+  /* An empty checklist advances the phase, wherever the emptying happened —
+     here, on the dashboard card, or in a session logged on another device. A
+     click-handler version only caught the first of those, so a roadmap could
+     sit on a phase whose goals were all ticked, showing a button that asked you
+     to confirm what the checklist had already said.
+
+     `requested` is what keeps a failed advance from retrying on every render:
+     it latches when the call goes out and only clears when the phase stops
+     being completable, which is also what lets an untick-then-retick advance
+     again. */
+  const requested = useRef(false);
+  useEffect(() => {
+    if (!isCurrent || isLastPhase || !canAdvance) {
+      requested.current = false;
+      return;
+    }
+    if (advancing || requested.current) return;
+    requested.current = true;
+    onAdvance();
+  }, [isCurrent, isLastPhase, canAdvance, advancing, onAdvance]);
 
   return (
     <div
@@ -294,7 +323,14 @@ function PhaseCard({
                 {phase.goals.map((g, i) => {
                   const key = roadmapGoalKey(phase.phase_number, i);
                   const isDone = completedGoals.has(key);
-                  const tick = onToggleGoal ? () => onToggleGoal(key) : undefined;
+                  /* Only the phase you are on is tickable. Every phase renders
+                     open so you can read ahead, but a checklist you can fill in
+                     for work three phases away is not a record of anything —
+                     and it would let you unlock the advance button below
+                     without doing the phase you are actually on. Completed
+                     phases are frozen for the same reason in reverse: the
+                     advance already happened and cannot be taken back here. */
+                  const tick = onToggleGoal && isCurrent ? () => onToggleGoal(key) : undefined;
                   return (
                     <button
                       key={i}
@@ -347,38 +383,12 @@ function PhaseCard({
             <p className="py-1 text-center text-[11px] font-semibold text-gray-500">
               Final phase — take your time with it.
             </p>
-          ) : confirming ? (
-            <div className="space-y-2">
-              {nextTitle && (
-                <p className="text-[11px] text-gray-500">
-                  Next up: <span className="font-semibold text-gray-700">{nextTitle}</span>
-                </p>
-              )}
-              <div className="flex gap-2">
-                <button
-                  onClick={onCancelConfirm}
-                  className="flex-1 cursor-pointer rounded-xl bg-gray-100 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={onConfirm}
-                  disabled={advancing}
-                  style={{ backgroundColor: accent }}
-                  className="flex-1 cursor-pointer rounded-xl py-1.5 text-[11px] font-bold text-white transition-all hover:shadow-md disabled:opacity-50"
-                >
-                  {advancing ? "Advancing…" : "Confirm"}
-                </button>
-              </div>
-            </div>
+          ) : canAdvance ? (
+            <p className="py-1 text-center text-[11px] font-semibold text-gray-500">Advancing…</p>
           ) : (
-            <button
-              onClick={onStartConfirm}
-              style={{ backgroundColor: accent }}
-              className="w-full cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:shadow-md"
-            >
-              Complete phase &amp; advance →
-            </button>
+            <p className="py-1 text-center text-[11px] text-gray-400">
+              {goalsLeft} goal{goalsLeft === 1 ? "" : "s"} left — the last one moves you on
+            </p>
           )
         ) : isComplete ? (
           <p className="flex items-center justify-center gap-1 rounded-xl border border-emerald-100 bg-emerald-50 py-1 text-[11px] font-bold text-emerald-700">
