@@ -1,0 +1,76 @@
+Meraki
+Copyright (C) 2026 Hiba Chaabnia
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+CREDITS AND THIRD-PARTY ASSETS
+═══════════════════════════════════════════════════════════════════════════════
+
+The AGPL covers the source code in this repository. It does not cover the items
+below — each carries its own terms. Check them before reusing anything.
+
+
+── Name, logo and visual identity ──────────────────────────────────────────────
+
+  "Meraki", the flower mark, the logo files in frontend/public/icons/logo/, and
+  the overall visual identity are not licensed under the AGPL and are not
+  licensed to you.
+
+  A code licence covers code, never a brand. You are free to fork and run this
+  software under the AGPL, but please rename your fork — don't present it as
+  Meraki, use the logo, or imply any endorsement or connection. You may of
+  course say truthfully that your project is based on Meraki.
+
+
+── Hobby icons ─────────────────────────────────────────────────────────────────
+
+  frontend/public/icons/hobbies-primary/   (36 files)
+  frontend/public/icons/hobbies-secondary/ (36 files)
+
+  Icons by Flaticon — https://www.flaticon.com — recoloured and adapted for this
+  project. They remain subject to the Flaticon licence, which is not the AGPL.
+  If you fork this project, obtain your own icons or your own Flaticon licence
+  rather than relying on these.
+
+
+── Display typeface: Chopard ───────────────────────────────────────────────────
+
+  frontend/src/app/fonts/Chopard Medium.ttf
+  frontend/src/app/fonts/Chopard MediumItalic.ttf
+
+  Obtained via https://freefonts.co/fonts/chopard-regular
+
+  These files are not covered by the AGPL and no licence to redistribute them is
+  granted here. If you fork this project, obtain the font from the designer
+  yourself, or substitute another display face — it is referenced in exactly two
+  places, `--font-chopard` in globals.css and the loader in app/layout.tsx.
+
+
+── Body typefaces ──────────────────────────────────────────────────────────────
+
+  Mulish, EB Garamond and Alegreya are loaded at build time via next/font and
+  are not redistributed in this repository. Each is licensed by its authors
+  under the SIL Open Font License 1.1.
+
+
+── Third-party services ────────────────────────────────────────────────────────
+
+  This software calls the OpenAI, Supabase, Opik, Google Places/Maps and YouTube
+  Data APIs. Running it requires your own credentials for each, and your use of
+  those services is governed by their terms, not by this licence.
+
+  YouTube API Services in particular require any application using them to
+  comply with the YouTube Terms of Service <https://www.youtube.com/t/terms>
+  and to disclose that use in a privacy policy.
