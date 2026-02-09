@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-02-09T09:18:43.239381+00:00",
+  "applied": false,
+  "trials_per_optimizer": 10,
+  "results": [
+    {
+      "name": "discovery",
+      "status": "success",
+      "initial_score": 0.725,
+      "best_score": 0.725,
+      "result_file": "C:\\Users\\hibac\\OneDrive\\Bureau\\Meraki\\backend\\src\\meraki_flow\\optimization\\results\\discovery_optimization_20260209_085612.json"
+    },
+    {
+      "name": "challenges",
+      "status": "success",
+      "initial_score": 0.674,
+      "best_score": 0.8640000000000001,
+      "result_file": "C:\\Users\\hibac\\OneDrive\\Bureau\\Meraki\\backend\\src\\meraki_flow\\optimization\\results\\challenge_optimization_20260209_090752.json"
+    },
+    {
+      "name": "motivation",
+      "status": "success",
+      "initial_score": 0.8780000000000001,
+      "best_score": 0.874,
+      "result_file": "C:\\Users\\hibac\\OneDrive\\Bureau\\Meraki\\backend\\src\\meraki_flow\\optimization\\results\\motivation_optimization_20260209_091843.json"
+    }
+  ]
+}

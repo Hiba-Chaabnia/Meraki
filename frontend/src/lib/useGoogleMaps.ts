@@ -24,10 +24,20 @@ function loadGoogleMapsScript(): Promise<void> {
 
   loadPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      // Ensure the Places library is fully available before resolving
+      const waitForPlaces = () => {
+        if (window.google?.maps?.places) {
+          resolve();
+        } else {
+          setTimeout(waitForPlaces, 50);
+        }
+      };
+      waitForPlaces();
+    };
     script.onerror = () => reject(new Error("Failed to load Google Maps"));
     document.head.appendChild(script);
   });

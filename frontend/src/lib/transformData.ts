@@ -5,6 +5,7 @@ import type {
   Milestone,
   Mood,
   UserStats,
+  Roadmap,
 } from "@/lib/dashboardData";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -46,6 +47,7 @@ export function toPracticeSession(row: any): PracticeSession {
     mood: (row.mood ?? "okay") as Mood,
     notes: row.notes ?? "",
     challengeId: row.user_challenge_id ?? null,
+    imageUrl: row.image_url ?? null,
   };
 }
 
@@ -82,6 +84,27 @@ export function toMilestone(row: any): Milestone {
     icon: row.icon ?? "",
     earned: !!row.earned,
     earnedDate: row.earnedDate ?? null,
+  };
+}
+
+/** Map a user_roadmaps row (with joined roadmaps + hobbies) to Roadmap */
+export function toRoadmap(row: any, hobbies: any[]): Roadmap {
+  const roadmap = row.roadmaps ?? {};
+  const hobbySlug = row.hobby_slug ?? "";
+  const hobby = hobbies.find((h: any) => (h.hobbies?.slug ?? h.slug) === hobbySlug);
+  const hobbyData = hobby?.hobbies ?? hobby ?? {};
+
+  return {
+    id: roadmap.id ?? row.roadmap_id ?? "",
+    hobbySlug,
+    hobbyName: hobbyData.name ?? hobbySlug,
+    hobbyColor: hobbyData.color ?? "#888",
+    title: roadmap.title ?? "",
+    description: roadmap.description ?? "",
+    phases: roadmap.phases ?? [],
+    currentPhase: row.current_phase ?? 0,
+    totalPhases: roadmap.total_phases ?? (roadmap.phases?.length ?? 0),
+    userRoadmapId: row.id ?? "",
   };
 }
 

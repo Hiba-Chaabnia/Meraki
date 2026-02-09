@@ -70,6 +70,22 @@ export async function saveHobbyMatches(
   return { success: true };
 }
 
+export async function hasQuizResults(): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { count, error } = await supabase
+    .from("hobby_matches")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  if (error) return false;
+  return (count ?? 0) > 0;
+}
+
 export async function getHobbyMatches() {
   const supabase = await createClient();
   const {

@@ -108,11 +108,12 @@ generate_recommendations_task:
           "hobby_slug": "string",
           "match_percentage": number,
           "match_tags": ["string"],
-          "reasoning": "2-3 sentence personalized explanation"
+          "reasoning": "Maximum 2 sentences. Why this hobby fits and how to start."
         }
       ],
-      "encouragement": "A brief personalized message addressing their barriers"
+      "encouragement": "A brief personalized message addressing their barriers (1-2 sentences max)"
     }
 
+    IMPORTANT: Each "reasoning" MUST be at most 2 short sentences. No more.
     Include top 3-5 matches. Use valid hobby slugs only.
   agent: discovery_agent

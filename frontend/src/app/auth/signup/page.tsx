@@ -31,7 +31,7 @@ export default function SignUpPage() {
   );
 
   return (
-    <AuthLayout>
+    <AuthLayout imageSrc="https://res.cloudinary.com/dm3csn6xh/video/upload/v1770607520/AI_Guided_Creative_Journey_Animation_jkudij.mp4" imageAlt="Meraki Animation">
       <div className="space-y-6">
         {/* Heading */}
         <div className="space-y-1">

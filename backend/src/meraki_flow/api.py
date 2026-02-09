@@ -20,6 +20,10 @@ from typing import Any
 
 warnings.filterwarnings("ignore", category=ResourceWarning)
 
+# Initialize Opik tracing BEFORE importing crews
+from meraki_flow.opik_setup import initialize_opik
+initialize_opik()
+
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,6 +32,10 @@ from pydantic import BaseModel
 from meraki_flow.crews.discovery_crew.discovery_crew import DiscoveryCrew
 from meraki_flow.crews.sampling_preview_crew.sampling_preview_crew import SamplingPreviewCrew
 from meraki_flow.crews.local_experiences_crew.local_experiences_crew import LocalExperiencesCrew
+from meraki_flow.crews.practice_feedback_crew.practice_feedback_crew import PracticeFeedbackCrew
+from meraki_flow.crews.challenge_generation_crew.challenge_generation_crew import ChallengeGenerationCrew
+from meraki_flow.crews.motivation_crew.motivation_crew import MotivationCrew
+from meraki_flow.crews.roadmap_crew.roadmap_crew import RoadmapCrew
 from meraki_flow.models import SamplingRecommendation, MicroActivity, CuratedVideos
 from meraki_flow.db import (
     create_job,
@@ -38,6 +46,10 @@ from meraki_flow.db import (
     save_sampling_result,
     save_local_experience_result,
     save_hobby_matches,
+    save_ai_feedback,
+    save_generated_challenge,
+    save_nudge,
+    save_generated_roadmap,
 )
 
 
@@ -79,6 +91,56 @@ class LocalExperiencesRequest(BaseModel):
     location: str
     hobby_slug: str = ""
     user_id: str = ""
+
+
+class PracticeFeedbackRequest(BaseModel):
+    session_id: str
+    user_id: str = ""
+    hobby_name: str
+    session_type: str = "practice"
+    duration: int = 0
+    mood: str = ""
+    notes: str = ""
+    image_url: str = ""
+    recent_sessions: str = ""
+    completed_challenges: str = ""
+
+
+class ChallengeGenerationRequest(BaseModel):
+    user_id: str
+    hobby_name: str
+    hobby_slug: str = ""
+    session_count: int = 0
+    avg_duration: int = 0
+    mood_distribution: str = ""
+    days_active: int = 0
+    completed_challenges: str = ""
+    skipped_challenges: str = ""
+    recent_feedback: str = ""
+    last_mood_trend: str = ""
+
+
+class MotivationCheckRequest(BaseModel):
+    user_id: str
+    hobby_name: str
+    hobby_slug: str = ""
+    days_since_last_session: int = 0
+    recent_moods: str = ""
+    challenge_skip_rate: float = 0.0
+    current_streak: int = 0
+    longest_streak: int = 0
+    session_frequency_trend: str = ""
+
+
+class RoadmapGenerationRequest(BaseModel):
+    user_id: str
+    hobby_name: str
+    hobby_slug: str = ""
+    session_count: int = 0
+    avg_duration: int = 0
+    days_active: int = 0
+    completed_challenges: str = ""
+    user_goals: str = ""
 
 
 class JobResponse(BaseModel):
@@ -480,6 +542,349 @@ async def start_local_experiences(request: LocalExperiencesRequest):
 @app.get("/sampling/local/{job_id}")
 async def get_local_experiences_status(job_id: str):
     """Get the status and result of a local experiences job."""
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return {
+        "job_id": job["id"],
+        "status": job["status"],
+        "result": job["result"],
+        "error": job["error"],
+        "created_at": job["created_at"],
+        "updated_at": job["updated_at"],
+    }
+
+
+# ─── Practice Feedback Endpoints ───
+
+def run_practice_feedback_job(job_id: str) -> None:
+    """Run the practice feedback crew in a background thread."""
+    import traceback
+
+    job = get_job(job_id)
+    if not job:
+        return
+
+    try:
+        update_job_status(job_id, "running")
+
+        request_data = job["request_data"]
+        inputs = {
+            "hobby_name": request_data.get("hobby_name", ""),
+            "session_type": request_data.get("session_type", "practice"),
+            "duration": str(request_data.get("duration", 0)),
+            "mood": request_data.get("mood", ""),
+            "notes": request_data.get("notes", ""),
+            "image_url": request_data.get("image_url", ""),
+            "recent_sessions": request_data.get("recent_sessions", "None"),
+            "completed_challenges": request_data.get("completed_challenges", "None"),
+        }
+
+        print(f"[Practice Feedback Job {job_id}] Starting crew for: {inputs['hobby_name']}")
+
+        result = PracticeFeedbackCrew().crew().kickoff(inputs=inputs)
+
+        if result.tasks_output and result.tasks_output[0].pydantic:
+            parsed = result.tasks_output[0].pydantic.model_dump()
+        else:
+            parsed = parse_task_output_json(result.raw or "")
+            if not parsed:
+                parsed = {"observations": [], "growth": [], "suggestions": [], "celebration": ""}
+
+        update_job_result(job_id, parsed)
+
+        session_id = request_data.get("session_id", "")
+        if session_id:
+            try:
+                save_ai_feedback(session_id, parsed)
+                print(f"[Practice Feedback Job {job_id}] Saved feedback for session {session_id}")
+            except Exception as e:
+                print(f"[Practice Feedback Job {job_id}] Failed to save feedback: {e}")
+
+        print(f"[Practice Feedback Job {job_id}] Job completed successfully")
+
+    except Exception as e:
+        error_details = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"[Practice Feedback Job {job_id}] FAILED: {error_details}")
+        update_job_error(job_id, str(e))
+
+
+@app.post("/practice/feedback", response_model=JobResponse)
+async def start_practice_feedback(request: PracticeFeedbackRequest):
+    """Start a practice feedback job."""
+    request_data = request.model_dump()
+    user_id = request_data.get("user_id", "")
+
+    job_id = create_job("practice_feedback", request_data, user_id)
+
+    thread = Thread(target=run_practice_feedback_job, args=(job_id,))
+    thread.start()
+
+    return JobResponse(job_id=job_id)
+
+
+@app.get("/practice/feedback/{job_id}")
+async def get_practice_feedback_status(job_id: str):
+    """Get the status and result of a practice feedback job."""
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return {
+        "job_id": job["id"],
+        "status": job["status"],
+        "result": job["result"],
+        "error": job["error"],
+        "created_at": job["created_at"],
+        "updated_at": job["updated_at"],
+    }
+
+
+# ─── Challenge Generation Endpoints ───
+
+def run_challenge_generation_job(job_id: str) -> None:
+    """Run the challenge generation crew in a background thread."""
+    import traceback
+
+    job = get_job(job_id)
+    if not job:
+        return
+
+    try:
+        update_job_status(job_id, "running")
+
+        request_data = job["request_data"]
+        inputs = {
+            "hobby_name": request_data.get("hobby_name", ""),
+            "session_count": str(request_data.get("session_count", 0)),
+            "avg_duration": str(request_data.get("avg_duration", 0)),
+            "mood_distribution": request_data.get("mood_distribution", ""),
+            "days_active": str(request_data.get("days_active", 0)),
+            "completed_challenges": request_data.get("completed_challenges", "None"),
+            "skipped_challenges": request_data.get("skipped_challenges", "None"),
+            "recent_feedback": request_data.get("recent_feedback", "None"),
+            "last_mood_trend": request_data.get("last_mood_trend", ""),
+        }
+
+        print(f"[Challenge Generation Job {job_id}] Starting crew for: {inputs['hobby_name']}")
+
+        result = ChallengeGenerationCrew().crew().kickoff(inputs=inputs)
+
+        if result.tasks_output and result.tasks_output[0].pydantic:
+            parsed = result.tasks_output[0].pydantic.model_dump()
+        else:
+            parsed = parse_task_output_json(result.raw or "")
+            if not parsed:
+                parsed = {"title": "", "description": ""}
+
+        update_job_result(job_id, parsed)
+
+        user_id = request_data.get("user_id", "")
+        hobby_slug = request_data.get("hobby_slug", "")
+        if user_id and hobby_slug and parsed.get("title"):
+            try:
+                uc_id = save_generated_challenge(user_id, hobby_slug, parsed)
+                if uc_id:
+                    print(f"[Challenge Generation Job {job_id}] Saved challenge, user_challenge_id={uc_id}")
+            except Exception as e:
+                print(f"[Challenge Generation Job {job_id}] Failed to save challenge: {e}")
+
+        print(f"[Challenge Generation Job {job_id}] Job completed successfully")
+
+    except Exception as e:
+        error_details = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"[Challenge Generation Job {job_id}] FAILED: {error_details}")
+        update_job_error(job_id, str(e))
+
+
+@app.post("/challenges/generate", response_model=JobResponse)
+async def start_challenge_generation(request: ChallengeGenerationRequest):
+    """Start a challenge generation job."""
+    request_data = request.model_dump()
+    user_id = request_data.get("user_id", "")
+
+    job_id = create_job("challenge_generation", request_data, user_id)
+
+    thread = Thread(target=run_challenge_generation_job, args=(job_id,))
+    thread.start()
+
+    return JobResponse(job_id=job_id)
+
+
+@app.get("/challenges/generate/{job_id}")
+async def get_challenge_generation_status(job_id: str):
+    """Get the status and result of a challenge generation job."""
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return {
+        "job_id": job["id"],
+        "status": job["status"],
+        "result": job["result"],
+        "error": job["error"],
+        "created_at": job["created_at"],
+        "updated_at": job["updated_at"],
+    }
+
+
+# ─── Motivation Check Endpoints ───
+
+def run_motivation_check_job(job_id: str) -> None:
+    """Run the motivation crew in a background thread."""
+    import traceback
+
+    job = get_job(job_id)
+    if not job:
+        return
+
+    try:
+        update_job_status(job_id, "running")
+
+        request_data = job["request_data"]
+        inputs = {
+            "hobby_name": request_data.get("hobby_name", ""),
+            "days_since_last_session": str(request_data.get("days_since_last_session", 0)),
+            "recent_moods": request_data.get("recent_moods", ""),
+            "challenge_skip_rate": str(request_data.get("challenge_skip_rate", 0)),
+            "current_streak": str(request_data.get("current_streak", 0)),
+            "longest_streak": str(request_data.get("longest_streak", 0)),
+            "session_frequency_trend": request_data.get("session_frequency_trend", ""),
+        }
+
+        print(f"[Motivation Check Job {job_id}] Starting crew for: {inputs['hobby_name']}")
+
+        result = MotivationCrew().crew().kickoff(inputs=inputs)
+
+        if result.tasks_output and result.tasks_output[0].pydantic:
+            parsed = result.tasks_output[0].pydantic.model_dump()
+        else:
+            parsed = parse_task_output_json(result.raw or "")
+            if not parsed:
+                parsed = {"nudge_type": "", "message": "", "suggested_action": "", "urgency": "gentle"}
+
+        update_job_result(job_id, parsed)
+
+        user_id = request_data.get("user_id", "")
+        hobby_slug = request_data.get("hobby_slug", "")
+        if user_id and parsed.get("message"):
+            try:
+                save_nudge(user_id, hobby_slug, parsed)
+                print(f"[Motivation Check Job {job_id}] Saved nudge")
+            except Exception as e:
+                print(f"[Motivation Check Job {job_id}] Failed to save nudge: {e}")
+
+        print(f"[Motivation Check Job {job_id}] Job completed successfully")
+
+    except Exception as e:
+        error_details = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"[Motivation Check Job {job_id}] FAILED: {error_details}")
+        update_job_error(job_id, str(e))
+
+
+@app.post("/motivation/check", response_model=JobResponse)
+async def start_motivation_check(request: MotivationCheckRequest):
+    """Start a motivation check job."""
+    request_data = request.model_dump()
+    user_id = request_data.get("user_id", "")
+
+    job_id = create_job("motivation_check", request_data, user_id)
+
+    thread = Thread(target=run_motivation_check_job, args=(job_id,))
+    thread.start()
+
+    return JobResponse(job_id=job_id)
+
+
+@app.get("/motivation/check/{job_id}")
+async def get_motivation_check_status(job_id: str):
+    """Get the status and result of a motivation check job."""
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return {
+        "job_id": job["id"],
+        "status": job["status"],
+        "result": job["result"],
+        "error": job["error"],
+        "created_at": job["created_at"],
+        "updated_at": job["updated_at"],
+    }
+
+
+# ─── Roadmap Generation Endpoints ───
+
+def run_roadmap_generation_job(job_id: str) -> None:
+    """Run the roadmap crew in a background thread."""
+    import traceback
+
+    job = get_job(job_id)
+    if not job:
+        return
+
+    try:
+        update_job_status(job_id, "running")
+
+        request_data = job["request_data"]
+        inputs = {
+            "hobby_name": request_data.get("hobby_name", ""),
+            "session_count": str(request_data.get("session_count", 0)),
+            "avg_duration": str(request_data.get("avg_duration", 0)),
+            "days_active": str(request_data.get("days_active", 0)),
+            "completed_challenges": request_data.get("completed_challenges", "None"),
+            "user_goals": request_data.get("user_goals", "None"),
+        }
+
+        print(f"[Roadmap Generation Job {job_id}] Starting crew for: {inputs['hobby_name']}")
+
+        result = RoadmapCrew().crew().kickoff(inputs=inputs)
+
+        if result.tasks_output and result.tasks_output[0].pydantic:
+            parsed = result.tasks_output[0].pydantic.model_dump()
+        else:
+            parsed = parse_task_output_json(result.raw or "")
+            if not parsed:
+                parsed = {"title": "", "description": "", "phases": []}
+
+        update_job_result(job_id, parsed)
+
+        user_id = request_data.get("user_id", "")
+        hobby_slug = request_data.get("hobby_slug", "")
+        if user_id and hobby_slug and parsed.get("phases"):
+            try:
+                ur_id = save_generated_roadmap(user_id, hobby_slug, parsed)
+                if ur_id:
+                    print(f"[Roadmap Generation Job {job_id}] Saved roadmap, user_roadmap_id={ur_id}")
+            except Exception as e:
+                print(f"[Roadmap Generation Job {job_id}] Failed to save roadmap: {e}")
+
+        print(f"[Roadmap Generation Job {job_id}] Job completed successfully")
+
+    except Exception as e:
+        error_details = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"[Roadmap Generation Job {job_id}] FAILED: {error_details}")
+        update_job_error(job_id, str(e))
+
+
+@app.post("/roadmap/generate", response_model=JobResponse)
+async def start_roadmap_generation(request: RoadmapGenerationRequest):
+    """Start a roadmap generation job."""
+    request_data = request.model_dump()
+    user_id = request_data.get("user_id", "")
+
+    job_id = create_job("roadmap_generation", request_data, user_id)
+
+    thread = Thread(target=run_roadmap_generation_job, args=(job_id,))
+    thread.start()
+
+    return JobResponse(job_id=job_id)
+
+
+@app.get("/roadmap/generate/{job_id}")
+async def get_roadmap_generation_status(job_id: str):
+    """Get the status and result of a roadmap generation job."""
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")

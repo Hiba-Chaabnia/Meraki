@@ -139,6 +139,154 @@ def save_local_experience_result(
     ).execute()
 
 
+def save_ai_feedback(
+    session_id: str,
+    feedback: dict[str, Any],
+) -> None:
+    """INSERT AI feedback for a practice session."""
+    if not session_id:
+        return
+    now = datetime.now(timezone.utc).isoformat()
+    get_supabase().table("ai_feedback").upsert(
+        {
+            "session_id": session_id,
+            "observations": feedback.get("observations", []),
+            "growth": feedback.get("growth", []),
+            "suggestions": feedback.get("suggestions", []),
+            "celebration": feedback.get("celebration", ""),
+            "created_at": now,
+        },
+        on_conflict="session_id",
+    ).execute()
+
+
+def save_generated_challenge(
+    user_id: str,
+    hobby_slug: str,
+    challenge_data: dict[str, Any],
+) -> str | None:
+    """Insert a generated challenge and assign it to the user. Returns user_challenge_id."""
+    if not user_id or not hobby_slug:
+        return None
+    sb = get_supabase()
+
+    # Look up hobby_id by slug
+    resp = sb.table("hobbies").select("id").eq("slug", hobby_slug).execute()
+    if not resp.data or len(resp.data) == 0:
+        return None
+    hobby_id = resp.data[0]["id"]
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Insert challenge
+    challenge_row = {
+        "hobby_id": hobby_id,
+        "title": challenge_data.get("title", ""),
+        "description": challenge_data.get("description", ""),
+        "why_this_challenge": challenge_data.get("why_this_challenge", ""),
+        "skills": challenge_data.get("skills", []),
+        "difficulty": challenge_data.get("difficulty", "easy"),
+        "estimated_time": challenge_data.get("estimated_time", ""),
+        "tips": challenge_data.get("tips", []),
+        "what_youll_learn": challenge_data.get("what_youll_learn", []),
+        "created_at": now,
+    }
+    ch_resp = sb.table("challenges").insert(challenge_row).execute()
+    if not ch_resp.data or len(ch_resp.data) == 0:
+        return None
+    challenge_id = ch_resp.data[0]["id"]
+
+    # Assign to user
+    uc_row = {
+        "user_id": user_id,
+        "challenge_id": challenge_id,
+        "status": "active",
+        "started_at": now,
+    }
+    uc_resp = sb.table("user_challenges").insert(uc_row).execute()
+    if not uc_resp.data or len(uc_resp.data) == 0:
+        return None
+    return uc_resp.data[0]["id"]
+
+
+def save_nudge(
+    user_id: str,
+    hobby_slug: str,
+    nudge_data: dict[str, Any],
+) -> None:
+    """INSERT a motivation nudge for a user."""
+    if not user_id:
+        return
+    sb = get_supabase()
+
+    # Look up hobby_id by slug
+    hobby_id = None
+    if hobby_slug:
+        resp = sb.table("hobbies").select("id").eq("slug", hobby_slug).execute()
+        if resp.data and len(resp.data) > 0:
+            hobby_id = resp.data[0]["id"]
+
+    now = datetime.now(timezone.utc).isoformat()
+    sb.table("nudges").insert({
+        "user_id": user_id,
+        "hobby_id": hobby_id,
+        "nudge_type": nudge_data.get("nudge_type", ""),
+        "message": nudge_data.get("message", ""),
+        "suggested_action": nudge_data.get("suggested_action", ""),
+        "action_data": nudge_data.get("action_data", ""),
+        "urgency": nudge_data.get("urgency", "gentle"),
+        "created_at": now,
+    }).execute()
+
+
+def save_generated_roadmap(
+    user_id: str,
+    hobby_slug: str,
+    roadmap_data: dict[str, Any],
+) -> str | None:
+    """Insert a generated roadmap and assign it to the user. Returns user_roadmap_id."""
+    if not user_id or not hobby_slug:
+        return None
+    sb = get_supabase()
+
+    # Look up hobby_id by slug
+    resp = sb.table("hobbies").select("id").eq("slug", hobby_slug).execute()
+    if not resp.data or len(resp.data) == 0:
+        return None
+    hobby_id = resp.data[0]["id"]
+
+    now = datetime.now(timezone.utc).isoformat()
+    phases = roadmap_data.get("phases", [])
+
+    # Insert roadmap
+    roadmap_row = {
+        "hobby_id": hobby_id,
+        "title": roadmap_data.get("title", ""),
+        "description": roadmap_data.get("description", ""),
+        "phases": phases,
+        "total_phases": len(phases),
+        "created_at": now,
+    }
+    r_resp = sb.table("roadmaps").insert(roadmap_row).execute()
+    if not r_resp.data or len(r_resp.data) == 0:
+        return None
+    roadmap_id = r_resp.data[0]["id"]
+
+    # Assign to user
+    ur_row = {
+        "user_id": user_id,
+        "roadmap_id": roadmap_id,
+        "hobby_slug": hobby_slug,
+        "current_phase": 0,
+        "started_at": now,
+        "updated_at": now,
+    }
+    ur_resp = sb.table("user_roadmaps").insert(ur_row).execute()
+    if not ur_resp.data or len(ur_resp.data) == 0:
+        return None
+    return ur_resp.data[0]["id"]
+
+
 def save_hobby_matches(
     user_id: str,
     matches: list[dict[str, Any]],

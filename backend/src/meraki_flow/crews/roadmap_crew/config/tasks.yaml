@@ -1,0 +1,43 @@
+generate_roadmap_task:
+  description: >
+    Design a personalized multi-phase learning roadmap for someone practicing {hobby_name}.
+
+    User context:
+    - Total practice sessions: {session_count}
+    - Average session duration: {avg_duration} minutes
+    - Days active: {days_active}
+    - Previously completed challenges: {completed_challenges}
+    - User goals (from quiz): {user_goals}
+
+    Calibration rules:
+    - Beginner (<5 sessions): Start from fundamentals, create 5-6 phases
+    - Intermediate (5-20 sessions): Skip pure basics, focus on technique, 4-5 phases
+    - Advanced (>20 sessions): Advanced concepts + personal style development, 4 phases
+
+    Each phase should include:
+    - A clear, motivating title
+    - A description of what this phase covers and why it matters
+    - 2-3 concrete goals the learner should achieve
+    - 2-3 suggested activities or exercises
+    - Estimated time commitment per week
+
+    The roadmap should feel like a journey, not a syllabus. Phase titles should be
+    inspiring (e.g., "Finding Your Voice" not "Module 3: Intermediate Techniques").
+
+  expected_output: >
+    Return a JSON object with the following structure:
+    {
+      "title": "Your {hobby_name} Journey",
+      "description": "A 1-2 sentence overview of where this roadmap takes them",
+      "phases": [
+        {
+          "phase_number": 1,
+          "title": "Getting Started",
+          "description": "Build familiarity with basic tools and materials",
+          "goals": ["Learn to set up workspace", "Practice basic strokes"],
+          "suggested_activities": ["Watch a beginner tutorial", "Try 15-min warm-up exercises"],
+          "time_per_week": "2-3 hours"
+        }
+      ]
+    }
+  agent: roadmap_designer

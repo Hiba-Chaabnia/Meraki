@@ -334,7 +334,7 @@ export const questions: QuizQuestion[] = [
   {
     id: 21,
     sectionId: "reflection",
-    text: "What hobby have you always wanted to try?",
+    text: "Any hobby you’ve always wanted to try?",
     type: "text",
     optional: true,
     placeholder: "Pottery, watercolor, guitar, gardening…",

@@ -49,13 +49,25 @@ export default function AuthLayout({
       {/* Image panel (desktop only) */}
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden bg-[var(--primary-medium)]">
         {imageSrc && (
-          <Image
-            src={imageSrc}
-            alt={imageAlt}
-            fill
-            className="object-cover"
-            priority
-          />
+          imageSrc.includes('.mp4') || imageSrc.includes('.webm') ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            >
+              <source src={imageSrc} />
+            </video>
+          ) : (
+            <Image
+              src={imageSrc}
+              alt={imageAlt}
+              fill
+              className="object-cover h-full"
+              priority
+            />
+          )
         )}
       </div>
     </div>

@@ -91,6 +91,7 @@ export default function LocalPage({
 
   useEffect(() => {
     if (!mapsReady || !inputRef.current || autocompleteRef.current) return;
+    if (!window.google?.maps?.places) return;
 
     const ac = new google.maps.places.Autocomplete(inputRef.current, {
       types: ["(cities)"],
@@ -368,13 +369,19 @@ export default function LocalPage({
       </AnimatePresence>
 
       {/* ── Top bar ── */}
-      <div className="w-full max-w-4xl mx-auto px-4 pt-6 pb-2">
+      <div className="w-full max-w-4xl mx-auto px-4 pt-6 pb-2 flex items-center justify-between">
         <Link
           href={`/discover/sampling/${hobbySlug}`}
           className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to sampling
+        </Link>
+        <Link
+          href="/dashboard"
+          className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          Dashboard
         </Link>
       </div>
 

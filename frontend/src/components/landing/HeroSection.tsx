@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import HeroIconPattern from "@/components/HeroIconPattern";
+import HeroIconPattern from "@/components/ui/HeroIconPattern";
 import { fadeUp, stagger } from "./animations";
 
 export default function HeroSection() {

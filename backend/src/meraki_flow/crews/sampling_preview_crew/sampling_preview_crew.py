@@ -49,17 +49,18 @@ class SamplingPreviewCrew:
 
     @after_kickoff
     def log_outputs(self, output):
-        """Log output metadata to Opik after crew execution."""
+        """Log output metadata and scoring to Opik after crew execution."""
         if OPIK_AVAILABLE:
             try:
+                raw = output.raw if hasattr(output, 'raw') else str(output)
+                from meraki_flow.opik_metrics import SamplingCompletenessMetric
+                result = SamplingCompletenessMetric().score(output=raw)
                 opik_context.update_current_trace(
-                    metadata={
-                        "result_type": type(output).__name__,
-                        "crew_completed": "sampling_preview",
-                    }
+                    metadata={"crew_completed": "sampling_preview", "result_type": type(output).__name__},
+                    feedback_scores=[{"name": result.name, "value": result.value, "reason": result.reason}],
                 )
-            except Exception:
-                pass  # Opik tracing not active, skip
+            except Exception as e:
+                print(f"[Opik] sampling_preview scoring failed (non-fatal): {e}")
         return output
 
     @agent

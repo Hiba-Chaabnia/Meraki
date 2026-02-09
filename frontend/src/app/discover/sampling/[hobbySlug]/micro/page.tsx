@@ -233,13 +233,19 @@ export default function MicroPage({
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* Top bar */}
-      <div className="w-full max-w-3xl mx-auto px-4 pt-6">
+      <div className="w-full max-w-3xl mx-auto px-4 pt-6 flex items-center justify-between">
         <Link
           href={`/discover/sampling/${hobbySlug}`}
           className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to sampling options
+        </Link>
+        <Link
+          href="/dashboard"
+          className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          Dashboard
         </Link>
       </div>
 

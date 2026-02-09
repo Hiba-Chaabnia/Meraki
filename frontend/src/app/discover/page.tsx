@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
-import HeroIconPattern from "@/components/HeroIconPattern";
+
+import HeroIconPattern from "@/components/ui/HeroIconPattern";
 import { fadeUp, stagger } from "@/components/landing/animations";
 
 
@@ -60,11 +60,11 @@ export default function DiscoverPage() {
           </motion.div>
         </div>
 
-        {/* Skip link */}
-        <motion.div variants={fadeUp} className="relative z-10">
+        {/* Secondary link */}
+        <motion.div variants={fadeUp} className="relative z-10 flex flex-col items-center gap-3">
           <Link
             href="/dashboard"
-            className="text-sm text-[var(--foreground)]/75 hover:text-[var(--foreground)] transition-colors"
+            className="text-sm text-[var(--foreground)]/80 font-medium hover:text-[var(--foreground)] transition-colors"
           >
             Skip to Dashboard
           </Link>

@@ -17,7 +17,7 @@ export async function signUp(formData: FormData) {
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -27,6 +27,21 @@ export async function signUp(formData: FormData) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Supabase returns a user with empty identities when the email is already registered.
+  // In that case, attempt to sign the user in and route them to the dashboard.
+  if (data.user && data.user.identities?.length === 0) {
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      return { error: "An account with this email already exists. Please log in instead." };
+    }
+
+    redirect("/dashboard");
   }
 
   redirect("/discover");

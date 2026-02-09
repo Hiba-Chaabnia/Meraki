@@ -1,18 +1,32 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ScallopedButton } from "@/components/ui/ScallopedButton";
+import { PlayIcon, ArrowLeftIcon, HomeIcon } from "@/components/ui/Icons";
+import { PathwayCard } from "@/components/discover/sampling/PathwayCard";
+import { useSamplingPreview } from "@/hooks/useSamplingPreview";
 import { getHobby } from "@/lib/hobbyData";
-import {
-  triggerSamplingPreview,
-  pollSamplingPreviewStatus,
-  getSamplingResult,
-  saveSamplingResult,
-  type SamplingPreviewResult,
-} from "@/app/actions/sampling";
+
+import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
+
+/* ─── Themes ─── */
+const THEME_PRIMARY: SectionTheme = {
+  bg: "#EBF2FE",
+  accent: "#5396F4",
+  border: "#BAD5FB",
+  light: "#D6E8FD",
+  textOnAccent: "#ffffff",
+};
+
+const THEME_SECONDARY: SectionTheme = {
+  bg: "#f5f9e0",
+  accent: "#CFE251",
+  border: "#DDEB85",
+  light: "#EBF4B8",
+  textOnAccent: "#292929",
+};
 
 /* ─── Animation variants ─── */
 const stagger = {
@@ -20,101 +34,12 @@ const stagger = {
   show: { transition: { staggerChildren: 0.12 } },
 };
 
+
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
-/* ─── SVG Icons ─── */
-const SparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
-    <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" opacity="0.6" />
-  </svg>
-);
-
-const MapPinIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 21c-4-4-8-7.33-8-11a8 8 0 1116 0c0 3.67-4 7-8 11z" />
-    <path d="M12 10.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" fill="currentColor" />
-  </svg>
-);
-
-const PlayIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M8 5.14v14l11-7-11-7z" />
-  </svg>
-);
-
-const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
-
-const CheckIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12l5 5L20 7" />
-  </svg>
-);
-
-const StarIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg {...props} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-  </svg>
-);
-
-/* ─── Perk row ─── */
-function Perk({ children, color }: { children: React.ReactNode; color: string }) {
-  return (
-    <li className="flex items-start gap-3 text-[15px] text-gray-600 leading-snug">
-      <span
-        className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
-        style={{ backgroundColor: color + "22" }}
-      >
-        <CheckIcon className="w-3 h-3" style={{ color }} />
-      </span>
-      {children}
-    </li>
-  );
-}
-
-/* ─── Detail pill ─── */
-function DetailPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-2 text-sm text-gray-400">
-      <span className="font-medium text-gray-500">{label}</span>
-      <span>{value}</span>
-    </div>
-  );
-}
-
-/* ─── Recommended badge ─── */
-function RecommendedBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 text-xs font-bold tracking-wider uppercase px-3 py-1 rounded-full bg-amber-100 text-amber-700">
-      <StarIcon className="w-3 h-3" />
-      Recommended for you
-    </span>
-  );
-}
-
-/* ─── Module-level caches ───
-   These survive component unmount/remount during client-side navigation.
-   This is the primary guard against re-triggering the crew on back-nav. */
-const resultCache = new Map<string, SamplingPreviewResult>();
-const jobIdCache = new Map<string, string>();
-
-function cacheResult(slug: string, result: SamplingPreviewResult) {
-  resultCache.set(slug, result);
-  try {
-    sessionStorage.setItem(`sampling-preview-${slug}`, JSON.stringify(result));
-  } catch { /* quota exceeded — module cache is still the primary */ }
-}
-
-/* ═══════════════════════════════════════════════════════
-   Main page
-   ═══════════════════════════════════════════════════════ */
 export default function SamplingPage({
   params,
 }: {
@@ -126,216 +51,52 @@ export default function SamplingPage({
   const hobby = getHobby(hobbySlug);
   const base = `/discover/sampling/${hobbySlug}`;
 
-  const backHref = from === "discover" ? "/discover" : "/discover/quiz/results";
-  const backLabel = from === "discover" ? "Back to discover" : "Back to quiz results";
+  const backHref = from === "dashboard" ? "/dashboard" : from === "discover" ? "/discover" : "/discover/quiz/results";
+  const backLabel = from === "dashboard" ? "Back to dashboard" : from === "discover" ? "Back to discover" : "Back to quiz results";
 
-  // Initialize state from module cache — instant on back-nav, no effect needed
-  const [previewResult, setPreviewResult] = useState<SamplingPreviewResult | null>(
-    () => resultCache.get(hobbySlug) ?? null
-  );
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [previewJobId, setPreviewJobId] = useState<string | null>(
-    () => jobIdCache.get(hobbySlug) ?? null
-  );
+  const { previewResult, previewLoading, previewError, previewJobId } = useSamplingPreview(hobbySlug);
 
-  // Fetch sampling preview on mount — skips entirely if module cache has data
-  useEffect(() => {
-    // If module cache already has a result, nothing to do
-    if (resultCache.has(hobbySlug)) return;
-
-    let cancelled = false;
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
-
-    function storeResult(result: SamplingPreviewResult, jobId?: string) {
-      // Always write to caches (even if component is unmounting)
-      cacheResult(hobbySlug, result);
-      if (jobId) jobIdCache.set(hobbySlug, jobId);
-      // Only update React state if component is still mounted
-      if (!cancelled) {
-        setPreviewResult(result);
-        setPreviewLoading(false);
-      }
-    }
-
-    function startPolling(jobId: string) {
-      jobIdCache.set(hobbySlug, jobId);
-      if (!cancelled) setPreviewJobId(jobId);
-      pollTimer = setInterval(async () => {
-        const status = await pollSamplingPreviewStatus(jobId);
-
-        // Write to caches even if unmounting — they survive navigation
-        if ("status" in status && status.status === "completed" && status.result) {
-          if (pollTimer) clearInterval(pollTimer);
-          cacheResult(hobbySlug, status.result);
-          if (jobId) jobIdCache.set(hobbySlug, jobId);
-          saveSamplingResult(hobbySlug, status.result).catch((e) => console.error("[Sampling] DB save failed:", e));
-          if (!cancelled) {
-            setPreviewResult(status.result);
-            setPreviewLoading(false);
-          }
-          return;
-        }
-
-        if (cancelled) return;
-
-        if (!("status" in status)) {
-          if (pollTimer) clearInterval(pollTimer);
-          setPreviewError(status.error);
-          setPreviewLoading(false);
-          return;
-        }
-
-        if (status.status === "failed") {
-          if (pollTimer) clearInterval(pollTimer);
-          setPreviewError(status.error || "Preview generation failed");
-          setPreviewLoading(false);
-        }
-      }, 2000);
-    }
-
-    async function fetchPreview() {
-      setPreviewError(null);
-
-      // 1. Check sessionStorage (sync, secondary cache)
-      try {
-        const stored = sessionStorage.getItem(`sampling-preview-${hobbySlug}`);
-        if (stored) {
-          const data: SamplingPreviewResult = JSON.parse(stored);
-          if (data.recommendation || data.micro_activity || (data.videos && data.videos.length > 0)) {
-            storeResult(data);
-            return;
-          }
-        }
-      } catch { /* parse error — continue to DB */ }
-
-      // Only show loading after all sync checks miss
-      setPreviewLoading(true);
-
-      try {
-        // 2. Check database (survives page refresh / restart)
-        const dbResult = await getSamplingResult(hobbySlug);
-        if (cancelled) return;
-        if (dbResult.data) {
-          storeResult(dbResult.data);
-          return;
-        }
-
-        // 3. Check if there's an existing job still running
-        const existingJobId = jobIdCache.get(hobbySlug)
-          || sessionStorage.getItem(`sampling-job-${hobbySlug}`);
-        if (existingJobId) {
-          const status = await pollSamplingPreviewStatus(existingJobId);
-          if (cancelled) return;
-          if ("status" in status) {
-            if (status.status === "completed" && status.result) {
-              storeResult(status.result, existingJobId);
-              saveSamplingResult(hobbySlug, status.result).catch((e) => console.error("[Sampling] DB save failed:", e));
-              return;
-            } else if (status.status === "pending" || status.status === "running") {
-              startPolling(existingJobId);
-              return;
-            }
-          }
-        }
-
-        // 4. Only trigger a new job if no existing result or job
-        console.log("[Sampling] All caches missed — triggering new crew for", hobbySlug);
-        const { job_id, error } = await triggerSamplingPreview(hobbySlug);
-        if (cancelled) return;
-        if (error || !job_id) {
-          setPreviewError(error || "Failed to start preview");
-          setPreviewLoading(false);
-          return;
-        }
-
-        jobIdCache.set(hobbySlug, job_id);
-        setPreviewJobId(job_id);
-        try { sessionStorage.setItem(`sampling-job-${hobbySlug}`, job_id); } catch {}
-        startPolling(job_id);
-      } catch (e) {
-        if (!cancelled) {
-          setPreviewError(`Failed to fetch preview: ${e}`);
-          setPreviewLoading(false);
-        }
-      }
-    }
-
-    fetchPreview();
-
-    return () => {
-      cancelled = true;
-      if (pollTimer) clearInterval(pollTimer);
-    };
-  }, [hobbySlug]);
-
-  // Determine which path is recommended
   const recommendedPath = previewResult?.recommendation?.primary_path;
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="h-screen w-screen bg-[var(--background)] overflow-y-auto">
       {/* ── Top bar ── */}
-      <div className="w-full max-w-5xl mx-auto px-4 pt-6">
-        <div className="flex items-center justify-between">
+      {/* ── Header Row ── */}
+      <div className="w-full mx-auto px-4 pt-8 mb-8 ">
+        <div className="grid grid-cols-[auto_1fr_auto] items-top gap-4">
           <Link
             href={backHref}
-            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
+            className="p-2 -ml-2 text-[var(--foreground)]/60 hover:text-[var(--foreground)] transition-colors"
+            title={backLabel}
           >
-            <ArrowLeft className="w-4 h-4" />
-            {backLabel}
+            <ArrowLeftIcon className="w-4 h-4" />
+          </Link>
+
+          <div className="text-center">
+            <p className="text-2xl md:text-3xl font-semibold text-[var(--foreground)]">
+              Dip your toes into <em className="font-bold lowercase">{hobby.name}</em>
+            </p>
+            <p className="text-md md:text-lg font-medium text-[var(--foreground)] mt-2">
+              Pick whatever sounds most fun to you. Zero commitment, just exploration.
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard"
+            className="p-2 -mr-2 text-[var(--foreground)]/60 hover:text-[var(--foreground)] transition-colors"
+            title="Dashboard"
+          >
+            <HomeIcon className="w-4 h-4" />
           </Link>
         </div>
       </div>
 
-      {/* ── Banner ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative mt-6 mx-auto max-w-5xl px-4"
-      >
-        <div
-          className="rounded-3xl overflow-hidden px-8 py-12 md:px-14 md:py-16 relative"
-          style={{ backgroundColor: hobby.lightColor }}
-        >
-          <div
-            className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-20"
-            style={{ backgroundColor: hobby.color }}
-          />
-          <div
-            className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full opacity-15"
-            style={{ backgroundColor: hobby.color }}
-          />
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="relative z-10 max-w-2xl"
-          >
-            <p
-              className="text-sm font-bold tracking-widest uppercase mb-3"
-              style={{ color: hobby.color }}
-            >
-              Your match
-            </p>
-            <h1 className="!text-3xl md:!text-5xl mb-4">
-              Let&apos;s Dip Your Toes Into {hobby.name}!
-            </h1>
-            <p className="text-gray-600 text-lg">
-              {previewResult?.recommendation?.encouragement ||
-                "Pick whatever sounds most fun to you. Zero commitment, just exploration!"}
-            </p>
-          </motion.div>
-        </div>
-      </motion.div>
-
       {/* ── Loading/Error State ── */}
       {previewLoading && (
-        <div className="max-w-5xl mx-auto px-4 pt-8">
-          <div className="bg-white rounded-xl border border-gray-100 p-6 flex items-center gap-4">
-            <div className="animate-spin w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full" />
-            <p className="text-gray-500">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="bg-yellow-50 rounded-xl border border-yellow-300 p-2 flex items-center gap-1">
+            <div className="animate-spin w-5 h-5 border-2 border-yellow-300 border-t-yellow-600 rounded-full" />
+            <p className="text-yellow-500 pl-2">
               Personalizing your experience...
             </p>
           </div>
@@ -343,8 +104,8 @@ export default function SamplingPage({
       )}
 
       {previewError && (
-        <div className="max-w-5xl mx-auto px-4 pt-8">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm">
+        <div className="max-w-5xl mx-auto px-4 ">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-2 text-red-800 text-sm ">
             Unable to personalize recommendations. Showing default options.
           </div>
         </div>
@@ -352,21 +113,14 @@ export default function SamplingPage({
 
       {/* ── Pathway cards ── */}
       <motion.div
-        className="max-w-5xl mx-auto px-4 py-12"
+        className="w-full mx-auto px-4 py-12"
         variants={stagger}
         initial="hidden"
         animate="show"
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Card 1 — Watch First */}
           <motion.div variants={fadeUp}>
-            <PathwayCardShell
-              badge="Zero Commitment"
-              badgeColor={hobby.color}
-              icon={
-                <PlayIcon className="w-8 h-8" style={{ color: hobby.color }} />
-              }
-              iconBg={hobby.lightColor}
+            <PathwayCard
               title="Watch First"
               description="Not ready to dive in? See what a real session looks like and get a feel for the vibe."
               perks={[
@@ -374,38 +128,32 @@ export default function SamplingPage({
                 "See what tools and space you'd need",
                 "Get inspired by real creators",
               ]}
-              perkColor={hobby.color}
+              theme={THEME_PRIMARY}
               details={[
-                { label: "Time:", value: "10\u201315 minutes" },
+                { label: "Time:", value: "10\u201315 min" },
                 { label: "Cost:", value: "Free" },
               ]}
               isRecommended={recommendedPath === "watch"}
               button={
-                <Link href={previewJobId ? `${base}/watch?jobId=${previewJobId}` : `${base}/watch`}>
-                  <div className="pointer-events-none">
-                    <ScallopedButton
-                      tabIndex={-1}
-                      bgColor={hobby.color}
-                      scallopSize="sm"
-                      className="w-full"
-                    >
-                      Watch Now
-                    </ScallopedButton>
-                  </div>
+                <Link
+                  href={previewJobId ? `${base}/watch?jobId=${previewJobId}` : `${base}/watch`}
+                  className="w-full py-3 border rounded-xl flex items-center justify-center font-bold tracking-widest text-xs transition-transform hover:scale-[1.02] group"
+                  style={{
+                    backgroundColor: THEME_PRIMARY.light,
+                    color: THEME_PRIMARY.accent,
+                    borderColor: THEME_PRIMARY.accent,
+                  }}
+                >
+                  Watch Now
+                  <PlayIcon className="w-4 h-4 ml-2" />
                 </Link>
               }
             />
           </motion.div>
 
-          {/* Card 2 — Micro-Try */}
+
           <motion.div variants={fadeUp}>
-            <PathwayCardShell
-              badge="Instant Taste"
-              badgeColor="var(--lavender)"
-              icon={
-                <SparkleIcon className="w-8 h-8" style={{ color: "var(--lavender)" }} />
-              }
-              iconBg="#E8E2F7"
+            <PathwayCard
               title="Micro-Try"
               description="Try a tiny activity right now — no prep, no supplies, just 5 minutes and your hands."
               perks={[
@@ -413,38 +161,31 @@ export default function SamplingPage({
                 "No materials or setup required",
                 "Instant sense of what the hobby feels like",
               ]}
-              perkColor="var(--lavender)"
+              theme={THEME_SECONDARY}
               details={[
-                { label: "Time:", value: "5 minutes" },
+                { label: "Time:", value: "5 min" },
                 { label: "Cost:", value: "Free" },
               ]}
               isRecommended={recommendedPath === "micro"}
               button={
-                <Link href={previewJobId ? `${base}/micro?jobId=${previewJobId}` : `${base}/micro`}>
-                  <div className="pointer-events-none">
-                    <ScallopedButton
-                      tabIndex={-1}
-                      bgColor="var(--lavender)"
-                      scallopSize="sm"
-                      className="w-full"
-                    >
-                      Try It Now
-                    </ScallopedButton>
-                  </div>
+                <Link
+                  href={previewJobId ? `${base}/micro?jobId=${previewJobId}` : `${base}/micro`}
+                  className="w-full py-3 border rounded-xl flex items-center justify-center font-bold tracking-widest text-xs transition-transform hover:scale-[1.02] group"
+                  style={{
+                    backgroundColor: THEME_SECONDARY.light,
+                    color: THEME_SECONDARY.accent,
+                    borderColor: THEME_SECONDARY.accent,
+                  }}
+                >
+                  Try It Now
                 </Link>
               }
             />
           </motion.div>
 
-          {/* Card 3 — Find Local */}
+
           <motion.div variants={fadeUp}>
-            <PathwayCardShell
-              badge="Learn With Others"
-              badgeColor="var(--green)"
-              icon={
-                <MapPinIcon className="w-8 h-8" style={{ color: "var(--green)" }} />
-              }
-              iconBg="#D4EFCF"
+            <PathwayCard
               title="Find Something Nearby"
               description="Discover one-time workshops and trial classes near you — meet people, learn together!"
               perks={[
@@ -452,25 +193,25 @@ export default function SamplingPage({
                 "Single sessions only (no long commitments!)",
                 "Reviews from other beginners like you",
               ]}
-              perkColor="var(--green)"
-              note="We'll need your location for this one"
+              theme={THEME_PRIMARY}
+              note="We'll need your location"
               isRecommended={recommendedPath === "local"}
               button={
-                <Link href={`${base}/local`}>
-                  <div className="pointer-events-none">
-                    <ScallopedButton
-                      tabIndex={-1}
-                      bgColor="var(--green)"
-                      scallopSize="sm"
-                      className="w-full"
-                    >
-                      Find Local Spots
-                    </ScallopedButton>
-                  </div>
+                <Link
+                  href={`${base}/local`}
+                  className="w-full py-3 border rounded-xl flex items-center justify-center font-bold tracking-widest text-xs transition-transform hover:scale-[1.02] group"
+                  style={{
+                    backgroundColor: THEME_PRIMARY.light,
+                    color: THEME_PRIMARY.accent,
+                    borderColor: THEME_PRIMARY.accent,
+                  }}
+                >
+                  Find Local Spots
                 </Link>
               }
             />
           </motion.div>
+
         </div>
 
         {/* Recommendation reason */}
@@ -479,9 +220,9 @@ export default function SamplingPage({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mt-8 bg-white rounded-xl border border-gray-100 p-6"
+            className="mt-8 rounded-xl p-6"
           >
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-center text-gray-500">
               <span className="font-medium text-gray-700">Why we recommend this: </span>
               {previewResult.recommendation.reason}
             </p>
@@ -489,90 +230,5 @@ export default function SamplingPage({
         )}
       </motion.div>
     </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════
-   Shared pathway card shell
-   ═══════════════════════════════════════════════════════ */
-function PathwayCardShell({
-  badge,
-  badgeColor,
-  icon,
-  iconBg,
-  title,
-  description,
-  perks,
-  perkColor,
-  details,
-  note,
-  button,
-  isRecommended,
-}: {
-  badge: string;
-  badgeColor: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  title: string;
-  description: string;
-  perks: string[];
-  perkColor: string;
-  details?: { label: string; value: string }[];
-  note?: string;
-  button: React.ReactNode;
-  isRecommended?: boolean;
-}) {
-  return (
-    <motion.div
-      whileHover={{ y: -6 }}
-      transition={{ type: "spring", stiffness: 300, damping: 22 }}
-      className={`bg-white rounded-2xl border shadow-sm hover:shadow-xl transition-shadow h-full flex flex-col ${
-        isRecommended ? "border-amber-300 ring-2 ring-amber-100" : "border-gray-100"
-      }`}
-    >
-      <div className="p-7 md:p-8 flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-5 flex-wrap">
-          <span
-            className="inline-block text-xs font-bold tracking-wider uppercase px-3 py-1 rounded-full"
-            style={{ backgroundColor: badgeColor + "18", color: badgeColor }}
-          >
-            {badge}
-          </span>
-          {isRecommended && <RecommendedBadge />}
-        </div>
-
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
-          style={{ backgroundColor: iconBg }}
-        >
-          {icon}
-        </div>
-
-        <h2 className="!text-xl md:!text-2xl !leading-snug mb-2">{title}</h2>
-        <p className="text-gray-500 text-[15px] leading-relaxed mb-6">
-          {description}
-        </p>
-
-        <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-3">
-          What you&apos;ll get
-        </p>
-        <ul className="space-y-3 mb-6">
-          {perks.map((perk) => (
-            <Perk key={perk} color={perkColor}>{perk}</Perk>
-          ))}
-        </ul>
-
-        <div className="mt-auto space-y-2">
-          {details?.map((d) => (
-            <DetailPill key={d.label} label={d.label} value={d.value} />
-          ))}
-          {note && <p className="text-xs text-gray-400 italic">{note}</p>}
-        </div>
-      </div>
-
-      <div className="px-7 md:px-8 pb-7 md:pb-8 pt-2">
-        {button}
-      </div>
-    </motion.div>
   );
 }

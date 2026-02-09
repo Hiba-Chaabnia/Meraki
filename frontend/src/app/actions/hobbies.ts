@@ -86,3 +86,97 @@ export async function getAllHobbies() {
   if (error) return { error: error.message };
   return { data };
 }
+
+export async function addHobbyDirect(slug: string) {
+  if (!slug || slug.length > 50) return { error: "Invalid slug." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: hobby, error: lookupError } = await supabase
+    .from("hobbies")
+    .select("id")
+    .eq("slug", slug)
+    .single();
+
+  if (lookupError || !hobby) return { error: "Hobby not found." };
+
+  const { data, error } = await supabase
+    .from("user_hobbies")
+    .upsert(
+      {
+        user_id: user.id,
+        hobby_id: hobby.id,
+        status: "active",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,hobby_id" },
+    )
+    .select()
+    .single();
+
+  if (error) return { error: error.message };
+  return { data };
+}
+
+export async function addCustomHobby(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed || trimmed.length > 100) return { error: "Invalid hobby name." };
+
+  const slug = trimmed
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 50);
+
+  if (!slug) return { error: "Invalid hobby name." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  // Check if hobby with this slug already exists
+  const { data: existing } = await supabase
+    .from("hobbies")
+    .select("id")
+    .eq("slug", slug)
+    .single();
+
+  let hobbyId: string;
+
+  if (existing) {
+    hobbyId = existing.id;
+  } else {
+    const { data: created, error: createError } = await supabase
+      .from("hobbies")
+      .insert({ slug, name: trimmed })
+      .select("id")
+      .single();
+
+    if (createError || !created) return { error: createError?.message ?? "Failed to create hobby." };
+    hobbyId = created.id;
+  }
+
+  const { data, error } = await supabase
+    .from("user_hobbies")
+    .upsert(
+      {
+        user_id: user.id,
+        hobby_id: hobbyId,
+        status: "active",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,hobby_id" },
+    )
+    .select()
+    .single();
+
+  if (error) return { error: error.message };
+  return { data, slug };
+}

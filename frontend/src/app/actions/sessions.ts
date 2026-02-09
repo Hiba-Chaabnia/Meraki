@@ -2,6 +2,32 @@
 
 import { createClient } from "@/lib/supabase/server";
 
+export async function uploadSessionImage(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const file = formData.get("file") as File | null;
+  if (!file) return { error: "No file provided" };
+
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("session-images")
+    .upload(path, file, { contentType: file.type, upsert: false });
+
+  if (error) return { error: error.message };
+
+  const { data: urlData } = supabase.storage
+    .from("session-images")
+    .getPublicUrl(path);
+
+  return { url: urlData.publicUrl };
+}
+
 export async function createSession(input: {
   userHobbyId: string;
   userChallengeId?: string | null;
@@ -9,6 +35,7 @@ export async function createSession(input: {
   duration: number;
   mood?: "loved" | "good" | "okay" | "frustrated" | "discouraged" | null;
   notes?: string;
+  imageUrl?: string;
 }) {
   const supabase = await createClient();
   const {
@@ -26,6 +53,7 @@ export async function createSession(input: {
       duration: input.duration,
       mood: input.mood ?? null,
       notes: input.notes ?? "",
+      image_url: input.imageUrl ?? null,
     })
     .select()
     .single();

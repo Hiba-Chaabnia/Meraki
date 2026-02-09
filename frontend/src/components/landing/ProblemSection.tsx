@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, type Variants } from "framer-motion";
-import ProblemCard from "./ProblemCard";
+import ProblemCard from "../ui/landing/problem-section/ProblemCard";
 import SectionBadge from "@/components/ui/SectionBadge";
 import { fadeUp, stagger } from "./animations";
 

@@ -2,15 +2,13 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { useQuiz } from "@/lib/hooks/useQuiz";
-import type { SectionTheme } from "@/components/discover/sectionTheme";
+import type { SectionTheme } from "@/components/discover/quiz/sectionTheme";
 import { FlowerShape } from "@/components/ui/FlowerShape";
-import { ScallopedButton } from "@/components/ui/ScallopedButton";
 import { saveQuizResponses } from "@/app/actions/quiz";
-import { QuizStepper } from "@/components/discover/QuizStepper";
-import { QuizCard } from "@/components/discover/QuizCard";
-import { ChevronLeftIcon, ChevronRightIcon, RotateIcon } from "@/components/discover/QuizIcons";
+import { QuizStepper } from "@/components/discover/quiz/QuizStepper";
+import { QuizCard } from "@/components/discover/quiz/QuizCard";
+import { ChevronLeftIcon, ChevronRightIcon, RotateIcon } from "@/components/discover/quiz/QuizIcons";
 
 /* ─── Layout constants (vw) ─── */
 const VW_PER_Q = 24;
@@ -109,13 +107,16 @@ export default function QuizPage() {
   return (
     <div className="h-[100dvh] overflow-hidden bg-[var(--background)] flex flex-col">
       {/* ── Headline ── */}
-      <div className="pt-6 pb-2 text-center z-10">
-        <h1 className="text-2xl md:text-3xl font-bold text-[var(--foreground)]">
-          Discover Your Creative Persona
-        </h1>
+      <div className="pt-4 pb-2 text-center z-10">
+        <p className="text-xl md:text-2xl font-semibold text-[var(--foreground)]">
+          Find a hobby you’ll actually enjoy — without overthinking it
+        </p>
+        <p className="text-md font-medium text-[var(--foreground)]">
+          Answer a few simple questions about your time, budget, and preferences. No right or wrong answers. Just honest preferences.
+        </p>
       </div>
 
-      {/* ── Stepper ── */}
+      {/* ── Stepper ── */}       
       <QuizStepper
         sections={quiz.sections}
         activeIndex={quiz.activeIndex}
@@ -160,8 +161,6 @@ export default function QuizPage() {
           {quiz.sections.map((section, cardIdx) => (
             <QuizCard
               key={section.id}
-              section={section}
-              sectionIndex={cardIdx}
               questions={quiz.sectionQuestions[cardIdx]}
               answers={quiz.answers}
               isActive={cardIdx === quiz.activeIndex}

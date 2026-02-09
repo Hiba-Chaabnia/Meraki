@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ActiveHobby, Challenge } from "@/lib/dashboardData";
+import { uploadSessionImage } from "@/app/actions/sessions";
 
 interface SessionLoggerModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export interface SessionFormData {
   hobbySlug: string;
   duration: number;
   notes: string;
+  imageUrl?: string;
 }
 
 export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeChallenges }: SessionLoggerModalProps) {
@@ -26,6 +28,10 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
   const [hobbySlug, setHobbySlug] = useState(hobbies[0]?.slug ?? "");
   const [duration, setDuration] = useState(30);
   const [notes, setNotes] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeChallenge = activeChallenges?.find((c) => c.status === "active");
 
@@ -35,10 +41,30 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
     setHobbySlug(hobbies[0]?.slug ?? "");
     setDuration(30);
     setNotes("");
+    setImageFile(null);
+    setImagePreview(null);
+    setSaving(false);
   }, [hobbies]);
 
-  const handleSave = () => {
-    onSave({ type: sessionType, hobbySlug, duration: sessionType === "thought" ? 0 : duration, notes });
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    let imageUrl: string | undefined;
+    if (imageFile) {
+      const fd = new FormData();
+      fd.append("file", imageFile);
+      const res = await uploadSessionImage(fd);
+      if (res.url) imageUrl = res.url;
+    }
+    onSave({ type: sessionType, hobbySlug, duration: sessionType === "thought" ? 0 : duration, notes, imageUrl });
     setPhase("saved");
   };
 
@@ -74,7 +100,8 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="relative bg-white rounded-2xl border-2 shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            style={{ borderColor: selectedHobby?.color ?? "var(--secondary)" }}
           >
             <AnimatePresence mode="wait">
               {phase === "saved" ? (
@@ -149,22 +176,20 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                       <button
                         type="button"
                         onClick={() => setSessionType("practice")}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                          sessionType === "practice"
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${sessionType === "practice"
                             ? "bg-white text-gray-800 shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
-                        }`}
+                          }`}
                       >
                         I practiced
                       </button>
                       <button
                         type="button"
                         onClick={() => setSessionType("thought")}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                          sessionType === "thought"
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${sessionType === "thought"
                             ? "bg-white text-gray-800 shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
-                        }`}
+                          }`}
                       >
                         I thought about it
                       </button>
@@ -188,11 +213,10 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                               key={h.slug}
                               type="button"
                               onClick={() => setHobbySlug(h.slug)}
-                              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                                hobbySlug === h.slug
+                              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${hobbySlug === h.slug
                                   ? "text-white shadow-sm"
                                   : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                              }`}
+                                }`}
                               style={
                                 hobbySlug === h.slug
                                   ? { backgroundColor: h.color }
@@ -258,14 +282,56 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                       />
                     </div>
 
+                    {/* Image upload (practice only) */}
+                    {sessionType === "practice" && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600 mb-1.5 block">
+                          Photo of your practice{" "}
+                          <span className="text-gray-400 font-normal">(optional)</span>
+                        </label>
+                        {imagePreview ? (
+                          <div className="relative w-full h-32 rounded-xl overflow-hidden border border-gray-200">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => { setImageFile(null); setImagePreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs cursor-pointer hover:bg-black/70"
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full py-4 rounded-xl border-2 border-dashed border-gray-200 text-sm text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors cursor-pointer"
+                          >
+                            Tap to add a photo
+                          </button>
+                        )}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </div>
+                    )}
+
                     {/* Save button */}
                     <button
                       onClick={handleSave}
-                      disabled={hobbies.length === 0}
+                      disabled={hobbies.length === 0 || saving}
                       className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ backgroundColor: selectedHobby?.color ?? "var(--secondary)" }}
                     >
-                      {sessionType === "thought" ? "Log Thought" : "Save Session"}
+                      {saving ? "Saving..." : sessionType === "thought" ? "Log Thought" : "Save Session"}
                     </button>
                   </div>
                 </motion.div>

@@ -65,3 +65,52 @@ class LocalExperiencesOutput(BaseModel):
     general_tips: GeneralTipsModel
     search_location: str = ""
     hobby: str = ""
+
+
+# --- Practice Feedback Models ---
+
+class PracticeFeedbackOutput(BaseModel):
+    observations: list[str]
+    growth: list[str]
+    suggestions: list[str]
+    celebration: str
+
+
+# --- Challenge Generation Models ---
+
+class GeneratedChallenge(BaseModel):
+    title: str
+    description: str
+    why_this_challenge: str
+    skills: list[str]
+    difficulty: str
+    estimated_time: str
+    tips: list[str]
+    what_youll_learn: list[str]
+
+
+# --- Motivation Nudge Models ---
+
+class MotivationNudge(BaseModel):
+    nudge_type: str
+    message: str
+    suggested_action: str
+    action_data: str = ""
+    urgency: str = "gentle"
+
+
+# --- Roadmap Models ---
+
+class RoadmapPhase(BaseModel):
+    phase_number: int
+    title: str
+    description: str
+    goals: list[str]
+    suggested_activities: list[str]
+    time_per_week: str
+
+
+class GeneratedRoadmap(BaseModel):
+    title: str
+    description: str
+    phases: list[RoadmapPhase]

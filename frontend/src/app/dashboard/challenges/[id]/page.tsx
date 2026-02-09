@@ -6,12 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SessionLoggerModal } from "@/components/dashboard";
 import type { SessionFormData } from "@/components/dashboard";
 import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
-import { getChallengeById, completeChallenge } from "@/app/actions/challenges";
+import { getChallengeById, completeChallenge, triggerChallengeGeneration, pollChallengeGenStatus } from "@/app/actions/challenges";
 import { getUserHobbies } from "@/app/actions/hobbies";
 import { createSession } from "@/app/actions/sessions";
 import { toChallenge, toActiveHobby } from "@/lib/transformData";
 import { difficultyConfig } from "@/lib/dashboardData";
 import type { Challenge, ActiveHobby } from "@/lib/dashboardData";
+import { checkAndAwardMilestones } from "@/app/actions/milestones";
 
 const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -52,6 +53,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
   const [loggerOpen, setLoggerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [generatingNext, setGeneratingNext] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -84,6 +86,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
   const handleMarkDone = async () => {
     await completeChallenge(id);
     setIsCompleted(true);
+    checkAndAwardMilestones().catch((e) => console.error("[Challenge] Milestone check failed:", e));
   };
 
   const handleLogAndComplete = async (data: SessionFormData) => {
@@ -100,6 +103,7 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
     }
     await completeChallenge(id);
     setIsCompleted(true);
+    checkAndAwardMilestones().catch((e) => console.error("[Challenge] Milestone check failed:", e));
   };
 
   return (
@@ -196,9 +200,31 @@ export default function ChallengeDetailPage({ params }: { params: Promise<{ id: 
               <SparklesIcon className="w-10 h-10 mx-auto mb-3" style={{ color: challenge.hobbyColor }} />
               <h2 className="!text-xl md:!text-2xl mb-2">Challenge Complete!</h2>
               <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">Great work on finishing this challenge. Your growth is showing!</p>
-              <Link href="/dashboard/challenges" className="inline-block px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg" style={{ backgroundColor: challenge.hobbyColor }}>
-                See More Challenges
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={async () => {
+                    if (generatingNext) return;
+                    setGeneratingNext(true);
+                    const { job_id } = await triggerChallengeGeneration(challenge.hobbySlug);
+                    if (!job_id) { setGeneratingNext(false); return; }
+                    const poll = setInterval(async () => {
+                      const s = await pollChallengeGenStatus(job_id);
+                      if (s.status === "completed" || s.status === "failed") {
+                        clearInterval(poll);
+                        setGeneratingNext(false);
+                      }
+                    }, 2500);
+                  }}
+                  disabled={generatingNext}
+                  className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
+                  style={{ backgroundColor: challenge.hobbyColor }}
+                >
+                  {generatingNext ? "Generating..." : "Generate Next Challenge"}
+                </button>
+                <Link href="/dashboard/challenges" className="px-6 py-2.5 rounded-xl text-sm font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">
+                  See All Challenges
+                </Link>
+              </div>
             </motion.div>
           ) : (
             <motion.div key="actions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row gap-3">

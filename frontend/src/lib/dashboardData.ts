@@ -50,6 +50,7 @@ export interface PracticeSession {
   mood: Mood;
   notes: string;
   challengeId: string | null;
+  imageUrl: string | null;
 }
 
 /* ─── Challenges ─── */
@@ -95,6 +96,41 @@ export interface Milestone {
   earned: boolean;
   earnedDate: string | null;
   icon: string;
+}
+
+/* ─── Roadmap ─── */
+export interface RoadmapPhase {
+  phase_number: number;
+  title: string;
+  description: string;
+  goals: string[];
+  suggested_activities: string[];
+  time_per_week: string;
+}
+
+export interface Roadmap {
+  id: string;
+  hobbySlug: string;
+  hobbyName: string;
+  hobbyColor: string;
+  title: string;
+  description: string;
+  phases: RoadmapPhase[];
+  currentPhase: number;
+  totalPhases: number;
+  userRoadmapId: string;
+}
+
+/* ─── Activity Timeline ─── */
+export interface ActivityItem {
+  id: string;
+  type: "session" | "challenge";
+  title: string;
+  subtitle: string;
+  date: string;
+  color: string;
+  icon: string;
+  href: string;
 }
 
 /* ─── Greeting based on time of day ─── */
