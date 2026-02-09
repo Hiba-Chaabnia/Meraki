@@ -7,7 +7,9 @@ import { PageSkeleton } from "@/components/ui/LoadingSkeleton";
 import { useUser } from "@/lib/hooks/useUser";
 import { useDashboardHome } from "@/lib/hooks/useDashboardHome";
 import { useRoadmapGeneration } from "@/lib/hooks/useRoadmapGeneration";
+import { useChallengeGeneration } from "@/lib/hooks/useChallengeGeneration";
 import { deriveNudge } from "@/lib/nudge";
+import { firstName } from "@/lib/displayName";
 import { useChallengeActions } from "@/lib/hooks/useChallengeActions";
 import { updateHobbyStatus } from "@/app/actions/hobbies";
 import { createSession } from "@/app/actions/sessions";
@@ -28,7 +30,6 @@ export default function DashboardPage() {
     rawChallenges,
     fetchData,
     addLoggedSession,
-    toggleGoal,
   } = useDashboardHome();
 
   const {
@@ -36,6 +37,12 @@ export default function DashboardPage() {
     generatingSlugs,
     errors: roadmapErrors,
   } = useRoadmapGeneration(fetchData);
+
+  const {
+    generate: generateChallenge,
+    generatingSlugs: generatingChallengeSlugs,
+    errors: challengeErrors,
+  } = useChallengeGeneration(fetchData);
 
   /* Derived, not fetched — see lib/nudge.ts. Nothing to poll, nothing to rate
      limit, and it lands with the first paint rather than a few seconds after. */
@@ -53,6 +60,8 @@ export default function DashboardPage() {
   const [loggerInitialDuration, setLoggerInitialDuration] = useState<number | undefined>();
   const [addHobbyOpen, setAddHobbyOpen] = useState(false);
   const [resumingHobbyId, setResumingHobbyId] = useState<string | null>(null);
+  const [pausingHobbyId, setPausingHobbyId] = useState<string | null>(null);
+  const [resumeErrors, setResumeErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchData();
@@ -60,8 +69,7 @@ export default function DashboardPage() {
 
   if (isLoading) return <PageSkeleton />;
 
-  const firstName =
-    (profile?.full_name || user?.email?.split("@")[0] || "there").split(" ")[0];
+  const greetingName = firstName(user, profile);
 
   /* One opener. The focus timer passes both, so a finished session arrives at
      the modal with nothing left to fill in. */
@@ -112,11 +120,37 @@ export default function DashboardPage() {
     fetchData().catch((e) => console.error("[Dashboard] Refetch failed:", e));
   };
 
+  /* Reached from the cap popover, which names the hobbies so this never has to
+     ask which one. No confirm step: pausing keeps everything and the card grows
+     a Resume button the moment it lands. */
+  const handlePause = async (userHobbyId: string) => {
+    if (pausingHobbyId) return;
+    setPausingHobbyId(userHobbyId);
+    const res = await updateHobbyStatus(userHobbyId, "paused");
+    if (res.error) console.error("[Dashboard] Failed to pause hobby:", res.error);
+    await fetchData();
+    setPausingHobbyId(null);
+  };
+
+  /* Resuming is the one status change the server can refuse: it counts against
+     the active-hobby cap. That refusal used to go to the console only, so the
+     button said "Resuming…", came back, and nothing had happened. */
   const handleResume = async (userHobbyId: string) => {
     if (resumingHobbyId) return;
     setResumingHobbyId(userHobbyId);
+    setResumeErrors((prev) => {
+      if (!prev[userHobbyId]) return prev;
+      const next = { ...prev };
+      delete next[userHobbyId];
+      return next;
+    });
+
     const res = await updateHobbyStatus(userHobbyId, "active");
-    if (res.error) console.error("[Dashboard] Failed to resume hobby:", res.error);
+    if (res.error) {
+      console.error("[Dashboard] Failed to resume hobby:", res.error);
+      setResumeErrors((prev) => ({ ...prev, [userHobbyId]: res.error! }));
+    }
+
     await fetchData();
     setResumingHobbyId(null);
   };
@@ -155,7 +189,7 @@ export default function DashboardPage() {
 
       <DashboardHome
         variant={variant}
-        firstName={firstName}
+        firstName={greetingName}
         streak={streak}
         hobbies={hobbies}
         week={week}
@@ -164,11 +198,16 @@ export default function DashboardPage() {
         resumingHobbyId={resumingHobbyId}
         generatingSlugs={generatingSlugs}
         roadmapErrors={roadmapErrors}
+        generatingChallengeSlugs={generatingChallengeSlugs}
+        challengeErrors={challengeErrors}
+        onGenerateChallenge={generateChallenge}
         onLog={openLogger}
         onAddHobby={() => setAddHobbyOpen(true)}
         onResume={handleResume}
+        onPause={handlePause}
+        pausingHobbyId={pausingHobbyId}
+        resumeErrors={resumeErrors}
         onGenerateRoadmap={generateRoadmap}
-        onToggleGoal={toggleGoal}
         onTimerComplete={(slug, minutes) => openLogger(slug, minutes)}
         onOpenChallenge={(id) => {
           const c = rawChallenges.find((x) => x.id === id);

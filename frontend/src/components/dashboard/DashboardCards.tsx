@@ -70,10 +70,20 @@ function clampLines(lines: number, cssVar: string) {
 interface ActiveChallengeCardProps {
   /** Every live challenge. One shows at a time; the stepper moves between them. */
   challenges: DashboardChallenge[];
+  /** Hobbies with no live challenge, as extra steps offering to build one.
+   *  They sort after every real challenge — what you have comes before what you
+   *  could have. */
+  offers?: ChallengeOffer[];
   /** Tuning seam for the preview harness. Production leaves this alone. */
   wallpaper?: Wallpaper;
   /** Opens the challenge. Omitted leaves Continue inert (previews). */
   onOpen?: (challengeId: string) => void;
+  /** Slugs with a challenge build in flight. */
+  generatingSlugs?: Set<string>;
+  /** Slug -> why the last build failed. */
+  errors?: Record<string, string>;
+  /** Build a challenge. Omitted leaves the offer steps out entirely. */
+  onGenerate?: (hobbySlug: string) => void;
 }
 
 /**
@@ -87,8 +97,13 @@ function titleCase(text: string): string {
   return text.replace(/(^|\s)(\S)/g, (_, lead: string, char: string) => lead + char.toUpperCase());
 }
 
+interface StepperItem {
+  key: string;
+  label: string;
+}
+
 interface ChallengeStepperProps {
-  challenges: DashboardChallenge[];
+  items: StepperItem[];
   activeIndex: number;
   onSelect: (idx: number) => void;
 }
@@ -103,17 +118,17 @@ interface ChallengeStepperProps {
  * auto-moves for more than five seconds owes the user a pause control under
  * WCAG 2.2.2. Letting them click earns none of that debt.
  */
-function ChallengeStepper({ challenges, activeIndex, onSelect }: ChallengeStepperProps) {
+function ChallengeStepper({ items, activeIndex, onSelect }: ChallengeStepperProps) {
   return (
     <div className="flex items-center justify-center gap-1.5">
-      {challenges.map((c, idx) => {
+      {items.map((item, idx) => {
         const isActive = idx === activeIndex;
         return (
           <button
-            key={c.id}
+            key={item.key}
             type="button"
             onClick={() => onSelect(idx)}
-            aria-label={`Challenge ${idx + 1} of ${challenges.length}: ${c.title}`}
+            aria-label={`${idx + 1} of ${items.length}: ${item.label}`}
             aria-current={isActive ? "true" : undefined}
             className="cursor-pointer outline-none transition-transform duration-300 hover:scale-110 active:scale-95"
           >
@@ -123,7 +138,7 @@ function ChallengeStepper({ challenges, activeIndex, onSelect }: ChallengeSteppe
             <FlowerShape
               size={isActive ? 16 : 12}
               color={isActive ? "var(--background)" : "rgba(255,255,255,0.4)"}
-              gradientId={`challenge-flower-${c.id}`}
+              gradientId={`challenge-flower-${item.key}`}
             />
           </button>
         );
@@ -132,38 +147,81 @@ function ChallengeStepper({ challenges, activeIndex, onSelect }: ChallengeSteppe
   );
 }
 
+/** An active hobby with a roadmap but no live challenge — a step that offers one. */
+export interface ChallengeOffer {
+  userHobbyId: string;
+  slug: string;
+  name: string;
+}
+
 /**
- * The focal card, carrying the immersive-panel treatment from the landing hero
- * and `/discover` (§5.1 archetype A): a blue panel under the hobby icon
- * wallpaper, with the lime CTA on top — the "blue is surface, lime is action"
- * pairing from §2.3. It keeps the card radius rather than the scalloped edge
- * those pages use; the scallop belongs to full-bleed panels, not to one card in
- * a column of them.
+ * One step of the focus slot: a challenge you have, or one you could build.
  *
- * The wallpaper is scaled down rather than copied — see `CHALLENGE_WALLPAPER`.
- * Its pitch is measured from the card's own box because the shared pattern
- * otherwise sizes its grid from the *window*, which would both cram a
- * 14-column field in here and change density at every breakpoint.
- *
- * One action only. A "Swap" button used to sit beside Continue, regenerating the
- * challenge from the AI; it was a 90-second wait triggered from the home screen,
- * competing with Continue on the page's focal card. Regenerating still lives on
- * the hobby page, which is where a decision that slow belongs.
+ * Both are the same panel because they are the same slot. Splitting them into
+ * two components meant generating a challenge for one hobby hid the offer for
+ * every other — the slot flipped to `ActiveChallengeCard` and the two hobbies
+ * still without one had no route from the dashboard at all.
  */
+type Slot =
+  | { kind: "challenge"; key: string; label: string; challenge: DashboardChallenge }
+  | { kind: "offer"; key: string; label: string; offer: ChallengeOffer };
+
 export function ActiveChallengeCard({
   challenges,
+  offers = [],
   wallpaper = CHALLENGE_WALLPAPER,
   onOpen,
+  generatingSlugs,
+  errors,
+  onGenerate,
 }: ActiveChallengeCardProps) {
   const [index, setIndex] = useState(0);
+  /* The hobby a build was just started for. Generating reorders the slots
+     underneath you — the new challenge moves to the front and every offer
+     shifts down — so holding a fixed index left you looking at a *different*
+     hobby's offer and concluding nothing had been generated. */
+  const [pendingSlug, setPendingSlug] = useState<string | null>(null);
 
-  if (challenges.length === 0) return null;
+  /* Challenges first, offers after: the stepper reads as "here is what you are
+     on", then "here is what else you could start". */
+  const slots: Slot[] = [
+    ...challenges.map(
+      (c): Slot => ({ kind: "challenge", key: c.id, label: c.title, challenge: c }),
+    ),
+    ...(onGenerate
+      ? offers.map(
+          (o): Slot => ({
+            kind: "offer",
+            key: o.userHobbyId,
+            label: o.name + " \u2014 no challenge yet",
+            offer: o,
+          }),
+        )
+      : []),
+  ];
+
+  if (slots.length === 0) return null;
+
+  /* Follow the build to wherever it landed, then fall back to the chosen step.
+     Derived rather than an effect: the slot the user should be looking at is a
+     function of the list they were handed, not a correction applied after a
+     render that already showed the wrong one. */
+  const landedIndex = pendingSlug
+    ? slots.findIndex((s) => s.kind === "challenge" && s.challenge.hobbySlug === pendingSlug)
+    : -1;
 
   /* Clamped on the way out, not corrected in an effect: a poll that retires a
      challenge can shrink the list underneath a stale index. */
-  const activeIndex = Math.min(index, challenges.length - 1);
-  const challenge = challenges[activeIndex];
-  const multiple = challenges.length > 1;
+  const activeIndex = landedIndex >= 0 ? landedIndex : Math.min(index, slots.length - 1);
+  const slot = slots[activeIndex];
+  const multiple = slots.length > 1;
+
+  const hobbyName = slot.kind === "challenge" ? slot.challenge.hobbyName : slot.offer.name;
+  const generating = slot.kind === "offer" && Boolean(generatingSlugs?.has(slot.offer.slug));
+  const error = slot.kind === "offer" ? errors?.[slot.offer.slug] : undefined;
+
+  const openChallenge =
+    slot.kind === "challenge" && onOpen ? () => onOpen(slot.challenge.id) : undefined;
 
   return (
     <div>
@@ -180,33 +238,34 @@ export function ActiveChallengeCard({
         />
 
         {/* The body opens the challenge, matching every other challenge card in
-            the app — those are clickable in full, and this being inert except
+            the app - those are clickable in full, and this being inert except
             for its small Continue button made the page's focal object the one
             thing you could not click. Deliberately not the whole panel: the
-            stepper below switches between challenges and must not open one. */}
+            stepper below switches between slots and must not open one. An offer
+            step is not clickable through: its only action is its button. */}
         <motion.div
-          key={challenge.id}
+          key={slot.key}
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          onClick={onOpen ? () => onOpen(challenge.id) : undefined}
-          role={onOpen ? "button" : undefined}
-          tabIndex={onOpen ? 0 : undefined}
+          onClick={openChallenge}
+          role={openChallenge ? "button" : undefined}
+          tabIndex={openChallenge ? 0 : undefined}
           onKeyDown={
-            onOpen
+            openChallenge
               ? (e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    onOpen(challenge.id);
+                    openChallenge();
                   }
                 }
               : undefined
           }
-          className={`relative z-10 ${onOpen ? "cursor-pointer" : ""}`}
+          className={`relative z-10 ${openChallenge ? "cursor-pointer" : ""}`}
         >
           <div className="mb-2.5 flex items-center justify-between gap-3">
             {/* The landing header's outline button, borrowed: cream border and
-                text on nothing. Not the hobby's accent — on a blue panel a blue
+                text on nothing. Not the hobby's accent - on a blue panel a blue
                 accent disappears, and conditioning the chip on the theme would
                 leave two hobbies looking like two different components. The
                 hobby's colour is carried by its flower in the stepper below,
@@ -215,17 +274,18 @@ export function ActiveChallengeCard({
               className="min-w-0 truncate rounded-full border border-[var(--background)] px-2 py-1 font-medium text-[var(--background)]"
               style={{ fontSize: `var(--challenge-chip-size, ${CHIP_SIZE})` }}
             >
-              {titleCase(challenge.hobbyName)}
+              {titleCase(hobbyName)}
             </span>
-            {/* Naming the ask up front is the §8 "shrink the ask" move — the time
-                was already fetched and thrown away before now. */}
-            {challenge.estimatedTime && (
+            {/* Naming the ask up front is the section 8 "shrink the ask" move -
+                the time was already fetched and thrown away before now. An offer
+                has no time to name: the challenge does not exist yet. */}
+            {slot.kind === "challenge" && slot.challenge.estimatedTime && (
               <span
                 className="flex flex-shrink-0 items-center gap-1 font-medium text-white/80"
                 style={{ fontSize: `var(--challenge-time-size, ${TIME_SIZE})` }}
               >
                 <ClockIcon className="h-3 w-3" />
-                {challenge.estimatedTime}
+                {slot.challenge.estimatedTime}
               </span>
             )}
           </div>
@@ -233,54 +293,91 @@ export function ActiveChallengeCard({
           <p
             className="break-words font-bold leading-[1.35]"
             style={{
-              ...clampLines(TITLE_LINES, "--challenge-title-lines"),
+              ...(slot.kind === "challenge"
+                ? clampLines(TITLE_LINES, "--challenge-title-lines")
+                : {}),
               fontSize: TITLE_FS,
             }}
           >
-            {challenge.title}
+            {slot.kind === "challenge" ? slot.challenge.title : "No challenge on the go"}
           </p>
-          {/* Held at its full clamp height while there is more than one
-              challenge, so stepping through does not bounce the flowers up and
-              down under the cursor that is clicking them. Skipped when there is
-              no description — a floor under nothing is just a void. */}
+
+          {/* Held at its full clamp height while there is more than one slot, so
+              stepping through does not bounce the flowers up and down under the
+              cursor that is clicking them. */}
           <p
             className="mt-[7px] break-words leading-[1.5] text-white/80"
             style={{
-              ...clampLines(DESC_LINES, "--challenge-desc-lines"),
+              ...(slot.kind === "challenge"
+                ? clampLines(DESC_LINES, "--challenge-desc-lines")
+                : {}),
               fontSize: DESC_FS,
-              ...(multiple && challenge.description
+              ...(multiple
                 ? {
                     minHeight: `calc(var(--challenge-desc-lines, ${DESC_LINES}) * ${DESC_LEADING} * ${DESC_FS})`,
                   }
                 : {}),
             }}
           >
-            {challenge.description}
+            {slot.kind === "challenge" ? (
+              slot.challenge.description
+            ) : (
+              <>
+                Want <em>something small to try</em>? One prompt, built around where you are on
+                your path.
+              </>
+            )}
           </p>
-
         </motion.div>
 
-        {/* One bottom row: stepper centred in the card, Continue right, both
+        {/* One bottom row: stepper centred in the card, the action right, both
             sitting on the same baseline. It lives outside the keyed body
             because the stepper must not fade out and back in under the cursor
-            that is clicking it — and Continue has nothing to animate. */}
+            that is clicking it - and the button has nothing to animate. */}
         <div className="relative z-10 mt-[13px] grid grid-cols-[1fr_auto_1fr] items-end">
           <span aria-hidden />
           {multiple ? (
             <ChallengeStepper
-              challenges={challenges}
+              items={slots}
               activeIndex={activeIndex}
-              onSelect={setIndex}
+              onSelect={(idx) => {
+                setPendingSlug(null);
+                setIndex(idx);
+              }}
             />
           ) : (
             <span aria-hidden />
           )}
           <div className="flex justify-end">
-            <Button onClick={onOpen ? () => onOpen(challenge.id) : undefined} size="sm" variant="secondary">
-              Continue
-            </Button>
+            {slot.kind === "challenge" ? (
+              <Button onClick={openChallenge} size="sm" variant="secondary">
+                Continue
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={generating}
+                onClick={
+                  onGenerate
+                    ? () => {
+                        setPendingSlug(slot.offer.slug);
+                        onGenerate(slot.offer.slug);
+                      }
+                    : undefined
+                }
+              >
+                {generating ? "Building\u2026" : "Generate a challenge"}
+              </Button>
+            )}
           </div>
         </div>
+
+        {error && (
+          <p className="relative z-10 mt-2.5 rounded-xl bg-[var(--background)] p-2 text-[11.5px] leading-relaxed text-yellow-800">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

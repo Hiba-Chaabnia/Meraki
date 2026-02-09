@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Map as MapIcon } from "lucide-react";
@@ -43,7 +43,7 @@ const CARD_TITLE = "min-w-0 flex-1 truncate text-base font-bold";
  * beside it, which inverts what the card is for — the name identifies it, the
  * button acts on it.
  */
-const COMPACT_ACTION = { paddingInline: 12, paddingBlock: 6, fontSize: "12.5px" } as const;
+export const COMPACT_ACTION = { paddingInline: 12, paddingBlock: 6, fontSize: "12.5px" } as const;
 
 /**
  * Volume, to sit opposite recency in the footer.
@@ -96,17 +96,25 @@ interface ChecklistProps {
   theme: SectionTheme;
   /** Paused register — the box takes the theme's own fill instead of white. */
   muted?: boolean;
-  onToggle?: (goalKey: string) => void;
+  /** Where a row goes. Omitted renders the list inert (paused cards, previews). */
+  href?: string;
 }
 
 /**
  * The mockup's mini checklist, backed by `user_roadmaps.completed_goals`
  * (migration 004): ticked items strike through, the rest stay open circles.
  *
- * Each row is a real button sitting above the card's stretched link, so
- * ticking an item never navigates.
+ * **A read-out, not a control.** Ticking here used to write straight through,
+ * which put the one gesture that now advances a phase on a card with none of
+ * the context for it — no phase title, no progress, no sight of what comes
+ * next, and three goals of a five-goal phase on screen. Emptying a checklist
+ * you cannot see the end of would advance the roadmap by surprise.
+ *
+ * So a row goes to the roadmap instead, where the same tick is made in front of
+ * the phase it completes. Each is a link above the card's stretched one, so it
+ * beats the card's own destination rather than being swallowed by it.
  */
-function Checklist({ goals, theme, muted = false, onToggle }: ChecklistProps) {
+function Checklist({ goals, theme, muted = false, href }: ChecklistProps) {
   if (goals.length === 0) return null;
 
   return (
@@ -124,17 +132,13 @@ function Checklist({ goals, theme, muted = false, onToggle }: ChecklistProps) {
       }}
     >
       <ul className="flex flex-col gap-1.5">
-        {goals.map((goal) => (
-          <li key={goal.key}>
-            <button
-              type="button"
-              disabled={!onToggle}
-              aria-pressed={goal.done}
-              onClick={() => onToggle?.(goal.key)}
-              className={`relative z-10 flex w-full items-start gap-2 text-left ${
-                onToggle ? "cursor-pointer active:scale-95" : "cursor-default"
-              }`}
-            >
+        {goals.map((goal) => {
+          const rowClass = `relative z-10 flex w-full items-start gap-2 text-left no-underline ${
+            href ? "cursor-pointer" : "cursor-default"
+          }`;
+
+          const row = (
+            <>
               {/* Ticked and open state are the same circle at the same size, so
                   the list does not shift when an item is checked. */}
               {goal.done ? (
@@ -163,9 +167,21 @@ function Checklist({ goals, theme, muted = false, onToggle }: ChecklistProps) {
               >
                 {goal.text}
               </span>
-            </button>
-          </li>
-        ))}
+            </>
+          );
+
+          return (
+            <li key={goal.key}>
+              {href ? (
+                <Link href={href} className={rowClass}>
+                  {row}
+                </Link>
+              ) : (
+                <div className={rowClass}>{row}</div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -334,7 +350,6 @@ interface HobbyCardProps {
   hobby: DashboardHobby;
   index?: number;
   onLog: (slug: string) => void;
-  onToggleGoal?: (userRoadmapId: string, goalKey: string) => void;
 }
 
 /**
@@ -355,19 +370,10 @@ interface HobbyCardProps {
  * system. What to do today is named by the greeting and the challenge card,
  * which say it in words.
  */
-export function HobbyCard({
-  hobby,
-  index = 0,
-  onLog,
-  onToggleGoal,
-}: HobbyCardProps) {
+export function HobbyCard({ hobby, index = 0, onLog }: HobbyCardProps) {
   const theme = themeFor(hobby.theme);
   const goals = hobby.stageGoals;
-
-  const toggle =
-    onToggleGoal && hobby.userRoadmapId
-      ? (goalKey: string) => onToggleGoal(hobby.userRoadmapId, goalKey)
-      : undefined;
+  const roadmapHref = `/dashboard/hobby/${hobby.slug}#roadmap`;
 
   /* Button.variant "primary" is --primary, "secondary" is --secondary, and
      the lime one already pairs itself with dark text — the same problem
@@ -430,14 +436,24 @@ export function HobbyCard({
           </p>
         )}
 
-        <StageBar
-          stage={hobby.stage}
-          stageCount={hobby.stageCount}
-          fill={theme.accent}
-          track={theme.border}
-        />
+        {/* The stage bar and the checklist both go to the roadmap; everything
+            else on the card falls through to the stretched link and opens the
+            hobby page at the top. Both are about the phase you are on, so both
+            lead to where that phase is managed. */}
+        <Link
+          href={roadmapHref}
+          aria-label={`Open the roadmap for ${hobby.name}`}
+          className="relative z-10 block"
+        >
+          <StageBar
+            stage={hobby.stage}
+            stageCount={hobby.stageCount}
+            fill={theme.accent}
+            track={theme.border}
+          />
+        </Link>
 
-        <Checklist goals={goals} theme={theme} onToggle={toggle} />
+        <Checklist goals={goals} theme={theme} href={roadmapHref} />
       </div>
 
       {/* ROW 3 — pure history: how recently, and how much. Everything above it
@@ -548,6 +564,14 @@ interface PausedHobbyCardProps {
   meta: string;
   index?: number;
   resuming?: boolean;
+  /** Set while the cap leaves no room: disables Resume and says why. */
+  blockedReason?: string;
+  /** Why the last resume was refused, for anything the cap did not catch. */
+  error?: string;
+  /** Replaces the built-in Resume button. The dashboard passes a cap-aware one
+   *  that opens the shared notice; omit it to get the plain button, which is
+   *  what previews and any other caller want. */
+  resumeAction?: ReactNode;
   onResume: (userHobbyId: string) => void;
 }
 
@@ -564,6 +588,9 @@ export function PausedHobbyCard({
   meta,
   index = 0,
   resuming = false,
+  blockedReason,
+  error,
+  resumeAction,
   onResume,
 }: PausedHobbyCardProps) {
   const goals = hobby.stageGoals;
@@ -572,11 +599,14 @@ export function PausedHobbyCard({
 
   // Solid like every other card's action, but in the neutral accent: colour
   // marks a hobby as running.
-  const resumeButton = (
+  /* Genuinely disabled at the cap rather than clickable-and-refused: the card
+     has room to say why without being asked, so the click would only fire a
+     request the server is already known to reject. */
+  const resumeButton = resumeAction ?? (
     <Button
       variant="primary"
       size="sm"
-      disabled={resuming}
+      disabled={resuming || Boolean(blockedReason)}
       onClick={() => onResume(hobby.userHobbyId)}
       className="relative z-10 flex-shrink-0"
       style={{ ...COMPACT_ACTION, backgroundColor: theme.accent, color: theme.textOnAccent }}
@@ -648,6 +678,14 @@ export function PausedHobbyCard({
           footer off from the body back when the paused card was the only one
           that had a footer; now all three do, and only this one being divided
           read as an accident. */}
+      {/* Above the footer, inside the card's own stacking context so the
+          full-card link does not sit on top of it. */}
+      {(blockedReason ?? error) && (
+        <p className="relative z-10 rounded-xl border border-yellow-300 bg-yellow-50 p-2 text-[12px] leading-relaxed text-yellow-800">
+          {blockedReason ?? error}
+        </p>
+      )}
+
       <div className="flex items-center justify-between gap-3">
         <TimeMeta>{meta}</TimeMeta>
         <SessionTally count={hobby.totalSessions} />

@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
+import { CAP_MESSAGE, MAX_ACTIVE_HOBBIES } from "@/lib/hobbyLimits";
+import { useDismissable } from "@/lib/hooks/useDismissable";
+import { THEME_NEUTRAL } from "@/lib/sectionTheme";
 import { FlowerShape } from "@/components/ui/FlowerShape";
-import { HobbyCard, NoRoadmapHobbyCard, PausedHobbyCard } from "./HobbyCard";
+import { HobbyCard, NoRoadmapHobbyCard, PausedHobbyCard, COMPACT_ACTION } from "./HobbyCard";
 import { PracticeWeek } from "./PracticeWeek";
 import { FocusTimerCard } from "./FocusTimerCard";
 import { ActiveChallengeCard, RetakeQuizCard } from "./DashboardCards";
@@ -37,13 +40,24 @@ export interface DashboardHomeProps {
   generatingSlugs?: Set<string>;
   /** Slug → message for roadmap builds that failed. */
   roadmapErrors?: Record<string, string>;
+  /** Hobbies with a challenge build in flight. */
+  generatingChallengeSlugs?: Set<string>;
+  /** Slug → message for challenge builds that failed. */
+  challengeErrors?: Record<string, string>;
+  /** Build a challenge for one hobby. Omitted hides the offer (previews). */
+  onGenerateChallenge?: (hobbySlug: string) => void;
   /** Called with no slug for the header button: the modal then asks which hobby. */
   onLog: (slug?: string) => void;
   onAddHobby: () => void;
   onResume: (userHobbyId: string) => void;
+  /** Shelve a running hobby. Omitted in read-only previews, which hides the
+   *  pause list inside the cap popover. */
+  onPause?: (userHobbyId: string) => void;
+  /** The hobby with a pause in flight, if any. */
+  pausingHobbyId?: string | null;
+  /** userHobbyId → why a resume was refused. The cap is the only reason. */
+  resumeErrors?: Record<string, string>;
   onGenerateRoadmap: (slug: string) => void;
-  /** Tick/untick a roadmap checklist item. Omitted in read-only previews. */
-  onToggleGoal?: (userRoadmapId: string, goalKey: string) => void;
   /** Fired when the focus timer runs out. Omitting it hides the timer card. */
   onTimerComplete?: (hobbySlug: string, minutes: number) => void;
   /** The motivation line, when there is one — it replaces the greeting's
@@ -155,6 +169,167 @@ export function DashboardHome(props: DashboardHomeProps) {
 type HobbyFilter = "active" | "paused";
 
 /**
+ * The cap, explained where it is met, with the way out attached.
+ *
+ * Shared by the two controls the cap can refuse — "+ Add hobby" and a paused
+ * card's Resume. The message says "pause one", so the list is what makes that a
+ * thing you can do here rather than an instruction to go elsewhere; it names
+ * the hobbies because "which one" is the only question left.
+ */
+function CapNotice({
+  active,
+  pausingHobbyId,
+  onPause,
+}: {
+  active: DashboardHobby[];
+  pausingHobbyId?: string | null;
+  onPause?: (userHobbyId: string) => void;
+}) {
+  return (
+    <motion.div
+      role="status"
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.15 }}
+      className="absolute right-0 top-full z-40 mt-2 w-64 rounded-xl border border-[var(--white-muted)] bg-white p-3 text-left shadow-lg"
+    >
+      <p className="text-[12.5px] leading-[1.5] text-[#6b7280]">{CAP_MESSAGE}</p>
+
+      {onPause && (
+        <ul className="mt-2.5 flex flex-col gap-0.5 border-t border-[var(--white-muted)] pt-2">
+          {active.map((hobby) => {
+            const busy = pausingHobbyId === hobby.userHobbyId;
+            return (
+              <li key={hobby.userHobbyId} className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-[12.5px] text-[var(--foreground)]">
+                  {hobby.name}
+                </span>
+                <button
+                  type="button"
+                  disabled={Boolean(pausingHobbyId)}
+                  onClick={() => onPause(hobby.userHobbyId)}
+                  className="flex-shrink-0 cursor-pointer rounded-lg px-2 py-1 text-[11.5px] font-semibold text-[#6b7280] transition-colors hover:bg-[var(--white-muted)] hover:text-[var(--foreground)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {busy ? "Pausing…" : "Pause"}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </motion.div>
+  );
+}
+
+/**
+ * Add hobby, plus the refusal it can no longer perform.
+ *
+ * At the cap the button reads as unavailable but stays clickable: a real
+ * `disabled` attribute would take `pointer-events` with it, and a control that
+ * refuses silently is the version people click three times. Pressing it opens
+ * the reason instead of the modal, so the cap is explained where it is met
+ * rather than after a modal has been opened and dismissed.
+ */
+function AddHobbyButton({
+  atCap,
+  active,
+  pausingHobbyId,
+  onAddHobby,
+  onPause,
+}: {
+  atCap: boolean;
+  active: DashboardHobby[];
+  pausingHobbyId?: string | null;
+  onAddHobby: () => void;
+  onPause?: (userHobbyId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useDismissable<HTMLDivElement>(open, useCallback(() => setOpen(false), []));
+
+  /* Dropping under the cap with the note open would leave it stranded, and
+     worse, re-showing it the next time the cap is hit without a click. Reset
+     during render — the same pattern the filter chips below use. */
+  if (!atCap && open) setOpen(false);
+
+  return (
+    <div ref={ref} className="relative ml-auto flex-shrink-0">
+      <Button
+        variant="primary"
+        size="sm"
+        noScaleOnHover={atCap}
+        aria-disabled={atCap}
+        aria-expanded={atCap ? open : undefined}
+        onClick={atCap ? () => setOpen((v) => !v) : onAddHobby}
+        className={atCap ? "opacity-45" : ""}
+        style={{ paddingInline: 12, paddingBlock: 6, fontSize: "12.5px" }}
+      >
+        + Add hobby
+      </Button>
+
+      {atCap && open && (
+        <CapNotice active={active} pausingHobbyId={pausingHobbyId} onPause={onPause} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Resume, refusing the same way Add hobby does.
+ *
+ * Resuming counts against the cap, so at three active this is as unavailable as
+ * adding a fourth — and it used to prove it by running the server call and
+ * failing. Same treatment: dimmed, still clickable, opens the same notice.
+ */
+function ResumeButton({
+  hobby,
+  atCap,
+  active,
+  resuming,
+  pausingHobbyId,
+  onResume,
+  onPause,
+}: {
+  hobby: DashboardHobby;
+  atCap: boolean;
+  active: DashboardHobby[];
+  resuming: boolean;
+  pausingHobbyId?: string | null;
+  onResume: (userHobbyId: string) => void;
+  onPause?: (userHobbyId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useDismissable<HTMLDivElement>(open, useCallback(() => setOpen(false), []));
+
+  if (!atCap && open) setOpen(false);
+
+  return (
+    <div ref={ref} className="relative z-20 flex-shrink-0">
+      <Button
+        variant="primary"
+        size="sm"
+        disabled={resuming}
+        noScaleOnHover={atCap}
+        aria-disabled={atCap}
+        aria-expanded={atCap ? open : undefined}
+        onClick={atCap ? () => setOpen((v) => !v) : () => onResume(hobby.userHobbyId)}
+        className={atCap ? "opacity-45" : ""}
+        style={{
+          ...COMPACT_ACTION,
+          backgroundColor: THEME_NEUTRAL.accent,
+          color: THEME_NEUTRAL.textOnAccent,
+        }}
+      >
+        {resuming ? "Resuming…" : "Resume Hobby"}
+      </Button>
+
+      {atCap && open && (
+        <CapNotice active={active} pausingHobbyId={pausingHobbyId} onPause={onPause} />
+      )}
+    </div>
+  );
+}
+
+/**
  * One list, active and paused together. Paused hobbies used to sit behind a
  * disclosure; a hobby you have shelved was then also out of sight, which is
  * how it stays shelved. They keep their PAUSED badge and Resume button, and
@@ -170,8 +345,10 @@ function HobbyColumn({
   onLog,
   onAddHobby,
   onResume,
+  onPause,
+  pausingHobbyId,
+  resumeErrors,
   onGenerateRoadmap,
-  onToggleGoal,
 }: DashboardHomeProps & { active: DashboardHobby[]; paused: DashboardHobby[] }) {
   const [filter, setFilter] = useState<HobbyFilter>("active");
   const allPaused = variant === "all-paused";
@@ -220,17 +397,13 @@ function HobbyColumn({
               </button>
             ))}
         </div>
-        {/* Always present, whatever the count. At the cap the modal reports
-            the refusal — the row itself no longer explains it. */}
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onAddHobby}
-          className="ml-auto flex-shrink-0"
-          style={{ paddingInline: 12, paddingBlock: 6, fontSize: "12.5px" }}
-        >
-          + Add hobby
-        </Button>
+        <AddHobbyButton
+          atCap={active.length >= MAX_ACTIVE_HOBBIES}
+          active={active}
+          pausingHobbyId={pausingHobbyId}
+          onAddHobby={onAddHobby}
+          onPause={onPause}
+        />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -248,6 +421,18 @@ function HobbyColumn({
                    tally to avoid it. The date is the fact that column is about. */
                 meta={pausedMeta(hobby)}
                 resuming={resumingHobbyId === hobby.userHobbyId}
+                error={resumeErrors?.[hobby.userHobbyId]}
+                resumeAction={
+                  <ResumeButton
+                    hobby={hobby}
+                    atCap={active.length >= MAX_ACTIVE_HOBBIES}
+                    active={active}
+                    resuming={resumingHobbyId === hobby.userHobbyId}
+                    pausingHobbyId={pausingHobbyId}
+                    onResume={onResume}
+                    onPause={onPause}
+                  />
+                }
                 onResume={onResume}
               />
             );
@@ -271,7 +456,6 @@ function HobbyColumn({
               hobby={hobby}
               index={i}
               onLog={onLog}
-              onToggleGoal={onToggleGoal}
             />
           );
         })}
@@ -300,6 +484,9 @@ function FocusColumn({
   streak,
   challenges,
   suggestedHobbyId,
+  generatingChallengeSlugs,
+  challengeErrors,
+  onGenerateChallenge,
   onTimerComplete,
   onOpenChallenge,
 }: DashboardHomeProps & {
@@ -311,6 +498,25 @@ function FocusColumn({
   // separate three hobbies, so the names carry the disambiguation — which only
   // works if the list is complete.
   const legend = active.map((h) => ({ name: h.name, theme: h.theme }));
+
+  /* Every active hobby without a live challenge becomes a step offering one.
+     They sit after the real challenges, so the stepper reads as "what you are
+     on" then "what else you could start" — and generating for one hobby no
+     longer hides the offer for the others, which is what a single-hobby offer
+     card did.
+
+     A roadmap is required: the crew builds the challenge around the phase you
+     are on, so a hobby with no roadmap has nothing to build against. The
+     suggested hobby leads the offers, matching the focus timer's default. */
+  const challengedSlugs = new Set(challenges.map((c) => c.hobbySlug));
+  const offers = active
+    .filter((h) => h.stageCount > 0 && !challengedSlugs.has(h.slug))
+    .sort((a, b) => {
+      if (a.userHobbyId === suggestedHobbyId) return -1;
+      if (b.userHobbyId === suggestedHobbyId) return 1;
+      return 0;
+    })
+    .map((h) => ({ userHobbyId: h.userHobbyId, slug: h.slug, name: h.name }));
 
   /* All-paused is the only state that swaps the slot, because a paused user has
      no live challenge by definition — `buildLiveChallenges` filters to active
@@ -328,12 +534,19 @@ function FocusColumn({
       <p className={`mb-2.5 ${SECTION_LABEL}`}>Somewhere to go next</p>
       <RetakeQuizCard />
     </>
-  ) : challenges.length > 0 ? (
+  ) : challenges.length > 0 || offers.length > 0 ? (
     /* No label. The dark card already announces itself as the challenge — its
        own chip names the hobby. Which one of the list is showing is the card's
        business; the guard stays here so `topSlot` still reports "empty" to the
        spacing below. */
-    <ActiveChallengeCard challenges={challenges} onOpen={onOpenChallenge} />
+    <ActiveChallengeCard
+      challenges={challenges}
+      offers={offers}
+      onOpen={onOpenChallenge}
+      generatingSlugs={generatingChallengeSlugs}
+      errors={challengeErrors}
+      onGenerate={onGenerateChallenge}
+    />
   ) : null;
 
   return (
