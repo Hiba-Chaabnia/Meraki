@@ -76,7 +76,9 @@ export interface ChallengeGeneration {
  *
  * @param onComplete Called once per job that finishes, successfully or not.
  */
-export function useChallengeGeneration(onComplete: () => void): ChallengeGeneration {
+export function useChallengeGeneration(
+  onComplete: () => void | Promise<void>,
+): ChallengeGeneration {
   const [generatingSlugs, setGeneratingSlugs] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -93,17 +95,29 @@ export function useChallengeGeneration(onComplete: () => void): ChallengeGenerat
     timersRef.current.delete(slug);
   }, []);
 
+  /* The refetch is awaited before the slug leaves `generatingSlugs`, and that
+     order is the whole point: clearing first re-rendered the card against data
+     that still said `stageCount === 0`, so a finished build flashed back
+     through the "no roadmap yet" state for the length of one round-trip before
+     the real card arrived. The generating state has to outlive the fetch that
+     replaces it. */
   const markSettled = useCallback(
-    (slug: string, error?: string) => {
+    async (slug: string, error?: string) => {
       stopPolling(slug);
       forgetJob(slug);
-      setGeneratingSlugs((prev) => {
-        const next = new Set(prev);
-        next.delete(slug);
-        return next;
-      });
       if (error) setErrors((prev) => ({ ...prev, [slug]: error }));
-      onCompleteRef.current();
+
+      try {
+        await onCompleteRef.current();
+      } catch (e) {
+        console.error("[Generation] Refetch after completion failed:", e);
+      } finally {
+        setGeneratingSlugs((prev) => {
+          const next = new Set(prev);
+          next.delete(slug);
+          return next;
+        });
+      }
     },
     [stopPolling],
   );
@@ -180,7 +194,6 @@ export function useChallengeGeneration(onComplete: () => void): ChallengeGenerat
       // table, via sessionStorage) is the case the rule's own guidance exempts.
       // A lazy useState initialiser would avoid the effect but read
       // sessionStorage during SSR and mismatch on hydration.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGeneratingSlugs((prev) => new Set([...prev, ...resumable]));
     }
 
