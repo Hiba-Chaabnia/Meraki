@@ -54,7 +54,7 @@ export function SamplingCTA({
             key={path}
             href={`/discover/sampling/${hobbySlug}/${pathConfig[path].segment}`}
             variant="secondary"
-            className="flex-1 hover:shadow-lg"
+            className="flex-1 whitespace-nowrap hover:shadow-lg"
           >
             {pathConfig[path].label}
           </Button>

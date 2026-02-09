@@ -168,7 +168,10 @@ export function LocalSpotsView({
                 </div>
 
                 {/* Row 2: Spot cards (3×2 grid) · Tips + CTA */}
-                <div className="flex-1 grid grid-cols-[3fr_1fr] gap-6 min-h-0">
+                {/* 1.3fr, not 1fr: the tips column also carries the two pathway buttons
+                    side by side, and at 1fr "Try a Micro Activity" wrapped to two
+                    lines and left the pair unequal in height. */}
+                <div className="flex-1 grid grid-cols-[3fr_1.3fr] gap-6 min-h-0">
                   {/* Left column — 6 spots in 3 cols × 2 rows */}
                   <div className="p-2">
                     {filteredSpots.length === 0 ? (
