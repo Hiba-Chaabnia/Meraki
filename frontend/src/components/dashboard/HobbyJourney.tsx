@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Flame, Map, Tv, MapPin, Zap, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, Flame, Map, Tv, MapPin, Zap } from "lucide-react";
 import { ChallengeCard } from "./ChallengeCard";
 import { ActiveChallengePanel } from "./ActiveChallengePanel";
+import { ChallengeArchive } from "./ChallengeArchive";
 import { RoadmapDetail } from "./RoadmapDetail";
 import { Button } from "@/components/ui/Button";
 import { moodEmojis } from "@/lib/dashboardData";
@@ -123,7 +124,6 @@ export function HobbyJourney({
   onToggleGoal,
   dangerZone,
 }: HobbyJourneyProps) {
-  const [pastOpen, setPastOpen] = useState(false);
   const META = THEME[theme];
   const activeChallenges = challenges.filter((c) => c.status === "active");
   const completedChallenges = challenges.filter((c) => c.status === "completed");
@@ -325,43 +325,16 @@ export function HobbyJourney({
             )}
           </motion.div>
 
-          {/* One archive, not two stacked. Completed and swapped-out were
-              separate sections of full cards; together they are the same
-              question — what has this hobby already thrown at me — and they
-              were the tallest thing on the page for the least urgent content.
-              Collapsed by default, and the swapped ones keep their muting
-              because their titles feed the crew's "do not repeat" prompt. */}
+          {/* One archive, not two stacked. Completed and swapped-out are the
+              same question — what has this hobby already thrown at me — and
+              the swapped ones are kept because their titles feed the crew's
+              "do not repeat" prompt. */}
           {pastChallenges.length > 0 && (
             <motion.div variants={fadeUp}>
-              <button
-                type="button"
-                onClick={() => setPastOpen((v) => !v)}
-                aria-expanded={pastOpen}
-                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
-              >
-                <div>
-                  <p className="label">Past challenges</p>
-                  <p className="caption">
-                    {completedChallenges.length} completed
-                    {skippedChallenges.length > 0 && ` · ${skippedChallenges.length} swapped out`}
-                  </p>
-                </div>
-                <ChevronDown
-                  className={`h-4 w-4 flex-shrink-0 text-gray-400 transition-transform ${pastOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {pastOpen && (
-                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {pastChallenges.map((c) => (
-                    <div key={c.id} className={c.status === "skipped" ? "opacity-70" : undefined}>
-                      <ChallengeCard challenge={c} onOpen={onOpenChallenge} />
-                    </div>
-                  ))}
-                </div>
-              )}
+              <ChallengeArchive challenges={pastChallenges} onOpen={onOpenChallenge} />
             </motion.div>
           )}
+
         </div>
       </div>
 

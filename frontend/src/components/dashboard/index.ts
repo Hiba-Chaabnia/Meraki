@@ -29,6 +29,7 @@ export { LogPracticeFAB } from "./LogPracticeFAB";
 export { ChallengeCard } from "./ChallengeCard";
 export { ActiveChallengePanel } from "./ActiveChallengePanel";
 export { SwapChallengeButton } from "./SwapChallengeButton";
+export { ChallengeArchive } from "./ChallengeArchive";
 export { ChallengeModal } from "./ChallengeModal";
 export { ChallengeDetails } from "./ChallengeDetails";
 export { SessionLoggerModal } from "./SessionLoggerModal";
