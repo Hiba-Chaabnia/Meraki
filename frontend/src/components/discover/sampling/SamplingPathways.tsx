@@ -21,10 +21,6 @@ export interface SamplingPathwaysProps {
   recommendationReason?: string;
   loading?: boolean;
   error?: boolean;
-  /** Start the hobby. Omitted hides the commit row — the preview has no auth. */
-  onCommit?: () => void;
-  committing?: boolean;
-  commitError?: string | null;
 }
 
 export function SamplingPathways({
@@ -39,9 +35,6 @@ export function SamplingPathways({
   recommendationReason,
   loading = false,
   error = false,
-  onCommit,
-  committing = false,
-  commitError,
 }: SamplingPathwaysProps) {
   return (
     <div className="h-screen w-screen bg-[var(--background)] overflow-y-auto">
@@ -191,41 +184,6 @@ export function SamplingPathways({
             />
           </motion.div>
         </div>
-
-        {/* The decision this page exists to produce.
-            It used to live only inside Watch, Micro and Local, so reading the
-            three pathways, deciding yes, and looking for the button found a
-            link to the dashboard instead — the one step the whole discovery
-            flow is for had no control on the page designed for it. */}
-        {onCommit && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-10 text-center"
-          >
-            <p className="text-sm text-gray-500 mb-3">
-              Already sure? You can start <em>{hobbyName}</em> without sampling first.
-            </p>
-            <motion.div
-              animate={{ rotate: [0, -3, 3, -2, 0] }}
-              transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 3 }}
-              whileHover={{ rotate: 0, scale: 1.05 }}
-              className="inline-block"
-            >
-              <button
-                onClick={onCommit}
-                disabled={committing}
-                className="cursor-pointer rounded-xl bg-[var(--secondary)] px-7 py-3 text-sm font-bold tracking-widest text-[var(--foreground)] transition-all hover:shadow-lg active:scale-95 disabled:opacity-50"
-              >
-                {committing ? "Starting…" : `Start ${hobbyName}`}
-              </button>
-            </motion.div>
-            {commitError && (
-              <p className="mt-3 text-sm text-red-600">{commitError}</p>
-            )}
-          </motion.div>
-        )}
 
         {/* Recommendation reason */}
         {recommendationReason && (

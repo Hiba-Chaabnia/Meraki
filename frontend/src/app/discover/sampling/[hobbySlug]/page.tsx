@@ -4,7 +4,6 @@ import { use } from "react";
 import { useSearchParams } from "next/navigation";
 import { SamplingPathways } from "@/components/discover/sampling/SamplingPathways";
 import { useSamplingPreview } from "@/hooks/useSamplingPreview";
-import { useCommit } from "@/hooks/useCommit";
 import { formatSlug } from "@/lib/hobbyData";
 
 export default function SamplingPage({
@@ -21,7 +20,6 @@ export default function SamplingPage({
   const backLabel = from === "dashboard" ? "Back to dashboard" : from === "discover" ? "Back to discover" : "Back to quiz results";
 
   const { previewResult, previewLoading, previewError, previewJobId } = useSamplingPreview(hobbySlug);
-  const { handleCommit, committing, commitError } = useCommit(hobbySlug);
   const jobQuery = previewJobId ? `?jobId=${previewJobId}` : "";
 
   return (
@@ -37,9 +35,6 @@ export default function SamplingPage({
       recommendationReason={previewResult?.recommendation?.reason}
       loading={previewLoading}
       error={Boolean(previewError)}
-      onCommit={handleCommit}
-      committing={committing}
-      commitError={commitError}
     />
   );
 }
