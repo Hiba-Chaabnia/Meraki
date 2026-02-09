@@ -47,12 +47,14 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeChallenge = activeChallenges?.find((c) => c.status === "active");
 
   const reset = useCallback(() => {
     setPhase("form");
+    setUploadError(null);
     setSessionType("practice");
     setHobbySlug(initialHobbySlug ?? hobbies[0]?.slug ?? "");
     setDuration(initialDuration ?? DEFAULT_DURATION);
@@ -81,13 +83,30 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
 
   const handleSave = async () => {
     setSaving(true);
+    setUploadError(null);
+
     let imageUrl: string | undefined;
     if (imageFile) {
       const fd = new FormData();
       fd.append("file", imageFile);
       const res = await uploadSessionImage(fd);
-      if (res.url) imageUrl = res.url;
+
+      /* A failed upload used to fall through to `onSave` with `imageUrl`
+         undefined: the session saved, the photo did not, and nothing said so —
+         the first sign was an empty session detail page later. Stop here
+         instead, so the choice between retrying and dropping the photo is the
+         user's. The × on the preview is how they drop it. */
+      if (!res.url) {
+        const reason = res.error ?? "Could not upload that photo.";
+        console.error("[SessionLogger] Image upload failed:", reason);
+        setUploadError(reason);
+        setSaving(false);
+        return;
+      }
+
+      imageUrl = res.url;
     }
+
     onSave({
       type: sessionType,
       hobbySlug,
@@ -366,6 +385,12 @@ export function SessionLoggerModal({ isOpen, onClose, onSave, hobbies, activeCha
                   sessionType === "thought" ? "Log Thought" : "Save Session"
                 )}
               </Button>
+
+              {uploadError && (
+                <p className="mt-2.5 rounded-xl border border-yellow-300 bg-yellow-50 p-2 text-[12px] leading-relaxed text-yellow-800">
+                  {uploadError} Remove the photo with the × to save the session without it.
+                </p>
+              )}
             </div>
           </motion.div>
         )}
