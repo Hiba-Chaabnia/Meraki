@@ -7,4 +7,4 @@ COPY src/ src/
 
 RUN pip install --no-cache-dir .
 
-CMD ["sh", "-c", "uvicorn meraki_flow.api:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["python", "-c", "import os; port = os.environ.get('PORT', '8000'); os.system(f'uvicorn meraki_flow.api:app --host 0.0.0.0 --port {port}')"]
