@@ -27,11 +27,12 @@ export {
 export type { Wallpaper } from "./DashboardCards";
 export { LogPracticeFAB } from "./LogPracticeFAB";
 export { ChallengeCard } from "./ChallengeCard";
+export { ChallengeModal } from "./ChallengeModal";
+export { ChallengeDetails } from "./ChallengeDetails";
 export { ActiveChallengePanel } from "./ActiveChallengePanel";
 export { SwapChallengeButton } from "./SwapChallengeButton";
 export { ChallengeArchive } from "./ChallengeArchive";
-export { ChallengeModal } from "./ChallengeModal";
-export { ChallengeDetails } from "./ChallengeDetails";
+export { PracticeLog } from "./PracticeLog";
 export { SessionLoggerModal } from "./SessionLoggerModal";
 export type { SessionFormData } from "./SessionLoggerModal";
 export { AddHobbyModal } from "./AddHobbyModal";

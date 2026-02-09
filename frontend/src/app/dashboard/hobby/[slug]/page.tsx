@@ -121,16 +121,16 @@ export default function HobbyJourneyPage({ params }: { params: Promise<{ slug: s
         onGenerateChallenge={() => challengeGen.generate(slug)}
         onGenerateRoadmap={() => roadmapGen.generate(slug)}
         onLogPractice={() => setLoggerOpen(true)}
-        onAdvancePhase={page.advancePhase}
-        onToggleGoal={page.toggleGoal}
-        advancingPhase={page.advancing}
-        advanceError={page.advanceError}
         onOpenChallenge={challengeUi.openChallenge}
+        onLogAndComplete={logAndComplete}
         onSwapChallenge={challengeUi.swap}
         swappingChallenge={challengeUi.generatingNext}
         swapError={challengeUi.error}
         onDismissSwapError={challengeUi.clearError}
-        onLogAndComplete={logAndComplete}
+        advancingPhase={page.advancing}
+        advanceError={page.advanceError}
+        onAdvancePhase={page.advancePhase}
+        onToggleGoal={page.toggleGoal}
         dangerZone={
           page.hobby ? (
             <HobbyDangerZone

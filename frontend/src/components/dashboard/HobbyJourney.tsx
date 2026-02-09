@@ -3,13 +3,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Flame, Map, Tv, MapPin, Zap } from "lucide-react";
+import { ArrowLeft, Plus, Play, Map, Tv, MapPin, Zap } from "lucide-react";
 import { ChallengeCard } from "./ChallengeCard";
 import { ActiveChallengePanel } from "./ActiveChallengePanel";
 import { ChallengeArchive } from "./ChallengeArchive";
+import { PracticeLog } from "./PracticeLog";
 import { RoadmapDetail } from "./RoadmapDetail";
-import { Button } from "@/components/ui/Button";
-import { moodEmojis } from "@/lib/dashboardData";
 import type { ActiveHobby, PracticeSession, Challenge, Roadmap } from "@/lib/dashboardData";
 import type { HobbyTheme } from "@/lib/dashboardHome";
 import type { PracticeFeedback } from "@/app/actions/feedback";
@@ -24,8 +23,16 @@ const stagger = staggerContainer(0.08);
  * the most recognisable structural rule in the product.
  */
 const THEME = {
-  primary: { color: "var(--primary)", lightColor: "var(--primary-theme-bg)" },
-  secondary: { color: "var(--secondary)", lightColor: "var(--secondary-theme-bg)" },
+  primary: {
+    color: "var(--primary)",
+    lightColor: "var(--primary-theme-bg)",
+    borderColor: "var(--primary-theme-border)",
+  },
+  secondary: {
+    color: "var(--secondary)",
+    lightColor: "var(--secondary-theme-bg)",
+    borderColor: "var(--secondary-theme-border)",
+  },
 } as const;
 
 export interface HobbyJourneyProps {
@@ -41,7 +48,6 @@ export interface HobbyJourneyProps {
 
   backHref: string;
   sessionHref: (sessionId: string) => string;
-  /** Opens the roadmap modal the page owns. */
   watchHref: string;
   microHref: string;
   localHref: string;
@@ -55,7 +61,9 @@ export interface HobbyJourneyProps {
   onGenerateChallenge: () => void;
   onGenerateRoadmap: () => void;
   onLogPractice: () => void;
-  /** Opens a challenge in the modal the page owns. */
+  /** Omitted hides the Start Timer button — there is no timer to start yet. */
+  onStartTimer?: () => void;
+  /** Opens a past challenge in the modal the page owns. */
   onOpenChallenge?: (challenge: Challenge) => void;
 
   /* ── The active challenge's own actions, now that it is open on the page ── */
@@ -82,11 +90,12 @@ export interface HobbyJourneyProps {
 /**
  * One hobby, end to end — now the only destination below the dashboard.
  *
- * Split into two columns on a seam that means something: **do now** on the left
- * (the challenge, the roadmap stage you are on), **look back** on the right
- * (stats, sessions, the challenge archives). Nine full-width sections stacked
- * vertically made every block equally loud and pushed the roadmap below a fold
- * it had no reason to be under.
+ * Three rows, each holding what fits its own shape: row 1 pairs the challenge
+ * you are on against the archive of ones you are not, row 2 gives the roadmap
+ * the full width its horizontal series needs, row 3 does the same for the
+ * practice log's grid. Nine full-width sections stacked vertically made every
+ * block equally loud; two columns then made the roadmap and the log fight for
+ * a half-width they both outgrew.
  *
  * It absorbed two things when their pages were deleted: the whole session list
  * (there is no sessions index any more) and the swapped-out challenge archive
@@ -112,6 +121,7 @@ export function HobbyJourney({
   onGenerateChallenge,
   onGenerateRoadmap,
   onLogPractice,
+  onStartTimer,
   onOpenChallenge,
   onLogAndComplete,
   onSwapChallenge,
@@ -130,7 +140,6 @@ export function HobbyJourney({
   const skippedChallenges = challenges.filter((c) => c.status === "skipped");
   // Completed first: finishing one is the part worth seeing.
   const pastChallenges = [...completedChallenges, ...skippedChallenges];
-  const totalHours = (sessions.reduce((sum, s) => sum + s.duration, 0) / 60).toFixed(1);
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="w-full px-4 py-8 md:px-8 md:py-12">
@@ -144,44 +153,60 @@ export function HobbyJourney({
       {/* Hobby banner */}
       <motion.div
         variants={fadeUp}
-        className="rounded-2xl overflow-hidden mb-6"
-        style={{ backgroundColor: META.lightColor }}
+        className="rounded-3xl overflow-hidden mb-8 border shadow-sm transition-colors duration-300"
+        style={{ backgroundColor: META.lightColor, borderColor: META.borderColor }}
       >
-        <div className="px-6 py-8 md:px-10 md:py-12 relative flex items-start justify-between gap-4">
+        <div className="px-6 py-8 md:px-10 md:py-10 relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div
-            className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-20"
+            className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-20 pointer-events-none"
             style={{ backgroundColor: META.color }}
           />
           <div className="relative z-10">
-            <h1 className="text-2xl md:text-4xl font-medium text-gray-900 leading-tight mb-2">{name}</h1>
-            <p className="text-gray-600">
-              {hobby?.status === "active" ? "Active" : "Paused"} &middot; Day {hobby?.daysSinceStart ?? 0} of your journey
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 backdrop-blur-sm text-xs font-semibold mb-3 border border-gray-200/50 text-gray-700">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: META.color }} />
+              {hobby?.status === "active" ? "Active Hobby" : "Paused"}
+            </div>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-2">{name}</h1>
+            <p className="text-gray-600 text-sm md:text-base font-medium">
+              Day {hobby?.daysSinceStart ?? 0} of your journey &middot; {sessions.length}{" "}
+              {sessions.length === 1 ? "session" : "sessions"} logged
             </p>
           </div>
-          <Button
-            onClick={onLogPractice}
-            variant="secondary"
-            shape="pill"
-            size="sm"
-            className="relative z-10 flex-shrink-0 shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
-          >
-            <Plus className="w-4 h-4" />
-            Log Practice
-          </Button>
+          <div className="relative z-10 flex items-center gap-3 flex-wrap">
+            {onStartTimer && (
+              <button
+                onClick={onStartTimer}
+                style={{ backgroundColor: META.color }}
+                className="px-5 py-3 rounded-2xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all flex items-center gap-2.5 active:scale-95 cursor-pointer"
+              >
+                <Play className="w-4 h-4" fill="currentColor" strokeWidth={0} />
+                Start Timer
+              </button>
+            )}
+            <button
+              onClick={onLogPractice}
+              className="px-5 py-3 rounded-2xl text-sm font-bold bg-white text-gray-800 border border-gray-200 shadow-sm hover:bg-gray-50 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Log Practice
+            </button>
+          </div>
         </div>
       </motion.div>
 
-      {/* ── Do now / look back ── */}
-      <div className="grid gap-6 lg:grid-cols-12">
+      {/* Three rows rather than two columns. The roadmap and the practice log
+          both want the full width — one is a horizontal series, the other a
+          grid — and neither was ever a sidebar's worth of content. What is left
+          in row 1 is the pair you actually compare: what you are on, and what
+          you have already been through. */}
+      <div className="space-y-8">
 
-        {/* ─── Do now ─── */}
-        {/* The wide column: with the challenge open in place, this side carries
-            the reading. */}
-        <div className="space-y-6 lg:col-span-7">
+        {/* ─── Row 1: what you are on / what you have done ─── */}
+        <div className="grid items-stretch gap-6 lg:grid-cols-12">
 
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} className="flex flex-col lg:col-span-7">
             {activeChallenges.length > 0 ? (
-              <div className="space-y-4">
+              <div className="flex flex-1 flex-col gap-4">
                 {activeChallenges.map((c) =>
                   onLogAndComplete ? (
                     <ActiveChallengePanel
@@ -199,7 +224,7 @@ export function HobbyJourney({
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+              <div className="flex flex-1 flex-col justify-center rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
                 <p className="card-heading mb-2">Current Challenge</p>
                 <p className="text-sm text-gray-400 mb-3">No active challenge</p>
                 {challengeError && (
@@ -221,144 +246,101 @@ export function HobbyJourney({
             )}
           </motion.div>
 
-          <motion.div variants={fadeUp}>
-            <h2 className="card-heading mb-4">Learning Roadmap</h2>
-            {roadmap && onAdvancePhase ? (
-              /* The whole path, open. It was a summary that opened a modal
-                 holding this exact component — a click that bought nothing but
-                 a second header, on the one page the roadmap belongs to. */
-              <RoadmapDetail
-                inline
-                roadmap={roadmap}
-                themeColor={META.color}
-                advancing={advancingPhase}
-                error={advanceError}
-                onAdvance={onAdvancePhase}
-                onToggleGoal={onToggleGoal}
-              />
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-                <p className="text-sm text-gray-400 mb-3">No roadmap yet for {name}</p>
-                <button
-                  onClick={onGenerateRoadmap}
-                  disabled={generatingRoadmap}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
-                  style={{ backgroundColor: META.color }}
-                >
-                  {generatingRoadmap ? (
-                    <><div className="animate-spin w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />Generating Roadmap...</>
-                  ) : (
-                    <><Map className="w-3.5 h-3.5" />Generate Roadmap</>
-                  )}
-                </button>
-                {roadmapError && (
-                  <p className="mt-3 text-sm text-red-600">{roadmapError}</p>
-                )}
-              </div>
-            )}
-          </motion.div>
-        </div>
-
-        {/* ─── Look back ─── */}
-        <div className="space-y-6 lg:col-span-5">
-
-          {/* Two tiles, not four. "Sessions" repeated the count in the header
-              directly below it, and "Challenges" the archive further down —
-              half the row restated its own neighbours. Hours and streak are the
-              two figures nothing else on the page carries. */}
-          <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3">
-            {[
-              { label: "Hours practised", value: `${totalHours}h` },
-              { label: "Current streak", value: `${hobby?.currentStreak ?? 0}d`, icon: <Flame className="w-4 h-4 text-[var(--secondary)]" /> },
-            ].map((s) => (
-              <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-                {s.icon && <div className="flex justify-center mb-1">{s.icon}</div>}
-                <p className="text-xl font-bold text-gray-800">{s.value}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </motion.div>
-
-          {/* The whole log, not a preview of it: the sessions index is gone, so
-              this is the only place a session can be found. */}
-          <motion.div variants={fadeUp}>
-            <div className="mb-4 flex items-baseline justify-between gap-3">
-              <h2 className="card-heading">Sessions</h2>
-              {sessions.length > 0 && (
-                <span className="caption">{sessions.length} logged</span>
-              )}
-            </div>
-            {sessions.length > 0 ? (
-              <div className="space-y-3">
-                {sessions.map((s) => {
-                  const mood = moodEmojis[s.mood] ?? { emoji: "", label: "" };
-                  const fb = feedbackMap[s.id];
-                  return (
-                    <Link key={s.id} href={sessionHref(s.id)}>
-                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg" style={{ backgroundColor: META.color + "20" }}>
-                            {mood.emoji}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-gray-700">{s.duration} min</p>
-                              <span className="text-xs text-gray-400">
-                                {new Date(s.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-400 truncate">{s.notes || "No notes"}</p>
-                          </div>
-                        </div>
-                        {fb?.celebration && (
-                          <p className="mt-2 text-xs italic pl-14" style={{ color: META.color }}>{fb.celebration}</p>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-                <p className="text-sm text-gray-400">No sessions yet for {name}.</p>
-              </div>
-            )}
-          </motion.div>
-
           {/* One archive, not two stacked. Completed and swapped-out are the
               same question — what has this hobby already thrown at me — and
               the swapped ones are kept because their titles feed the crew's
               "do not repeat" prompt. */}
           {pastChallenges.length > 0 && (
-            <motion.div variants={fadeUp}>
+            <motion.div variants={fadeUp} className="flex flex-col lg:col-span-5">
               <ChallengeArchive challenges={pastChallenges} onOpen={onOpenChallenge} />
             </motion.div>
           )}
-
         </div>
+
+        {/* ─── Row 2: the whole path ─── */}
+        <motion.div variants={fadeUp}>
+          <h2 className="card-heading mb-4">Learning Roadmap</h2>
+          {roadmap && onAdvancePhase ? (
+            /* The whole path, open. It was a summary that opened a modal
+               holding this exact component — a click that bought nothing but a
+               second header, on the one page the roadmap belongs to. */
+            <RoadmapDetail
+              inline
+              roadmap={roadmap}
+              themeColor={META.color}
+              advancing={advancingPhase}
+              error={advanceError}
+              onAdvance={onAdvancePhase}
+              onToggleGoal={onToggleGoal}
+            />
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+              <p className="text-sm text-gray-400 mb-3">No roadmap yet for {name}</p>
+              <button
+                onClick={onGenerateRoadmap}
+                disabled={generatingRoadmap}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
+                style={{ backgroundColor: META.color }}
+              >
+                {generatingRoadmap ? (
+                  <><div className="animate-spin w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />Generating Roadmap...</>
+                ) : (
+                  <><Map className="w-3.5 h-3.5" />Generate Roadmap</>
+                )}
+              </button>
+              {roadmapError && (
+                <p className="mt-3 text-sm text-red-600">{roadmapError}</p>
+              )}
+            </div>
+          )}
+        </motion.div>
+
+        {/* ─── Row 3: everything you have logged ─── */}
+        <motion.div variants={fadeUp}>
+          <PracticeLog
+            sessions={sessions}
+            feedbackMap={feedbackMap}
+            sessionHref={sessionHref}
+            onLogPractice={onLogPractice}
+            themeColor={META.color}
+            hobbyName={name}
+          />
+        </motion.div>
       </div>
 
       {/* Go deeper */}
       <motion.div variants={fadeUp} className="mt-8">
-        <h2 className="card-heading mb-4">Go deeper with {name}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { href: watchHref, icon: Tv, title: "Watch", sub: "Videos & tutorials" },
-            { href: microHref, icon: Zap, title: "Micro", sub: "Quick exercises" },
-            { href: localHref, icon: MapPin, title: "Local", sub: "Venues near you" },
-          ].map(({ href, icon: Icon, title, sub }) => (
-            <Link key={title} href={href} className="group">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: META.color + "15" }}>
-                  <Icon className="w-5 h-5" style={{ color: META.color }} />
+        <div className="rounded-3xl border border-gray-200/90 bg-white p-6 shadow-sm md:p-7">
+          <div className="mb-5 border-b border-gray-100 pb-4">
+            <h2 className="text-lg font-bold tracking-tight text-gray-900">Go deeper with {name}</h2>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Three other ways in, when a challenge is not the thing you need today.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {[
+              { href: watchHref, icon: Tv, title: "Watch", sub: "Videos & tutorials" },
+              { href: microHref, icon: Zap, title: "Micro", sub: "Quick exercises" },
+              { href: localHref, icon: MapPin, title: "Local", sub: "Venues near you" },
+            ].map(({ href, icon: Icon, title, sub }) => (
+              <Link
+                key={title}
+                href={href}
+                className="flex items-center gap-4 rounded-2xl border border-gray-200/80 bg-slate-50/70 p-4 transition-all hover:border-gray-300 hover:shadow-sm"
+              >
+                <div
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white"
+                  style={{ color: META.color }}
+                >
+                  <Icon className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">{title}</p>
-                  <p className="text-xs text-gray-400">{sub}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-extrabold text-gray-900">{title}</p>
+                  <p className="text-xs font-medium text-gray-500">{sub}</p>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
         </div>
       </motion.div>
 
