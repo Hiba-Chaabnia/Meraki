@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { triggerRoadmapGeneration } from "./roadmap";
 import { requireAuth } from "@/lib/supabase/requireAuth";
 import type { Database } from "@/types/database.types";
 import { CAP_MESSAGE, MAX_ACTIVE_HOBBIES } from "@/lib/hobbyLimits";
@@ -299,38 +298,26 @@ export async function deleteUserHobby(
  * stopped on a success screen, Micro and Local used the other and navigated.
  * Same intent, different outcome depending on which card you happened to open.
  *
- * It also kicks off the roadmap. A hobby with no roadmap lands on a dashboard
- * card whose only offer is "build one" and a hobby page of empty states, which
- * is what the moment of highest intent used to buy you. The job id comes back
- * so the caller can hand it to `useRoadmapGeneration`, which then shows the
- * build in flight rather than an empty roadmap slot.
- *
- * A failed trigger is not a failed start: the hobby is saved either way, and
- * the hobby page still offers the manual button.
+ * It does not build the roadmap. Adding a hobby used to fire a crew run nobody
+ * asked for — an LLM job on every commit, including the ones people undo a
+ * minute later — and it decided the shape of a hobby before its owner had seen
+ * the page. The hobby page offers the build as a button; that button is now the
+ * only way a roadmap starts.
  */
-export async function startHobby(
-  slug: string,
-): Promise<HobbyResult & { roadmapJobId?: string }> {
+export async function startHobby(slug: string): Promise<HobbyResult> {
   if (!slug || !SLUG_RE.test(slug)) return { error: "Invalid hobby slug." };
 
-  const result = await addUserHobby(slug, "active");
-  if ("error" in result && result.error) return result;
-
-  const { job_id, error } = await triggerRoadmapGeneration(slug);
-  if (error) console.error("[startHobby] Roadmap trigger failed:", error);
-
-  return { ...result, roadmapJobId: job_id };
+  return addUserHobby(slug, "active");
 }
 
 /**
  * Add a hobby by typing its name, from the dashboard.
  *
- * Triggers the roadmap for the same reason `startHobby` does — a hobby added
- * here used to land as a card whose only offer was "build one".
+ * Like `startHobby`, it no longer builds the roadmap — see the note there.
  */
 export async function addCustomHobby(
   name: string,
-): Promise<HobbyResult & { slug?: string; roadmapJobId?: string }> {
+): Promise<HobbyResult & { slug?: string }> {
   const trimmed = name.trim();
   if (!trimmed || trimmed.length > 100) return { error: "Invalid hobby name." };
 
@@ -376,8 +363,5 @@ export async function addCustomHobby(
 
   if (error) return { error: error.message };
 
-  const { job_id, error: roadmapError } = await triggerRoadmapGeneration(slug);
-  if (roadmapError) console.error("[addCustomHobby] Roadmap trigger failed:", roadmapError);
-
-  return { data, slug, roadmapJobId: job_id };
+  return { data, slug };
 }

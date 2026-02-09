@@ -4,11 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { startHobby } from "@/app/actions/hobbies";
 
-/* Must match `JOB_KEY_PREFIX` in lib/hooks/useRoadmapGeneration — that hook
-   resumes any job it finds under this key on mount, which is how the roadmap
-   build started here survives the navigation to the hobby page. */
-const ROADMAP_JOB_KEY_PREFIX = "roadmap-job-";
-
 interface UseCommitResult {
   handleCommit: () => Promise<void>;
   committing: boolean;
@@ -23,9 +18,8 @@ interface UseCommitResult {
  * while Micro and Local pushed straight through — the same decision cost two
  * extra clicks depending on which pathway you happened to open.
  *
- * The roadmap job id is parked in sessionStorage under the key
- * `useRoadmapGeneration` resumes from, so the hobby page picks the build up
- * mid-flight and renders its generating state instead of an empty slot.
+ * Committing does not start a roadmap. The hobby page opens with the build
+ * offered as a button, which is the only thing that starts one.
  */
 export function useCommit(hobbySlug: string): UseCommitResult {
   const [committing, setCommitting] = useState(false);
@@ -44,14 +38,6 @@ export function useCommit(hobbySlug: string): UseCommitResult {
       setCommitError(result.error);
       setCommitting(false);
       return;
-    }
-
-    if (result.roadmapJobId) {
-      try {
-        sessionStorage.setItem(`${ROADMAP_JOB_KEY_PREFIX}${hobbySlug}`, result.roadmapJobId);
-      } catch {
-        /* Private mode or quota — the hobby page still offers the manual build. */
-      }
     }
 
     /* Left true through the navigation: flipping it back would un-disable the
