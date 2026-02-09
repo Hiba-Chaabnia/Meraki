@@ -77,7 +77,12 @@ export default function SolutionSection() {
                 <div className="flex justify-center mb-6 md:mb-10 ">
                   <SectionBadge label="The Meraki Way" bgColor="var(--primary-lighter)" color="var(--primary)" />
                 </div>
-                <h2 className="mb-6 md:mb-10 text-center">
+                {/* Chopard, same as the landing hero. The clamp is tuned to this
+                    7/12 column — the hero's own sizes overflow it. */}
+                <h2
+                  className="display-heading mb-6 md:mb-10 text-center"
+                  style={{ fontSize: "clamp(1.75rem, 4.5vw, 3.25rem)" }}
+                >
                   A <em>kinder way</em> to find<br />your <em>creative calling</em><br />— and <em>stick to it</em>
                 </h2>
                 <p className="text-lg md:text-xl font-semibold leading-snug text-center" style={{ color: "var(--foreground)" }}>
