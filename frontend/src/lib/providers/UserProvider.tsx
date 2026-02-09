@@ -49,14 +49,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   useEffect(() => {
+    /* Both paths are wrapped because `supabase.auth.getUser()` goes through
+       `navigator.locks`, and a navigation while the lock is pending rejects it
+       with an AbortError — "signal is aborted without reason". Floating, that
+       surfaced as a runtime error overlay on a page change that had in fact
+       succeeded. It is a cancellation, not a failure, so it is swallowed
+       quietly; anything else is still reported.
+
+       `isLoading` is cleared either way. Leaving it true on an aborted call
+       would strand every consumer on its skeleton. */
+    const aborted = (e: unknown) => e instanceof Error && e.name === "AbortError";
+
     const init = async () => {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
-      setUser(currentUser);
-      if (currentUser) await fetchProfile(currentUser.id);
-      setIsLoading(false);
+      try {
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
+        setUser(currentUser);
+        if (currentUser) await fetchProfile(currentUser.id);
+      } catch (e) {
+        if (!aborted(e)) console.error("[UserProvider] Failed to load the session:", e);
+      } finally {
+        setIsLoading(false);
+      }
     };
+
     init();
 
     const {
@@ -64,10 +81,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const newUser = session?.user ?? null;
       setUser(newUser);
-      if (newUser) {
-        await fetchProfile(newUser.id);
-      } else {
+      if (!newUser) {
         setProfile(null);
+        return;
+      }
+
+      try {
+        await fetchProfile(newUser.id);
+      } catch (e) {
+        if (!aborted(e)) console.error("[UserProvider] Failed to load the profile:", e);
       }
     });
 
