@@ -496,6 +496,17 @@ python -m meraki_flow.evaluation.run_evaluation
 
 ---
 
+## What's Left
+
+- [ ] **Finish the manual test pass** — milestones and stats, profile, settings.
+- [ ] **Bring the rest of the app onto the visual identity.** The landing hero and the `/discover` flow are the reference;
+      `dashboard`, `profile`, `settings`, `privacy`, `terms` and `auth` are not there yet.
+- [ ] **Evaluate `PracticeFeedbackCrew` multimodally.** It is the only crew that takes an image, and the current 
+      metric scores text alone — so the input hardest to get right is the one going unmeasured.
+- [ ] **Make it work on a phone.** Most pages were built at desktop widths; the multi-column layouts — the hobby
+      page's three rows, the dashboard's 7/5 split, the local-spots grid — need real mobile treatments.
+---
+
 ## Licence
 
 Meraki is licensed under the **GNU Affero General Public License v3.0** — see
